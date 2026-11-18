@@ -10,4 +10,6 @@ pwabuilder.com → آدرس بالا → Package for stores → Android → Gene
 فایل `assetlinks.json` که PWABuilder می‌دهد را جایگزین `.well-known/assetlinks.json` کن تا نوار آدرس در APK حذف شود.
 
 ## به‌روزرسانی
-فقط فایل‌های جدید را آپلود (replace) کن؛ اپ نصب‌شده خودش نسخه‌ی جدید را می‌گیرد.
+فقط فایل‌های جدید را آپلود (replace) کن؛ اپ نصب‌شده خودش نسخه‌ی جدید را y�tn n 
+
+## به�
