@@ -40,6 +40,7 @@
   .seg{display:flex;background:var(--card2);border-radius:10px;padding:3px;margin-bottom:10px}
   .seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
   .seg button.on{background:var(--acc);color:#fff;font-weight:700}
+  .seg.wrap{flex-wrap:wrap;gap:2px}.seg.wrap button{flex:1 1 auto;font-size:11px;padding:7px 6px;white-space:nowrap;line-height:1.3}
   input[type=range]{width:100%;accent-color:var(--acc);margin-top:4px}
   .badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700}
   .long{background:rgba(34,197,94,.15);color:var(--green)}
@@ -96,13 +97,12 @@
 </head>
 <body>
 <header>
-  <h1><span data-i="title">تحلیل‌گر بازار</span> <small style="color:var(--muted);font-size:11px;font-weight:400">v77</small></h1>
+  <h1><span data-i="title">تحلیل‌گر بازار</span> <small style="color:var(--muted);font-size:11px;font-weight:400">v78</small></h1>
   <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
 </header>
 
 <div class="tabs">
   <button data-tab="calc" data-i="tabCalc">ماشین‌حساب</button>
-  <button data-tab="chart" data-i="tabChart">تحلیل چارت</button>
   <button data-tab="screener" data-i="tabScreener">اسکرینر</button>
   <button class="on" data-tab="tv" data-i="tabTv">چارت</button>
   <button data-tab="market" data-i="tabMarket">بازار AI</button>
@@ -230,7 +230,7 @@
       <div class="hint" data-i="scrHint">روند با EMA20/EMA50 و قیمت تعیین می‌شود: صعودی = قیمت > EMA20 > EMA50 ، نزولی = قیمت < EMA20 < EMA50. داده‌ها از API عمومی صرافی (بدون نیاز به کلید) گرفته می‌شود.</div>
     </div>
     <div class="card">
-      <div class="seg" id="filters">
+      <div class="seg wrap" id="filters">
         <button data-f="watch" data-i="fWatch">⭐ واچ‌لیست</button>
         <button class="on" data-f="all" data-i="fAll">همه</button>
         <button data-f="tt" data-i="fTT">🏆 TT ≥6/7</button>
@@ -598,7 +598,7 @@ setMode(mode);setRiskMode(riskMode);setLang(lang);
  console.log('VERIFY',ok?'PASS':'FAIL',r);})();
 
 /* ================= TABS ================= */
-const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);};$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};
+const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);if(id==='chart'){try{$('noKey').style.display=getKey()?'none':'';}catch(e){}}};window.openPage=openPage;$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};
 window.updToolsSym=()=>{try{$('toolsSym').textContent=(window.tvSymbol?tvSymbol().full:'')+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='tools')updToolsSym();if(b.dataset.tab==='bot'){try{if(window.botUI)botUI.refresh(false);if(window.ledger&&ledger.settle)ledger.settle();}catch(e){}}
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
@@ -1107,7 +1107,7 @@ $('sendChart').onclick=async()=>{if(!cur)return;const btn=$('sendChart');btn.dis
   try{const tf=$('dTf').value;const k=await klinesAny(cur,tf,150);if(!k)throw new Error(t().noKlines);
     const r=rows.find(x=>x.symbol===cur);const cv=drawChart(k,(r?r.display:cur),tf);const url=cv.toDataURL('image/jpeg',0.9);
     if(typeof setChartImage==='function'){setChartImage(url,(r?r.display:cur),tf);}
-    document.querySelector('[data-tab="chart"]').click();toast(t().sentToChart);
+    window.openPage('chart');toast(t().sentToChart);
   }catch(e){toast(e.message);}
   btn.disabled=false;btn.textContent=t().sendChart;};
 
@@ -1203,10 +1203,10 @@ $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.met
 (function(){const t=()=>T[lang];
 async function fromChart(){const b=$('tvVision');b.disabled=true;const old=b.textContent;b.textContent=t().tvVisBusy;
   try{const {q}=tvSymbol();const tf=tfName[$('tvInt').value]||'4H';const k=await klinesAny(q,tf,150);if(!k)throw new Error(t().noKlines);
-    const url=drawChart(k,q,tf).toDataURL('image/jpeg',0.9);setChartImage(url,q,tf);document.querySelector('[data-tab="chart"]').click();setTimeout(()=>$('analyzeBtn').click(),150);}
+    const url=drawChart(k,q,tf).toDataURL('image/jpeg',0.9);setChartImage(url,q,tf);window.openPage('chart');setTimeout(()=>$('analyzeBtn').click(),150);}
   catch(e){toast(e.message||e);}finally{b.disabled=false;b.textContent=old;}}
 function fromFile(f){if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');const sc=Math.min(1,1600/im.width);c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-  const {q}=tvSymbol();setChartImage(c.toDataURL('image/jpeg',0.88),q,tfName[$('tvInt').value]||'4H');document.querySelector('[data-tab="chart"]').click();setTimeout(()=>$('analyzeBtn').click(),150);};im.src=r.result;};r.readAsDataURL(f);}
+  const {q}=tvSymbol();setChartImage(c.toDataURL('image/jpeg',0.88),q,tfName[$('tvInt').value]||'4H');window.openPage('chart');setTimeout(()=>$('analyzeBtn').click(),150);};im.src=r.result;};r.readAsDataURL(f);}
 const a=$('tvVision'),f=$('tvVisionFile'),i=$('tvVisFile');if(a)a.onclick=fromChart;if(f&&i){f.onclick=()=>i.click();i.onchange=()=>{fromFile(i.files[0]);i.value='';};}
 })();
 
