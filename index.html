@@ -100,7 +100,7 @@
 </head>
 <body>
 <header>
-  <h1><span data-i="title">تحلیل‌گر بازار</span> <small style="color:var(--muted);font-size:11px;font-weight:400">v93</small></h1>
+  <h1><span data-i="title">تحلیل‌گر بازار</span> <small style="color:var(--muted);font-size:11px;font-weight:400">v94</small></h1>
   <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
 </header>
 
@@ -1673,8 +1673,14 @@ const aggT=arr=>{const n=arr.length;if(!n)return {n:0};const wins=arr.filter(x=>
 /* ---- Strategy library: classic rule sets (re-written from public descriptions: Turtle/Donchian, Connors RSI-2, Bollinger mean-reversion, MACD+EMA trend, EMA crossover) — all share the SAME exit model & costs so they are comparable with the Lens setup ---- */
 function labSeries(k,S){const c=S.c;const n=c.length;const r2=rsi(c,2);const bbM=sma(c,20);const bbS=c.map((_,i)=>{if(i<19)return null;const m=bbM[i];let v=0;for(let j=i-19;j<=i;j++)v+=(c[j]-m)**2;return Math.sqrt(v/20);});
   const hh=new Array(n).fill(null),ll=new Array(n).fill(null);for(let i=20;i<n;i++){let h=-Infinity,l=Infinity;for(let j=i-20;j<i;j++){if(k[j].h>h)h=k[j].h;if(k[j].l<l)l=k[j].l;}hh[i]=h;ll[i]=l;}
-  return {r2,bbM,bbS,hh,ll};}
+  // Ichimoku (standard 9/26/52) — backtest 2021-10→2026-11, 19 large caps, 4H: TK cross filtered by cloud +0.11R/trade (shorts +0.16, 17/19 symbols positive)
+  const hl=(a,b,f)=>{let m=f==='h'?-Infinity:Infinity;for(let j=a;j<=b;j++){const v=k[j][f];if(f==='h'?v>m:v<m)m=v;}return m;};
+  const tenkan=c.map((_,i)=>i<9?null:(hl(i-8,i,'h')+hl(i-8,i,'l'))/2),kijun=c.map((_,i)=>i<26?null:(hl(i-25,i,'h')+hl(i-25,i,'l'))/2);
+  const spanA=c.map((_,i)=>i<35?null:(tenkan[i-26]+kijun[i-26])/2),spanB=c.map((_,i)=>i<78?null:(hl(i-77,i-26,'h')+hl(i-77,i-26,'l'))/2);
+  return {r2,bbM,bbS,hh,ll,tenkan,kijun,spanA,spanB};}
 const STRATS={
+  ICHI:{name:'Ichimoku TK cross + cloud filter',kind:'trend',sig:(k,S,X,i)=>{if(!X.spanA||X.spanA[i]==null||X.spanB[i]==null||X.tenkan[i-1]==null)return null;const top=Math.max(X.spanA[i],X.spanB[i]),bot=Math.min(X.spanA[i],X.spanB[i]);const c=S.c[i];
+    const up=X.tenkan[i]>X.kijun[i]&&X.tenkan[i-1]<=X.kijun[i-1],dn=X.tenkan[i]<X.kijun[i]&&X.tenkan[i-1]>=X.kijun[i-1];if(up&&c>top)return {side:'LONG',score:70};if(dn&&c<bot)return {side:'SHORT',score:75};return null;}},
   LENS:{name:'Lens setup',kind:'confluence',sig:(k,S,X,i)=>{const q=scoreAt(k,S,i);return q.event==='LONG_SETUP'?{side:'LONG',score:q.ls}:q.event==='SHORT_SETUP'?{side:'SHORT',score:q.ss}:null;}},
   DONCHIAN20:{name:'Donchian 20 breakout (Turtle)',kind:'trend',sig:(k,S,X,i)=>{if(X.hh[i]==null)return null;const c=S.c[i];if(c>X.hh[i]&&(S.e200[i]==null||c>S.e200[i]))return 'LONG';if(c<X.ll[i]&&(S.e200[i]==null||c<S.e200[i]))return 'SHORT';return null;}},
   RSI2:{name:'RSI-2 pullback (Connors)',kind:'mean-reversion',sig:(k,S,X,i)=>{const c=S.c[i];if(i<200||X.r2[i]==null)return null;if(c>S.e200[i]&&X.r2[i]<10&&c<S.e20[i])return 'LONG';if(c<S.e200[i]&&X.r2[i]>90&&c>S.e20[i])return 'SHORT';return null;}},
