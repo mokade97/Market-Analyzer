@@ -1525,7 +1525,7 @@ function vwapDay(k,L){const last=k[L];const d0=Math.floor(last.t/86400000)*86400
 function htfBiasSeries(k,htfK){if(!htfK||htfK.length<60)return k.map(()=>'NEUTRAL');const c=htfK.map(x=>x.c);const e20=ema(c,20),e50=ema(c,50);const b=htfK.map((_,i)=>c[i]>e20[i]&&e20[i]>e50[i]?'UP':c[i]<e20[i]&&e20[i]<e50[i]?'DOWN':'NEUTRAL');
   let j=0;return k.map(x=>{while(j+1<htfK.length&&htfK[j+1].t<=x.t)j++;const idx=j-1;return idx>=50?b[idx]:'NEUTRAL';});}
 function series(k,htfK){const c=k.map(x=>x.c);const S={c,e20:ema(c,20),e50:ema(c,50),e200:ema(c,200),rsi:rsi(c),atr:atr(k),mh:macdH(c),vs:sma(k.map(x=>x.v),20),htf:htfBiasSeries(k,htfK)};Object.assign(S,adxSeries(k));return S;}
-const THR=70;
+let THR=70;const setThr=v=>{if(v>0)THR=+v;return THR;}; /* v108: single source of truth — the bot passes config.minScore here */
 function scoreAt(k,S,L){const c=S.c;const stack=c[L]>S.e20[L]&&S.e20[L]>S.e50[L]&&(L<210||S.e50[L]>S.e200[L])?'BULLISH':c[L]<S.e20[L]&&S.e20[L]<S.e50[L]&&(L<210||S.e50[L]<S.e200[L])?'BEARISH':'MIXED';
   const adx=S.adx[L],dip=S.dip[L],din=S.din[L],rs=S.rsi[L],mh=S.mh[L],mhp=S.mh[L-1],relVol=S.vs[L]?k[L].v/S.vs[L]:null,hb=S.htf[L];
   const lf={trend:stack==='BULLISH'?20:(c[L]>S.e20[L]?10:0),momentum:(rs>50&&rs<75?(mh>0&&mh>mhp?20:12):(rs>=75?6:0)),strength:adx>=25&&dip>din?20:(dip>din?10:0),volume:relVol>=1.5?20:relVol>=1.1?12:relVol>=0.8?6:0,htf:hb==='UP'?20:hb==='NEUTRAL'?8:0};
@@ -1612,15 +1612,15 @@ function sweepSignals(k,Aarr){const n=k.length;const sig=new Array(n).fill(null)
     for(const d of ['L','S']){const x=st[d];if(x&&((x.phase==='SWEPT'&&i-x.sweepI>10)||(x.phase==='ARMED'&&i-x.chochI>15)))st[d]=null;}
     /* LONG side */
     let x=st.L;
-    if(x&&x.phase==='ARMED'){if(b.l<=x.fvg.hi&&b.c>x.fvg.lo&&b.c>b.o){sig[i]='LONG';x.phase='DONE';x.entryI=i;state={side:'LONG',status:'ENTRY',fvg:x.fvg,sweep:x.sweepLow,bars_ago:0};st.L=null;}else if(b.c<x.sweepLow)st.L=null;}
+    if(x&&x.phase==='ARMED'){if(b.l<=x.fvg.hi&&b.c>x.fvg.lo&&b.c>b.o){sig[i]='LONG';x.phase='DONE';x.entryI=i;state={side:'LONG',status:'ENTRY',fvg:x.fvg,sweep:x.sweepLow,bars_ago:0,entryI:i};st.L=null;}else if(b.c<x.sweepLow)st.L=null;}
     else if(x&&x.phase==='SWEPT'){if(sh&&sh.i>x.sweepI-20&&b.c>sh.p){x.phase='ARMED';x.chochI=i;x.choch=sh.p;let f=null;for(let j=i;j>=x.sweepI+2;j--){if(k[j-2].h<k[j].l&&(!A||k[j].l-k[j-2].h>=0.1*A)){f={lo:k[j-2].h,hi:k[j].l};break;}}if(!f)st.L=null;else x.fvg=f;}else if(b.c<x.sweepLow)st.L=null;}
     else if(sl&&sl.i<i-1&&b.l<sl.p&&b.c>sl.p){st.L={phase:'SWEPT',sweepLow:b.l,sweepI:i};}
     /* SHORT side */
     x=st.S;
-    if(x&&x.phase==='ARMED'){if(b.h>=x.fvg.lo&&b.c<x.fvg.hi&&b.c<b.o){sig[i]='SHORT';x.phase='DONE';state={side:'SHORT',status:'ENTRY',fvg:x.fvg,sweep:x.sweepHigh,bars_ago:0};st.S=null;}else if(b.c>x.sweepHigh)st.S=null;}
+    if(x&&x.phase==='ARMED'){if(b.h>=x.fvg.lo&&b.c<x.fvg.hi&&b.c<b.o){sig[i]='SHORT';x.phase='DONE';x.entryI=i;state={side:'SHORT',status:'ENTRY',fvg:x.fvg,sweep:x.sweepHigh,bars_ago:0,entryI:i};st.S=null;}else if(b.c>x.sweepHigh)st.S=null;}
     else if(x&&x.phase==='SWEPT'){if(sl&&sl.i>x.sweepI-20&&b.c<sl.p){x.phase='ARMED';x.chochI=i;x.choch=sl.p;let f=null;for(let j=i;j>=x.sweepI+2;j--){if(k[j-2].l>k[j].h&&(!A||k[j-2].l-k[j].h>=0.1*A)){f={lo:k[j].h,hi:k[j-2].l};break;}}if(!f)st.S=null;else x.fvg=f;}else if(b.c>x.sweepHigh)st.S=null;}
     else if(sh&&sh.i<i-1&&b.h>sh.p&&b.c<sh.p){st.S={phase:'SWEPT',sweepHigh:b.h,sweepI:i};}
-    if(state&&state.status==='ENTRY')state.entryI=i;}
+    /* v108 fix: entryI is set once at entry (was overwritten every bar → live status stuck at ENTRY_TRIGGERED/bars_ago 0 forever) */}
   const L=n-1;const live=(()=>{const r6=v=>v==null?null:+(+v).toFixed(6);for(const d of ['L','S']){const x=st[d];if(x&&x.phase!=='DONE')return {side:d==='L'?'LONG':'SHORT',status:x.phase==='ARMED'?'ARMED_WAIT_FVG_RETEST':'SWEPT_WAIT_CHOCH',sweep_level:r6(x.sweepLow!=null?x.sweepLow:x.sweepHigh),choch_level:r6(x.choch),fvg:x.fvg?{low:r6(x.fvg.lo),high:r6(x.fvg.hi)}:null,bars_since_sweep:L-x.sweepI};}
     if(state&&L-state.entryI<=3)return {side:state.side,status:'ENTRY_TRIGGERED',sweep_level:r6(state.sweep),fvg:{low:r6(state.fvg.lo),high:r6(state.fvg.hi)},bars_ago:L-state.entryI};return null;})();
   return {sig,live};}
@@ -1737,7 +1737,7 @@ async function build(sym,tf){const [k,h]=await Promise.all([klinesAny(sym,tf,320
 async function buildAll(sym,tf){const [k,h]=await Promise.all([klinesAny(sym,tf,1000),HTF[tf]!==tf?klinesAny(sym,HTF[tf],200):Promise.resolve(null)]);if(!k)return null;const hh=h||null;const pk=packet(sym,tf,k,hh,h?HTF[tf]:'N/A');let lab=null;try{lab=strategyLab(k,hh,{tf});}catch(e){}if(pk)pk.strategy_lab=lab;return {packet:pk,backtest:backtest(k,hh,{tf}),backtestLoose:backtest(k,hh,{loose:true,tf}),lab,k};}
 /* v98 (Exp 23): volatility-target risk multiplier = clamp(mean ATR% of previous 500 bars / current ATR%, 0.5, 1.5). Robust across windows 250–1000 and clamps; inverse weighting is worse. */
 function volMult(k,S,i,win=500,lo=0.5,hi=1.5){i=i==null?k.length-1:i;if(!S||!S.atr||!S.atr[i]||!k[i])return 1;const cur=S.atr[i]/k[i].c;let s=0,n=0;for(let j=Math.max(1,i-win);j<i;j++){if(S.atr[j]&&k[j].c){s+=S.atr[j]/k[j].c;n++;}}if(n<100||!cur)return 1;return +Math.min(hi,Math.max(lo,(s/n)/cur)).toFixed(2);}
-window.lens={volMult,packet,build,buildAll,backtest,strategyLab,STRATS,labSeries,simulate,HTF,championAt,series,smcZones,chartPatterns,structureExtras,sweepSignals};
+window.lens={setThr,volMult,packet,build,buildAll,backtest,strategyLab,STRATS,labSeries,simulate,HTF,championAt,series,smcZones,chartPatterns,structureExtras,sweepSignals};
 })();
 
 </script>
