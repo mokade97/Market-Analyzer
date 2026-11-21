@@ -112,7 +112,7 @@
 <body>
 <header>
   <h1><span data-i="title">تحلیل‌گر بازار</span> <small id="appVer" style="color:var(--muted);font-size:11px;font-weight:400" title="app build">v108</small></h1>
-  <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
+  <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="pxBtn" title="Paper exchange" style="font-size:17px;padding:4px 10px">🏦</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
 </header>
 <div class="tabs">
   <button data-tab="calc" data-i="tabCalc">ماشین‌حساب</button>
@@ -398,6 +398,7 @@
     <div class="btns" style="margin-top:6px"><button class="ghost" id="mkClear" data-i="chatClear">پاک کردن گفتگو</button></div>
   </div>
 </div>
+<div class="page" id="page-exchange"><div id="pxBox"></div></div>
 <div class="page" id="page-journal">
   <div class="card">
     <h2 data-i="jStats">آمار عملکرد</h2>
@@ -598,7 +599,7 @@ setMode(mode);setRiskMode(riskMode);setLang(lang);
  const ok=Math.abs(r.size-0.041667)<1e-5&&Math.abs(r.rr-3)<1e-9&&Math.abs(r.margin-250)<1e-6&&Math.abs(r.liq-54300)<1;
  console.log('VERIFY',ok?'PASS':'FAIL',r);})();
 /* ================= TABS ================= */
-const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);if(id==='chart'){try{$('noKey').style.display=getKey()?'none':'';}catch(e){}}};window.openPage=openPage;$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};
+const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);if(id==='chart'){try{$('noKey').style.display=getKey()?'none':'';}catch(e){}}};window.openPage=openPage;$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};$('pxBtn').onclick=()=>{openPage('exchange');if(window.paperX)paperX.open();};
 window.updToolsSym=()=>{try{$('toolsSym').textContent=(window.tvSymbol?tvSymbol().full:'')+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='tools')updToolsSym();if(b.dataset.tab==='bot'){try{if(window.botUI)botUI.refresh(false);if(window.ledger&&ledger.settle)ledger.settle();}catch(e){}}
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
@@ -805,6 +806,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch
 <script src="flow.js"></script>
 <script src="ledger.js"></script>
 <script src="botui.js"></script>
+<script src="paper.js"></script>
 <script src="help.js"></script>
 <script>
 window.addEventListener('error',e=>{try{const d=document.createElement('div');d.className='alert red';d.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99;margin:0;border-radius:0;font-size:12px';d.textContent='JS error: '+(e.message||'')+' @'+(e.lineno||'');document.body.appendChild(d);setTimeout(()=>d.remove(),8000);}catch(_){}});
