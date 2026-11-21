@@ -96,6 +96,15 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.chart.setStyles({candle:{tooltip:{showRule:'follow_cross'}},indicator:{tooltip:{showRule:'follow_cross'}}});
  H.chart.setStyles({separator:{size:3,color:light?'#d6dae3':'#3a4152',fill:true,activeBackgroundColor:'rgba(41,98,255,.25)'}});
  H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);
+ // --- separator touch-drag shim: the engine hit-tests separators by a 7px coordinate band (unusable with a finger). We enlarge the DOM band (CSS) and drive the engine's own drag methods from touch events. ---
+ const sepShim=()=>{try{const m=H.chart.getAllSeparatorPanes&&H.chart.getAllSeparatorPanes();if(!m)return;m.forEach(sp=>{const w=sp.getWidget();const c=w.getContainer();if(!c||c.dataset.sepShim)return;c.dataset.sepShim='1';c.style.touchAction='none';let on=false;
+  c.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;on=true;e.preventDefault();e.stopPropagation();w._mouseDownEvent({pageY:e.touches[0].pageY});},{passive:false});
+  c.addEventListener('touchmove',e=>{if(!on)return;e.preventDefault();e.stopPropagation();w._pressedTouchMouseMoveEvent({pageY:e.touches[0].pageY});},{passive:false});
+  const end=e=>{if(!on)return;on=false;e.stopPropagation();w._mouseUpEvent();};c.addEventListener('touchend',end);c.addEventListener('touchcancel',end);
+  c.addEventListener('mousedown',e=>{on=true;e.stopPropagation();w._mouseDownEvent({pageY:e.pageY});const mv=ev=>{if(on)w._pressedTouchMouseMoveEvent({pageY:ev.pageY});};const up=()=>{on=false;w._mouseUpEvent();window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);});});}catch(e){}};
+ sepShim();H._sepTimer=setInterval(sepShim,1500);
+ // --- keep canvas size in sync with the container (fullscreen / rotation / keyboard) ---
+ try{let rt=null;H._ro=new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(()=>{try{H.chart.resize();}catch(e){}},60);});H._ro.observe(el);}catch(e){}
  el.addEventListener('click',ev=>{const it=ev.target.closest&&ev.target.closest('.klinecharts-pro-period-bar .item');if(!it)return;const tx=(it.textContent||'').trim();if(/اسکرین‌شات|Screenshot|screenshot/.test(tx)){ev.stopImmediatePropagation();ev.preventDefault();screenshot(H);}},true);
  // --- API ---
  H.setBars=bars=>{H.bars=bars||[];H._fresh=true;H.pro.setSymbol({ticker:H.sym,name:H.sym,pricePrecision:prec,volumePrecision:0});};
@@ -112,7 +121,7 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.saveDrawings=()=>saveDrawings(H,true);
  H.toolBar=()=>toolBar(H);
  H.screenshot=()=>screenshot(H);
- H.destroy=()=>{saveDrawings(H,true);clearInterval(H._saveT);try{KL().dispose(H.chart);}catch(e){}el.innerHTML='';H.chart=null;};
+ H.destroy=()=>{saveDrawings(H,true);clearInterval(H._saveT);clearInterval(H._sepTimer);try{H._ro&&H._ro.disconnect();}catch(e){}try{KL().dispose(H.chart);}catch(e){}el.innerHTML='';H.chart=null;};
  H._saveT=setInterval(()=>saveDrawings(H),2000);
  // extras bar (indicators that are not in the Pro modal)
  if(o.extrasBar!==false)buildExtras(H,o);
