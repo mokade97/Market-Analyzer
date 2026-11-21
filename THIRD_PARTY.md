@@ -1,6 +1,6 @@
 # Third-party components
 
-- **TradingView Lightweight Charts™ 5.2.0** — Apache-2.0 — https://github.com/tradingview/lightweight-charts (src/lwc.js, attribution shown in app)
-- **Lightweight Charts Line Tools** (core + plugins: lines, rectangle, circle, triangle, fib-retracement, parallel-channel, long-short-position, text, price-range, freehand, path) by difurious — **MPL-2.0** — https://github.com/difurious/lightweight-charts-line-tools-core (src/linetools.js, single IIFE bundle built with rollup from the sources at commit of 2026-07).
-  - Modification (MPL §3.2 notice): in the pane views of Rectangle, Circle, Triangle and ParallelChannel, `hitTestBackground: false` was changed to `true` so clicking inside a filled shape selects it (TradingView behaviour). No other source changes. Bundle entry: `createAll(chart, series)` registers all tools on one core instance.
+- **KLineCharts 9.8.12** — Apache-2.0 — https://github.com/klinecharts/KLineChart — bundled as `src/klinecharts.js` (candlestick engine for Backtest/Replay charts).
+- **KLineChart Pro 0.1.1** — Apache-2.0 — https://github.com/klinecharts/pro — bundled as `src/klpro.js` + `src/klpro.css` (TradingView-style toolbar: periods, indicator modal, drawing tools, settings, screenshot, fullscreen). Persian locale strings added by this app in `src/tvchart.js`.
+- (removed in v109: TradingView Lightweight Charts™ and Lightweight Charts Line Tools — no longer bundled)
 - Drawing-UX concepts (hover state, handles, object tree, extend L/R, keyboard shortcuts) ported in-house from OpenCharts (MIT) — https://github.com/dylanpersonguy/OpenCharts
