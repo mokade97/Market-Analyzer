@@ -51,7 +51,7 @@ const EX={
   base:'https://www.okx.com',
   async top(n){const d=await J(this.base+'/api/v5/market/tickers?instType=SWAP');return d.data.filter(x=>x.instId.endsWith('-USDT-SWAP')).map(x=>({symbol:x.instId,display:x.instId.replace('-USDT-SWAP','USDT'),change24:(+x.last/+x.open24h-1)*100,vol24:+x.volCcy24h*+x.last,price:+x.last})).sort((a,b)=>b.vol24-a.vol24).slice(0,n);},
   async klines(s,tf,limit){const m={'1D':'1D','4H':'4H','1H':'1H','15m':'15m'};const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
-    while(out.length<limit&&out.length){const page=map(await J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${out[out.length-1].t}&limit=${Math.min(300,limit-out.length)}`));if(!page.length)break;out=out.concat(page);if(page.length<100)break;}
+    while(out.length<limit&&out.length){const page=map(await J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${out[out.length-1].t}&limit=${Math.min(300,limit-out.length)}`));if(!page.length)break;out=out.concat(page);if(page.length<100)break;await new Promise(r=>setTimeout(r,120));}
     return out.reverse();},
   async meta(s){const ccy=s.split('-')[0];const [mk,ix,fr,oi]=await Promise.all([J(`${this.base}/api/v5/public/mark-price?instType=SWAP&instId=${s}`),J(`${this.base}/api/v5/market/index-tickers?instId=${ccy}-USDT`),J(`${this.base}/api/v5/public/funding-rate?instId=${s}`),J(`${this.base}/api/v5/public/open-interest?instType=SWAP&instId=${s}`)]);
     let oiPrev=null,oiNow=+oi.data[0].oiCcy;try{const h=await J(`${this.base}/api/v5/rubik/stat/contracts/open-interest-volume?ccy=${ccy}&period=1H`);if(h.data.length>1){oiNow=+h.data[0][1];oiPrev=+h.data[1][1];}}catch(e){}
@@ -106,7 +106,7 @@ async function metaAny(sym){metaLog=[];for(const n of chain()){try{const m=await
 const KC_KEY='fc_kcache';function kcGet(){try{return JSON.parse(localStorage.getItem(KC_KEY)||'{}');}catch(e){return {};}}
 function kcPut(sym,tf,k){try{const c=kcGet();c[sym+'|'+tf]={t:Date.now(),k:k.slice(-320).map(x=>[x.t,x.o,x.h,x.l,x.c,x.v])};const keys=Object.keys(c).sort((a,b)=>c[b].t-c[a].t);keys.slice(8).forEach(x=>delete c[x]);localStorage.setItem(KC_KEY,JSON.stringify(c));}catch(e){}}
 window.dataSrc=null;
-async function klinesAny(sym,tf,limit){for(const n of chain()){try{const k=await withTimeout(EX[n].klines(symFor(n,sym),tf,limit),6000);if(k&&k.length>10){window.dataSrc=n;if(limit>=100)kcPut(sym,tf,k);return k;}}catch(e){}}
+async function klinesAny(sym,tf,limit){for(const n of chain()){try{const k=await withTimeout(EX[n].klines(symFor(n,sym),tf,limit),6000+2000*Math.ceil((limit||300)/300));if(k&&k.length>10){window.dataSrc=n;if(limit>=100)kcPut(sym,tf,k);return k;}}catch(e){}}
   const c=kcGet()[sym+'|'+tf];if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
