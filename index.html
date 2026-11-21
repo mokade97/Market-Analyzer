@@ -114,8 +114,8 @@
 </head>
 <body>
 <header>
-  <h1><span data-i="title">تحلیل‌گر بازار</span> <small id="appVer" style="color:var(--muted);font-size:11px;font-weight:400" title="app build">v109</small></h1>
-  <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
+  <h1><span data-i="title">تحلیل‌گر بازار</span> <small id="appVer" style="color:var(--muted);font-size:11px;font-weight:400" title="app build">v110</small></h1>
+  <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="pxBtn" title="Paper exchange" style="font-size:17px;padding:4px 10px">🏦</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
 </header>
 <div class="tabs">
   <button data-tab="calc" data-i="tabCalc">ماشین‌حساب</button>
@@ -401,6 +401,7 @@
     <div class="btns" style="margin-top:6px"><button class="ghost" id="mkClear" data-i="chatClear">پاک کردن گفتگو</button></div>
   </div>
 </div>
+<div class="page" id="page-exchange"><div id="pxBox"></div></div>
 <div class="page" id="page-journal">
   <div class="card">
     <h2 data-i="jStats">آمار عملکرد</h2>
@@ -601,7 +602,7 @@ setMode(mode);setRiskMode(riskMode);setLang(lang);
  const ok=Math.abs(r.size-0.041667)<1e-5&&Math.abs(r.rr-3)<1e-9&&Math.abs(r.margin-250)<1e-6&&Math.abs(r.liq-54300)<1;
  console.log('VERIFY',ok?'PASS':'FAIL',r);})();
 /* ================= TABS ================= */
-const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);if(id==='chart'){try{$('noKey').style.display=getKey()?'none':'';}catch(e){}}};window.openPage=openPage;$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};
+const openPage=id=>{if(id==='tools'){try{const q=window.tvSymbol?tvSymbol().full:'';$('toolsSym').textContent=q+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}}document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='page-'+id));window.scrollTo(0,0);if(id==='chart'){try{$('noKey').style.display=getKey()?'none':'';}catch(e){}}};window.openPage=openPage;$('setBtn').onclick=()=>openPage('settings');$('jrnBtn').onclick=()=>{openPage('journal');if(window.renderJournal)renderJournal();};$('pxBtn').onclick=()=>{openPage('exchange');if(window.paperX)paperX.open();};
 window.updToolsSym=()=>{try{$('toolsSym').textContent=(window.tvSymbol?tvSymbol().full:'')+' · '+((window.tfName&&tfName[$('tvInt').value])||'');}catch(e){}};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='tools')updToolsSym();if(b.dataset.tab==='bot'){try{if(window.botUI)botUI.refresh(false);if(window.ledger&&ledger.settle)ledger.settle();}catch(e){}}
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
@@ -2627,6 +2628,125 @@ function init(){try{$('botUrl').value=url();$('botUrl').onchange=()=>{localStora
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&url())refresh(false);});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.botUI={refresh,data:()=>data};
+})();
+
+</script>
+<script>/* ==== paper.js ==== */
+/* ==== Paper Exchange (v110): a simulated USDT-M perpetual exchange inside the app. The bot's live book (same Lens engine + rules as lens-bot v111b)
+   trades a $100 account with isolated margin, auto-selected leverage, liquidation, fees, slippage and funding. Everything is closed-candle based and
+   deterministic, so the simulator "catches up" on missed candles each time the app opens — nothing is lost while the app is closed.
+   Strategy logic is NOT changed here; this is an execution/risk layer on top of lens.js. ==== */
+(function(){
+const $=id=>document.getElementById(id);const LS=k=>localStorage.getItem(k);const fa=()=>(LS('fc_lang')||'fa')==='fa';
+const T={fa:{title:'🏦 صرافی مجازی — ربات با ۱۰۰ دلار',sub:'حساب فیوچرز شبیه‌سازی‌شده (USDT-M، مارجین ایزوله). ربات با همان موتور Lens و همان قواعد کتاب زنده (ICHI) معامله می‌کند؛ اهرم هر معامله را خودش از روی فاصله‌ی استاپ، نوسان و امتیاز انتخاب می‌کند. هر بار که برنامه باز شود کندل‌های بسته‌شده‌ی عقب‌افتاده پردازش می‌شوند.',
+ bal:'موجودی',eq:'ارزش حساب',upnl:'سود/زیان باز',roi:'بازده',dd:'حداکثر افت',margin:'مارجین درگیر',free:'موجودی آزاد',trades:'معاملات بسته',win:'نرخ برد',pf:'PF',run:'⟳ اجرای اسکن',running:'در حال اسکن…',auto:'اسکن خودکار هر ۵ دقیقه (تا وقتی برنامه باز است)',reset:'ریست حساب به ۱۰۰$',resetQ:'حساب، پوزیشن‌ها و تاریخچه پاک شود؟',pos:'پوزیشن‌های باز',none:'—',closed:'معاملات بسته‌شده',log:'تصمیم‌های ربات',settings:'تنظیمات',syms:'نمادها (با کاما)',tfs:'تایم‌فریم‌ها',mode:'کتاب',modeLive:'کتاب زنده‌ی بات (ICHI · فقط SHORT در 4H — همان v111b)',modeAll:'ICHI هر دو جهت (آزمایشی، خارج از کتاب زنده)',risk:'ریسک هر معامله (%)',levCap:'سقف اهرم',back:'شروع از چند روز قبل (برای دیدن سریع نتیجه)',save:'ذخیره و اسکن',lev:'اهرم',liq:'لیکوئید',mark:'قیمت فعلی',entry:'ورود',size:'حجم',pnl:'PnL',bars:'کندل',close:'بستن دستی',why:'چرا این اهرم؟',never:'هنوز اسکن نشده',last:'آخرین اسکن',noLens:'موتور Lens بارگذاری نشده',nodata:'داده‌ای نیامد',eqc:'منحنی ارزش حساب',tips:'نکته: اهرم فقط مارجین درگیر و قیمت لیکوئید را تعیین می‌کند؛ اندازه‌ی پوزیشن از ریسک (٪ حساب ÷ فاصله‌ی استاپ) می‌آید — مثل بات. اگر مارجین لازم از موجودی آزاد بیشتر باشد حجم کم می‌شود.',export:'خروجی JSON'},
+ en:{title:'🏦 Paper Exchange — the bot with $100',sub:'Simulated USDT-M perpetual futures account (isolated margin). The bot trades with the same Lens engine and the same live-book rules (ICHI); leverage per trade is auto-selected from stop distance, volatility and score. Missed closed candles are processed every time the app opens.',
+ bal:'Balance',eq:'Equity',upnl:'Unrealized',roi:'ROI',dd:'Max DD',margin:'Margin used',free:'Free',trades:'Closed trades',win:'Win-rate',pf:'PF',run:'⟳ Scan now',running:'scanning…',auto:'Auto-scan every 5 min (while open)',reset:'Reset to $100',resetQ:'Wipe account, positions and history?',pos:'Open positions',none:'—',closed:'Closed trades',log:'Bot decisions',settings:'Settings',syms:'Symbols (comma)',tfs:'Timeframes',mode:'Book',modeLive:'Bot live book (ICHI · SHORT only on 4H — v111b)',modeAll:'ICHI both sides (experimental, outside live book)',risk:'Risk per trade (%)',levCap:'Leverage cap',back:'Start N days back (quick look at results)',save:'Save & scan',lev:'Lev',liq:'Liq',mark:'Mark',entry:'Entry',size:'Size',pnl:'PnL',bars:'bars',close:'Close',why:'Why this leverage?',never:'not scanned yet',last:'Last scan',noLens:'Lens engine not loaded',nodata:'no data',eqc:'Equity curve',tips:'Note: leverage only sets margin and liquidation price; position size comes from risk (% of account ÷ stop distance) — like the bot. If required margin exceeds free balance the size is reduced.',export:'Export JSON'}};
+const t=()=>T[fa()?'fa':'en'];
+const TFMS={'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5};
+const DEF={account:100,riskPct:3,maxOpenRiskPct:6,maxOpen:4,maxSameDir:2,minNotional:5,maxNotionalMult:3,feePct:0.05,slipPct:0.05,fundPer8h:0.01,maxBars:40,mmr:0.005,levCap:20,mode:'live',tfs:['4H','1D'],syms:['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT'],backDays:0,cooldownBars:6,maxExtAtr:2,auto:true};
+let CFG=Object.assign({},DEF);try{CFG=Object.assign({},DEF,JSON.parse(LS('fc_px_cfg')||'{}'));}catch(e){}
+const saveCfg=()=>localStorage.setItem('fc_px_cfg',JSON.stringify(CFG));
+const fresh=()=>({balance:CFG.account,startBal:CFG.account,positions:[],closed:[],log:[],seen:{},lastCard:{},lastScan:{},marks:{},eq:[],peak:CFG.account,maxDD:0,createdAt:Date.now(),lastRun:null});
+let S=null;try{S=JSON.parse(LS('fc_px_state')||'null');}catch(e){}if(!S||!S.positions)S=fresh();
+const save=()=>{if(S.log.length>300)S.log=S.log.slice(0,300);if(S.eq.length>2000)S.eq=S.eq.filter((_,i)=>i%2===0);localStorage.setItem('fc_px_state',JSON.stringify(S));};
+const r2=(x,d=2)=>+(+x).toFixed(d);const fmtP=x=>x==null?'—':x>=1000?x.toFixed(1):x>=10?x.toFixed(2):x>=1?x.toFixed(3):x>=0.01?x.toFixed(5):x.toFixed(7);
+const usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
+const logD=(kind,o)=>{S.log.unshift(Object.assign({ts:Date.now(),kind},o));};
+/* ---------- leverage selection (explainable) ---------- */
+function pickLev(entry,stop,atrPct,score,sym){const slPct=Math.abs(entry-stop)/entry;const byLiq=Math.max(1,Math.floor(1/(3*slPct+CFG.mmr)));const byVol=atrPct<0.01?20:atrPct<0.02?12:atrPct<0.035?6:3;const sM=score>=85?1:score>=75?0.8:0.6;const cap=/^(BTC|ETH)USDT$/.test(sym)?CFG.levCap:Math.min(CFG.levCap,15);
+ const lev=Math.max(1,Math.min(cap,byLiq,Math.max(1,Math.round(byVol*sM))));
+ const why=fa()?`فاصله‌ی استاپ ${(slPct*100).toFixed(2)}٪ → برای این‌که قیمت لیکوئید حداقل ۳ برابر دورتر از استاپ باشد حداکثر ${byLiq}× · نوسان (ATR ${(atrPct*100).toFixed(2)}٪ قیمت) → پایه ${byVol}× · امتیاز Lens ${score} → ضریب ${sM} · سقف نماد ${cap}× ⇒ ${lev}×`:`stop ${(slPct*100).toFixed(2)}% → liq ≥3×stop allows ≤${byLiq}× · volatility (ATR ${(atrPct*100).toFixed(2)}%) base ${byVol}× · Lens score ${score} ×${sM} · symbol cap ${cap}× ⇒ ${lev}×`;
+ return {lev,why,slPct};}
+const liqPrice=(side,entry,lev)=>side==='LONG'?entry*(1-1/lev+CFG.mmr):entry*(1+1/lev-CFG.mmr);
+/* ---------- rules (port of lens-bot ruleCheck, the parts that need no AI / no deep history) ---------- */
+function ruleCheck(p,side){const fails=[],warns=[];const Q=p.regime_quadrant;if(Q&&Q.quadrant==='Q4')warns.push('Q4 (آشوب) — نیم‌سایز');
+ const hb=p.trend&&p.trend.htf_bias;if((side==='LONG'&&hb==='DOWN')||(side==='SHORT'&&hb==='UP'))fails.push('خلاف سوگیری تایم‌فریم بالاتر');
+ const x=p.structure_extras||{};if(x.last_event){const ch=x.last_event.type;const bad=(side==='LONG'&&ch.endsWith('BEARISH'))||(side==='SHORT'&&ch.endsWith('BULLISH'));if(bad)(ch.startsWith('CHOCH')?fails:warns).push(ch.replace('_',' ')+' خلاف جهت');}
+ const cp=(p.chart_patterns&&p.chart_patterns.patterns)||[];cp.forEach(pt=>{const opp=pt.bias===(side==='LONG'?'BEARISH':'BULLISH');if(opp)(pt.status!=='FORMING'?fails:warns).push('الگوی '+pt.name.replace(/_/g,' ')+' خلاف جهت');});
+ if(!((side==='LONG'&&p.trade.stop<p.trade.entry&&p.trade.target_1>p.trade.entry)||(side==='SHORT'&&p.trade.stop>p.trade.entry&&p.trade.target_1<p.trade.entry)))fails.push('طرح معامله با جهت نمی‌خواند');
+ return {fails,warns,sizeMult:Q?(Q.quadrant==='Q4'?0.5:(Q.size_multiplier||1)):1};}
+/* ---------- account helpers ---------- */
+const marginUsed=()=>S.positions.reduce((q,x)=>q+x.margin,0);
+const unreal=()=>S.positions.reduce((q,x)=>{const m=S.marks[x.sym];if(!m)return q;return q+(x.side==='LONG'?m-x.entry:x.entry-m)*x.qtyLeft;},0);
+const equity=()=>S.balance+unreal();
+function closePart(pos,px,qty,why,barT,market){const slip=market?px*CFG.slipPct/100*(pos.side==='LONG'?-1:1):0;const fill=px+slip;const gross=(pos.side==='LONG'?fill-pos.entry:pos.entry-fill)*qty;const fee=fill*qty*CFG.feePct/100;const pnl=gross-fee;pos.realized+=pnl;pos.fees+=fee;pos.qtyLeft=r2(pos.qtyLeft-qty,8);S.balance+=pnl;
+ if(pos.qtyLeft<=1e-9){pos.margin=0;const R=Math.abs(pos.entry-pos.stop)*pos.qty;const rec={id:pos.id,sym:pos.sym,tf:pos.tf,side:pos.side,strategy:pos.strategy,lev:pos.lev,entry:pos.entry,stop:pos.stop,exit:fill,out:why,openedT:pos.openedT,closedT:barT,bars:pos.bars,pnl:r2(pos.realized-pos.funding),fees:r2(pos.fees),funding:r2(pos.funding),rr:R?r2((pos.realized-pos.funding)/R):0,riskUSD:pos.riskUSD,margin0:pos.margin0,roiPct:pos.margin0?r2((pos.realized-pos.funding)/pos.margin0*100,1):0,levWhy:pos.levWhy};S.closed.unshift(rec);S.positions=S.positions.filter(x=>x!==pos);S.eq.push([barT,r2(S.balance)]);S.eq.sort((a,b)=>a[0]-b[0]);logD('CLOSE',{sym:pos.sym,tf:pos.tf,side:pos.side,out:why,pnl:rec.pnl,rr:rec.rr,barT});}
+ return pnl;}
+function manage(pos,K){const idx=K.findIndex(b=>b.t>pos.lastBarT);if(idx<0)return;const LG=pos.side==='LONG';
+ for(let i=idx;i<K.length-1;i++){const b=K[i];pos.bars++;pos.lastBarT=b.t;const fund=pos.qtyLeft*b.c*CFG.fundPer8h/100*((TFMS[pos.tf]||144e5)/36e5)/8;pos.funding+=fund;S.balance-=fund;
+  if(LG?b.l<=pos.liq:b.h>=pos.liq){const q=pos.qtyLeft;closePart(pos,pos.liq,q,'LIQ',b.t,true);S.balance-=Math.max(0,pos.margin);S.balance=Math.max(0,S.balance);pos.margin=0;return;}
+  const hs=LG?b.l<=pos.stop:b.h>=pos.stop,h1=LG?b.h>=pos.t1:b.l<=pos.t1,h2=LG?b.h>=pos.t2:b.l<=pos.t2;
+  if(hs){closePart(pos,pos.stop,pos.qtyLeft,pos.t1hit?'T1_THEN_SL':'SL',b.t,true);return;}
+  if(h2){if(!pos.t1hit&&h1){closePart(pos,pos.t1,r2(pos.qtyLeft/2,8),'T1',b.t,false);pos.t1hit=true;}closePart(pos,pos.t2,pos.qtyLeft,'T2',b.t,false);return;}
+  if(h1&&!pos.t1hit){closePart(pos,pos.t1,r2(pos.qtyLeft/2,8),'T1',b.t,false);pos.t1hit=true;}
+  if(pos.bars>=CFG.maxBars){closePart(pos,b.c,pos.qtyLeft,'TIMEOUT',b.t,true);return;}}}
+/* ---------- entry evaluation on bar i of K (i = last CLOSED bar) ---------- */
+function tryEnter(sym,tf,K,HK,i,S0,X,lab){const lens=window.lens;const st=lens.STRATS.ICHI;let sg=null;try{sg=st.sig(K,S0,X,i);}catch(e){}if(!sg)return;const side=typeof sg==='string'?sg:sg.side;const barT=K[i].t;
+ const allowed=CFG.mode==='live'?(side==='SHORT'):true;const key=`${sym}|${tf}|ICHI|${side}|${barT}`;if(S.seen[key])return;S.seen[key]=1;
+ const rej=(why,extra)=>{logD('SKIP',Object.assign({sym,tf,side,barT,why},extra||{}));};
+ if(!allowed)return rej(fa()?'جهت LONG در کتاب زنده‌ی بات نیست (بک‌تست 4H: LONG −0.058R)':'LONG not in live book');
+ const last=S.lastCard[sym+'|'+tf];if(last&&barT-last.t<CFG.cooldownBars*TFMS[tf]&&last.side===side)return rej('cooldown');
+ const A=S0.atr[i],e20=S0.e20[i];if(A&&e20){const ext=(K[i].c-e20)/A;const e=side==='LONG'?ext:-ext;if(e>CFG.maxExtAtr)return rej(fa()?`ورود کش‌شده (${e.toFixed(1)}×ATR از EMA20) — فقط سایه`:`chase ${e.toFixed(1)}×ATR`);}
+ if(lab&&lab.strategies&&lab.strategies.ICHI&&lab.strategies.ICHI.n>=15&&lab.strategies.ICHI.verdict==='NEGATIVE')return rej(fa()?`آزمایشگاه: ICHI روی ${sym} ${tf} منفی (${lab.strategies.ICHI.avg_r}R)`:'lab negative');
+ const ks=K.slice(0,i+1).concat([K[i]]);const hk=HK?HK.filter(b=>b.t+TFMS[lens.HTF[tf]]<=barT+TFMS[tf]):null;let p=null;try{p=lens.packet(sym,tf,ks,hk&&hk.length>60?hk.concat([hk[hk.length-1]]):null,hk&&hk.length>60?lens.HTF[tf]:'N/A');}catch(e){}if(!p||!p.trade)return rej('packet failed');
+ if(p.trade.side!==side){const R0=1.5*(p.volatility&&p.volatility.atr||A);const entry=p.trade.entry;const sgn=side==='LONG'?1:-1;p.trade=Object.assign({},p.trade,{side,stop:+(entry-sgn*R0).toFixed(8),target_1:+(entry+sgn*1.5*R0).toFixed(8),target_2:+(entry+sgn*3*R0).toFixed(8)});}
+ const rc=ruleCheck(p,side);const score=side==='LONG'?p.scores.long:p.scores.short;S.lastCard[sym+'|'+tf]={t:barT,side};
+ if(rc.fails.length)return rej(rc.fails.join('؛ '),{score});
+ // fill = next bar open (the signal bar is closed) with slippage; plan shifts with the fill like the bot
+ const nb=K[i+1];const planned=p.trade.entry;const fill0=nb?nb.o:K[i].c;const fill=fill0*(1+(side==='LONG'?1:-1)*CFG.slipPct/100);const sh=fill-planned;const stop=p.trade.stop+sh,t1=p.trade.target_1+sh,t2=p.trade.target_2+sh;
+ // risk rails
+ if(S.positions.some(x=>x.sym===sym))return rej('busy: '+sym);if(S.positions.length>=CFG.maxOpen)return rej('max open');
+ const same=S.positions.filter(x=>x.side===side).length,opp=S.positions.length-same;if(same-opp>=CFG.maxSameDir)return rej(fa()?`سقف هم‌جهت (${same} ${side})`:'same-dir cap');
+ let volM=1;try{volM=lens.volMult(K,S0,i);}catch(e){}const eq=Math.max(0,equity());let riskUSD=eq*CFG.riskPct/100*rc.sizeMult*volM;const openRisk=S.positions.reduce((q,x)=>q+x.riskUSD,0);if(openRisk+riskUSD>eq*CFG.maxOpenRiskPct/100)return rej(fa()?`سقف ریسک باز ${CFG.maxOpenRiskPct}٪`:'open-risk cap');
+ const slDist=Math.abs(fill-stop);if(!(slDist>0))return rej('bad stop');let qty=riskUSD/slDist;let notional=qty*fill;
+ const atrPct=A/fill;const L=pickLev(fill,stop,atrPct,score,sym);const free=S.balance-marginUsed();let margin=notional/L.lev;const fee=notional*CFG.feePct/100;
+ if(margin+fee>free*0.95){const k=free*0.95/(margin+fee);if(k<0.25)return rej(fa()?`مارجین کافی نیست (آزاد ${free.toFixed(2)}$، لازم ${(margin+fee).toFixed(2)}$)`:'insufficient margin');qty*=k;notional*=k;riskUSD*=k;margin=notional/L.lev;}
+ const openNot=S.positions.reduce((q,x)=>q+x.notional,0);if(openNot+notional>eq*CFG.maxNotionalMult)return rej(fa()?`سقف ارزش باز ${CFG.maxNotionalMult}× حساب`:'notional cap');
+ if(notional<CFG.minNotional)return rej(fa()?`ارزش پوزیشن ${notional.toFixed(2)}$ زیر حداقل صرافی`:'min notional');
+ const fee0=notional*CFG.feePct/100;S.balance-=fee0;
+ const pos={id:key,sym,tf,side,strategy:'ICHI',entry:fill,planned,stop,t1,t2,qty:r2(qty,8),qtyLeft:r2(qty,8),notional:r2(notional),lev:L.lev,levWhy:L.why,margin:r2(margin),margin0:r2(margin),liq:liqPrice(side,fill,L.lev),riskUSD:r2(riskUSD),score,quad:p.regime_quadrant&&p.regime_quadrant.quadrant,htf:p.trend&&p.trend.htf_bias,warns:rc.warns,openedT:nb?nb.t:barT,barT,lastBarT:nb?nb.t:barT,bars:0,t1hit:false,realized:-fee0,fees:fee0,funding:0,volM:r2(volM),sizeMult:rc.sizeMult};
+ S.positions.push(pos);logD('OPEN',{sym,tf,side,barT,entry:fill,stop,t1,t2,lev:L.lev,margin:pos.margin,notional:pos.notional,riskUSD:pos.riskUSD,score,levWhy:L.why,warns:rc.warns});
+ // the position opened at bar i+1's open — manage it through the remaining closed bars immediately
+ if(nb){pos.lastBarT=nb.t-1;manage(pos,K);}}
+/* ---------- scan ---------- */
+let busy=false,timer=null;
+async function run(force){if(busy||!window.lens||!window.klinesAny)return;busy=true;render();const lens=window.lens;const startT=Date.now()-(CFG.backDays||0)*864e5;
+ try{for(const sym of CFG.syms){const data={};for(const tf of ['4H','1D'])try{data[tf]=await klinesAny(sym,tf,tf==='1D'?400:600);}catch(e){}
+   if(data['4H']&&data['4H'].length)S.marks[sym]=data['4H'][data['4H'].length-1].c;
+   // manage open positions first (never on the forming bar)
+   S.positions.filter(x=>x.sym===sym).forEach(pos=>{const K=data[pos.tf];if(K&&K.length>5)manage(pos,K);});
+   for(const tf of CFG.tfs){const K=data[tf];if(!K||K.length<150)continue;const HK=tf==='4H'?data['1D']:null;let S0,X,lab=null;try{S0=lens.series(K,null);X=lens.labSeries(K,S0);}catch(e){continue;}try{lab=lens.strategyLab(K,HK,{tf,costPct:CFG.feePct*2+CFG.slipPct,fundPerBar:(TFMS[tf]/36e5)/8*CFG.fundPer8h});}catch(e){}
+    const sk=sym+'|'+tf;const since=S.lastScan[sk]||Math.max(startT,K[0].t);const lastClosed=K.length-2;let i0=K.findIndex(b=>b.t>since);if(i0<0)i0=lastClosed+1;i0=Math.max(i0,60);
+    if(!S.lastScan[sk]&&!(CFG.backDays>0))i0=lastClosed;  // first run with no look-back: only the latest closed bar
+    for(let i=i0;i<=lastClosed;i++){if(i===lastClosed){const K2=K;tryEnter(sym,tf,K2,HK,i,S0,X,lab);}else tryEnter(sym,tf,K,HK,i,S0,X,lab);}
+    S.lastScan[sk]=K[lastClosed].t;}}
+  S.lastRun=Date.now();const eq=equity();S.eq.push([Date.now(),r2(eq)]);S.peak=Math.max(S.peak||0,eq);S.maxDD=Math.max(S.maxDD||0,S.peak?(S.peak-eq)/S.peak*100:0);save();}
+ catch(e){logD('ERR',{why:e.message||String(e)});}
+ busy=false;render();}
+function manualClose(id){const pos=S.positions.find(x=>x.id===id);if(!pos)return;const m=S.marks[pos.sym];if(!m)return;closePart(pos,m,pos.qtyLeft,'MANUAL',Date.now(),true);save();render();}
+/* ---------- UI ---------- */
+function stats(){const c=S.closed;const n=c.length,w=c.filter(x=>x.pnl>0).length;const g=c.filter(x=>x.pnl>0).reduce((q,x)=>q+x.pnl,0),l=-c.filter(x=>x.pnl<0).reduce((q,x)=>q+x.pnl,0);return {n,win:n?Math.round(100*w/n):0,pf:l?(g/l).toFixed(2):(g>0?'∞':'—'),sumR:c.reduce((q,x)=>q+x.rr,0)};}
+function render(){const box=$('pxBox');if(!box)return;const L=t();const eq=equity(),up=unreal(),mu=marginUsed(),st=stats();const roi=(eq/S.startBal-1)*100;const col=x=>x>0?'var(--green)':x<0?'var(--red)':'var(--muted)';const dt=x=>x?new Date(x).toISOString().slice(5,16).replace('T',' '):'—';
+ box.innerHTML=`<div class="card"><h2>${L.title}</h2><div class="hint">${L.sub}</div>
+ <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:8px"><div class="item"><div class="k">${L.eq}</div><div class="v" style="color:${col(roi)}">$${eq.toFixed(2)}</div></div><div class="item"><div class="k">${L.bal}</div><div class="v">$${S.balance.toFixed(2)}</div></div><div class="item"><div class="k">${L.upnl}</div><div class="v" style="color:${col(up)}">${usd(up)}</div></div><div class="item"><div class="k">${L.roi}</div><div class="v" style="color:${col(roi)}">${roi>=0?'+':''}${roi.toFixed(2)}%</div></div><div class="item"><div class="k">${L.dd}</div><div class="v">${(S.maxDD||0).toFixed(1)}%</div></div><div class="item"><div class="k">${L.margin} / ${L.free}</div><div class="v" style="font-size:12px">$${mu.toFixed(2)} / $${(S.balance-mu).toFixed(2)}</div></div><div class="item"><div class="k">${L.trades}</div><div class="v">${st.n}</div></div><div class="item"><div class="k">${L.win}</div><div class="v">${st.win}%</div></div><div class="item"><div class="k">${L.pf} · ΣR</div><div class="v">${st.pf} · ${st.sumR>=0?'+':''}${st.sumR.toFixed(2)}R</div></div></div>
+ <div class="btns" style="gap:6px;flex-wrap:wrap"><button class="primary" id="pxRun" ${busy?'disabled':''}>${busy?L.running:L.run}</button><label class="chk" style="margin:0"><input type="checkbox" id="pxAuto" ${CFG.auto?'checked':''}> <span style="font-size:12px">${L.auto}</span></label><span style="flex:1"></span><button class="ghost" id="pxExport">${L.export}</button><button class="ghost" id="pxReset">${L.reset}</button></div>
+ <div class="hint" style="margin-top:4px">${L.last}: ${S.lastRun?new Date(S.lastRun).toLocaleString():L.never} · ${CFG.syms.join(', ')} · ${CFG.tfs.join('/')} · ${CFG.mode==='live'?'ICHI SHORT':'ICHI BOTH'} · risk ${CFG.riskPct}% · lev ≤${CFG.levCap}×</div>
+ <canvas id="pxEq" style="width:100%;height:110px;display:block;margin-top:8px;border-radius:8px;background:var(--card2)"></canvas></div>
+ <div class="card" style="margin-top:10px"><h2>${L.pos} (${S.positions.length})</h2>${S.positions.length?`<div style="overflow:auto"><table style="width:100%;font-size:11px;direction:ltr;text-align:center;border-collapse:collapse"><tr style="color:var(--muted)"><th>sym</th><th>side</th><th>${L.lev}</th><th>${L.entry}</th><th>${L.mark}</th><th>SL / T1 / T2</th><th>${L.liq}</th><th>${L.size}</th><th>${L.pnl}</th><th>${L.bars}</th><th></th></tr>${S.positions.map(x=>{const m=S.marks[x.sym];const u=m?(x.side==='LONG'?m-x.entry:x.entry-m)*x.qtyLeft:0;const R=Math.abs(x.entry-x.stop)*x.qty;return `<tr style="border-top:1px solid var(--border)"><td><b>${x.sym.replace('USDT','')}</b><br><span class="hint" style="font-size:10px">${x.tf}</span></td><td style="color:${x.side==='LONG'?'var(--green)':'var(--red)'}">${x.side}${x.t1hit?' ½':''}</td><td title="${x.levWhy}">${x.lev}×<br><span class="hint" style="font-size:10px">$${x.margin.toFixed(2)}</span></td><td>${fmtP(x.entry)}</td><td>${fmtP(m)}</td><td>${fmtP(x.stop)}<br>${fmtP(x.t1)}<br>${fmtP(x.t2)}</td><td style="color:var(--red)">${fmtP(x.liq)}</td><td>${x.qtyLeft}<br><span class="hint" style="font-size:10px">$${(x.qtyLeft*(m||x.entry)).toFixed(1)}</span></td><td style="color:${col(u)}">${usd(u)}<br>${R?((u/R).toFixed(2)+'R'):''}</td><td>${x.bars}</td><td><button class="ghost" data-close="${x.id}" style="padding:2px 6px;font-size:10px">✕</button></td></tr><tr><td colspan="11" class="hint" style="text-align:left;font-size:10px;padding:2px 6px 6px">🎚 ${x.levWhy}${x.warns&&x.warns.length?' · ⚠ '+x.warns.join('؛ '):''}</td></tr>`;}).join('')}</table></div>`:`<div class="hint">${L.none}</div>`}<div class="hint" style="margin-top:6px">${L.tips}</div></div>
+ <div class="card" style="margin-top:10px"><h2>${L.closed} (${st.n})</h2>${st.n?`<div style="overflow:auto;max-height:50vh"><table style="width:100%;font-size:11px;direction:ltr;text-align:center;border-collapse:collapse"><tr style="color:var(--muted)"><th>when</th><th>sym</th><th>side</th><th>${L.lev}</th><th>${L.entry}→exit</th><th>out</th><th>${L.pnl}</th><th>R</th><th>ROI</th></tr>${S.closed.slice(0,80).map(x=>`<tr style="border-top:1px solid var(--border)"><td>${dt(x.closedT)}</td><td><b>${x.sym.replace('USDT','')}</b> <span class="hint" style="font-size:10px">${x.tf}</span></td><td style="color:${x.side==='LONG'?'var(--green)':'var(--red)'}">${x.side}</td><td>${x.lev}×</td><td>${fmtP(x.entry)}→${fmtP(x.exit)}</td><td>${x.out}</td><td style="color:${col(x.pnl)}">${usd(x.pnl)}</td><td style="color:${col(x.rr)}">${x.rr>0?'+':''}${x.rr}</td><td style="color:${col(x.roiPct)}">${x.roiPct}%</td></tr>`).join('')}</table></div>`:`<div class="hint">${L.none}</div>`}</div>
+ <div class="card" style="margin-top:10px"><h2>${L.log}</h2><div style="max-height:40vh;overflow:auto;font-size:11px;direction:ltr;text-align:left">${S.log.slice(0,120).map(x=>`<div style="padding:3px 0;border-bottom:1px solid var(--border)"><span class="hint">${dt(x.barT||x.ts)}</span> <b style="color:${x.kind==='OPEN'?'var(--green)':x.kind==='CLOSE'?(x.pnl>0?'var(--green)':'var(--red)'):x.kind==='ERR'?'var(--red)':'var(--muted)'}">${x.kind}</b> ${x.sym||''} ${x.tf||''} ${x.side||''} ${x.kind==='OPEN'?`@${fmtP(x.entry)} SL ${fmtP(x.stop)} T2 ${fmtP(x.t2)} · ${x.lev}× · margin $${x.margin} · risk $${x.riskUSD} · score ${x.score}`:x.kind==='CLOSE'?`${x.out} ${usd(x.pnl)} (${x.rr}R)`:(x.why||'')}</div>`).join('')||`<div class="hint">${L.none}</div>`}</div></div>
+ <div class="card" style="margin-top:10px"><h2>${L.settings}</h2><div class="row3"><div class="field" style="grid-column:1/-1"><label>${L.syms}</label><input id="pxSyms" value="${CFG.syms.join(',')}" style="direction:ltr"></div><div class="field"><label>${L.tfs}</label><select id="pxTfs"><option value="4H,1D" ${CFG.tfs.length===2?'selected':''}>4H + 1D</option><option value="4H" ${CFG.tfs.join()==='4H'?'selected':''}>4H</option><option value="1D" ${CFG.tfs.join()==='1D'?'selected':''}>1D</option></select></div><div class="field"><label>${L.mode}</label><select id="pxMode"><option value="live" ${CFG.mode==='live'?'selected':''}>${L.modeLive}</option><option value="all" ${CFG.mode==='all'?'selected':''}>${L.modeAll}</option></select></div><div class="field"><label>${L.risk}</label><input type="number" id="pxRisk" value="${CFG.riskPct}" step="0.5" min="0.5" max="10"></div><div class="field"><label>${L.levCap}</label><input type="number" id="pxLev" value="${CFG.levCap}" step="1" min="1" max="50"></div><div class="field"><label>${L.back}</label><input type="number" id="pxBack" value="${CFG.backDays}" step="1" min="0" max="120"></div></div><div class="btns"><button class="primary" id="pxSave">${L.save}</button></div></div>`;
+ $('pxRun').onclick=()=>run(true);$('pxAuto').onchange=e=>{CFG.auto=e.target.checked;saveCfg();schedule();};$('pxReset').onclick=()=>{if(!confirm(L.resetQ))return;S=fresh();save();render();};
+ $('pxExport').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({cfg:CFG,state:S},null,1)],{type:'application/json'}));a.download='paper-exchange.json';a.click();};
+ box.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>manualClose(b.dataset.close));
+ $('pxSave').onclick=()=>{const back0=CFG.backDays;CFG.syms=$('pxSyms').value.toUpperCase().split(/[,\s]+/).filter(Boolean).map(s=>/USDT$/.test(s)?s:s+'USDT');CFG.tfs=$('pxTfs').value.split(',');CFG.mode=$('pxMode').value;CFG.riskPct=+$('pxRisk').value||3;CFG.levCap=+$('pxLev').value||20;CFG.backDays=+$('pxBack').value||0;saveCfg();if(CFG.backDays!==back0){if(confirm(fa()?'تغییر نقطه‌ی شروع ⇒ حساب از نو با ۱۰۰$ شبیه‌سازی می‌شود. ادامه؟':'Changing the start point re-simulates the account from $100. Continue?')){S=fresh();}}save();run(true);};
+ drawEq();}
+function drawEq(){const cv=$('pxEq');if(!cv)return;const pts=S.eq.length>1?S.eq:[[S.createdAt,S.startBal],[Date.now(),equity()]];const dpr=2;const W=cv.width=cv.clientWidth*dpr,H=cv.height=110*dpr;const g=cv.getContext('2d');let lo=Math.min(...pts.map(p=>p[1]),S.startBal),hi=Math.max(...pts.map(p=>p[1]),S.startBal);const pad=(hi-lo)*0.1||1;lo-=pad;hi+=pad;const t0=pts[0][0],t1=pts[pts.length-1][0]||t0+1;const X=t=>(t-t0)/Math.max(1,t1-t0)*(W-8*dpr)+4*dpr,Y=v=>H-6*dpr-(v-lo)/(hi-lo)*(H-12*dpr);
+ g.strokeStyle='rgba(128,128,128,.4)';g.setLineDash([4,4]);g.beginPath();g.moveTo(0,Y(S.startBal));g.lineTo(W,Y(S.startBal));g.stroke();g.setLineDash([]);const last=pts[pts.length-1][1];g.strokeStyle=last>=S.startBal?'#22c55e':'#ef4444';g.lineWidth=2*dpr;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();g.fillStyle='#8b95a9';g.font=`${10*dpr}px sans-serif`;g.textAlign='right';g.fillText('$'+last.toFixed(2),W-6*dpr,12*dpr);g.textAlign='left';g.fillText('$'+S.startBal,6*dpr,Y(S.startBal)-4*dpr);}
+function schedule(){clearInterval(timer);timer=null;if(CFG.auto)timer=setInterval(()=>{if(navigator.onLine)run(false);},5*60*1000);}
+function open(){render();if(!S.lastRun||Date.now()-S.lastRun>60*1000)run(false);}
+schedule();window.paperX={open,run,state:()=>S,cfg:()=>CFG,pickLev,_test:{ruleCheck,manage,closePart,fresh,setState:s=>{S=s;},setCfg:c=>{Object.assign(CFG,c);}}};
 })();
 
 </script>
