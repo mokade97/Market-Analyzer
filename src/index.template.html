@@ -91,6 +91,7 @@
   #rpChartWrap{height:clamp(380px,58vh,560px)}
   #rpBox.rpfs{position:fixed;inset:0;z-index:60;overflow:hidden;margin:0!important;border-radius:0;background:var(--bg);padding:4px;display:flex;flex-direction:column}#rpBox.rpfs #rpChartRow{flex:1;min-height:0}#rpBox.rpfs #rpChartWrap{height:auto;min-height:0}#rpBox.rpfs>*:not(#rpTb):not(#rpChartRow):not(#rpPlayRow):not(#rpIndDlg){display:none!important}#rpBox.rpfs #rpPlayRow{margin:4px 0 0;justify-content:center;flex-wrap:nowrap}#rpBox.rpfs #rpPlayRow button{padding:8px 10px;font-size:13px;flex:0 1 auto}#rpBox.rpfs #rpTb>div{margin:2px 0}body.rpfsb{overflow:hidden}
   #rpBox.rpfs #rpTb button,#rpBox.rpfs #rpTb select{padding:3px 6px!important;font-size:10px!important}
+  #rpBox.rpfs #rpTb>div{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;margin:2px 0!important}#rpBox.rpfs #rpTb>div::-webkit-scrollbar{display:none}#rpBox.rpfs #rpTb>div>*{flex-shrink:0}
   #rpTb .ghost.on{background:var(--acc);color:#fff}
   body.tvfs .tabs,body.tvfs header,body.tvfs #tvCtl{display:none!important}
   body.tvfs #tvWrap{position:fixed;inset:0;height:100vh!important;border-radius:0;z-index:50}
@@ -105,8 +106,13 @@
   .klinecharts-pro .klinecharts-pro-period-bar .item{flex-shrink:0}
   .klinecharts-pro .klinecharts-pro-drawing-bar{overflow:visible}
   .klinecharts-pro .klinecharts-pro-modal{z-index:120}
+  .klinecharts-pro div[style*="ns-resize"]{height:22px!important;top:-10px!important;z-index:5}
+  .klinecharts-pro .klinecharts-pro-modal .inner{max-height:94%;max-width:96vw;display:flex;flex-direction:column;overflow:hidden}
+  .klinecharts-pro .klinecharts-pro-modal .inner .content-container{overflow:auto;flex:1;min-height:0;padding:0 14px}
+  .klinecharts-pro .klinecharts-pro-modal .inner .button-container{flex-shrink:0;padding:8px 14px}
+  @media (max-height:560px){.klinecharts-pro .klinecharts-pro-drawing-bar{display:none}}
   #rpBox.rpfs #rpChartWrap{height:auto!important;min-height:0!important}
-  #btTv.tvfs{background:var(--bg)}
+  #btTvWrap.tvfs{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column}#btTvWrap.tvfs #btTv{flex:1;height:auto!important;border-radius:0}
 </style>
 </head>
 <body>
