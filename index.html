@@ -112,7 +112,7 @@
 </head>
 <body>
 <header>
-  <h1><span data-i="title">تحلیل‌گر بازار</span> <small id="appVer" style="color:var(--muted);font-size:11px;font-weight:400" title="app build">v122</small></h1>
+  <h1><span data-i="title">تحلیل‌گر بازار</span> <small id="appVer" style="color:var(--muted);font-size:11px;font-weight:400" title="app build">v123</small></h1>
   <div style="display:flex;gap:6px;align-items:center"><button class="langbtn" id="jrnBtn" title="Journal" style="font-size:17px;padding:4px 10px">📓</button><button class="langbtn" id="pxBtn" title="Paper exchange" style="font-size:17px;padding:4px 10px">🏦</button><button class="langbtn" id="setBtn" title="Settings" style="font-size:17px;padding:4px 10px">⚙️</button><button class="langbtn" id="langBtn">EN</button></div>
 </header>
 <div class="tabs">
@@ -1261,7 +1261,7 @@ function render(){if(!sheet||!sheet.classList.contains('on'))return;const t=T();
   if(!h)h=`<div class="hint" style="padding:10px">${t.none}</div>`;$('spList').innerHTML=h;$('spList').querySelectorAll('.sp-it').forEach(b=>b.onclick=()=>pick(b.dataset.s));}
 function pick(s){const inp=target;pushRecent(s);close();if(!inp)return;inp.value=s;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));}
 function attach(inp){if(!inp||inp.tagName!=='INPUT'||inp.dataset.sp)return;inp.dataset.sp='1';inp.removeAttribute('list');inp.setAttribute('autocomplete','off');inp.setAttribute('autocapitalize','characters');const w=document.createElement('div');w.className='sp-wrap';inp.parentNode.insertBefore(w,inp);w.appendChild(inp);const b=document.createElement('button');b.type='button';b.className='sp-btn';b.innerHTML='▾';b.title='symbols';b.onclick=e=>{e.preventDefault();open(inp);};w.appendChild(b);}
-const IDS=['tvSym','btSym','rpSym','cSym','customSym','sym'];
+const IDS=['tvSym','btSym','rpSym','customSym','sym'];
 function scan(){IDS.forEach(id=>attach($(id)));document.querySelectorAll('input[data-sym]').forEach(attach);}
 const css=document.createElement('style');css.textContent=`.sp-wrap{display:flex;align-items:stretch;gap:0;width:100%;min-width:0}.sp-wrap>input{flex:1;min-width:0;border-radius:10px 0 0 10px!important}.sp-wrap>input[type=text]{width:auto}.sp-btn{flex:0 0 40px;border:1px solid var(--border);border-left:0;background:var(--card2);color:var(--txt);border-radius:0 10px 10px 0;font-size:16px;cursor:pointer;font-family:inherit}[dir=rtl] .sp-wrap>input{border-radius:0 10px 10px 0!important}[dir=rtl] .sp-btn{border-left:1px solid var(--border);border-right:0;border-radius:10px 0 0 10px}
 #spSheet{position:fixed;inset:0;z-index:9000;display:none}#spSheet.on{display:block}#spSheet .sp-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}#spSheet .sp-box{position:absolute;left:0;right:0;bottom:0;max-height:82vh;background:var(--card);border-radius:16px 16px 0 0;display:flex;flex-direction:column;box-shadow:0 -6px 30px rgba(0,0,0,.35)}
