@@ -43,3 +43,30 @@ Parked items from the previous list are now all applied; the list is empty.
 - Regression (real OKX data, v115c-before-audit vs v116c): engine lens.backtest identical on 12 sym/TF combos (no behavioural change intended there); Backtest Studio ICHI: unchanged when T1/trail off (SOL 4H identical), with T1/trail trades −1..−2 and results shift (BTC 4H −6.4R→−2.8R, XAU 4H +3.8R→+10.5R, ETH 1H −8.2→−7.6R) because same-bar BE exits no longer happen; Paper 120d/22 syms: 65→63 closed, win 48%→43%, +13.0R→+4.8R, maxDD 9.7%→8.4%, no negative margin, 0 errors — more conservative as expected after removing the entry-bar look-ahead and lab gating.
 - v116d (bot): CORRECTION — the v116 bot patches had been applied to the stale template futures-calculator/bot/bot.js (pre-v100, no shadow/desk/judge) and that file was shipped in the update zips. The real bot is lens-bot/ (v111b). Re-checked against the audits: v107 side-rebuild (= Claude #1), v110 number lock (≈ #3), v111b setThr (#14) already present; pool-based scan makes #15 moot; applied the one missing fix (#2: SWEEP nominates only when bars_ago === 0). engine.js identical in both. Bot now ships separately as lens-bot-v116.zip.
 - v116d (external audit #5, "manual-verified" report, 26 items): fixed #3 stored XSS (journal symbol/why/note/lesson, alerts sym/label escH; bot panel deep-escapes remote JSON), #12 display sanitized before prompt, #14 SW install allSettled (hardening; icons DO exist), #15 saveLog try/catch, #16 flow.js AbortSignal.timeout guard, #17 clipboard .catch, #21 aiData re-render on lang switch (was never reached — TDZ/let), #22 fa tdKeyL + setLang keeps text when key missing, #23 chat history capped 40, #24 overscroll-behavior-y. FALSE: #1 Bitget reverse (v2 API returns oldest-first — checked live), #11 trail (ratchet already applied next bar since v116). Already fixed: #2 (v116 #6), #4 okx 300, #5/#6 race guards, #7 TTL, #9 paper gap, #13 key export confirm. Design/deferred: #8 slippage per layer (lens is deliberately conservative live), #10 TP slippage, #18 Sharpe years, #19 (see Grok #3), #20, #25, #26.
+
+## DONE v117 (user-approved, ship with the first v117 change)
+- Screener "manual scan" (inspired by alphakademi.com): condition builder — indicator (EMA/SMA/RSI/ATR/BB width/ADX/relVol/Supertrend/Ichimoku/price/change%) · bars-ago shift · operator (< > crosses) · number OR another indicator×k · AND/OR; named presets (BB squeeze, 52-period breakout, relVol 2× + above EMA9 "smart money", SMA50>SMA200 & ADX>25, Supertrend flip, momentum top movers); save filters (localStorage); result table with the condition columns + existing "📈 فراخوانی چارت" button; CSV export. Runs on the screener's cached klines via lens.series/labSeries (no new data). Both languages.
+
+
+## v117 (done)
+- KLineCharts perf phase 1: TF switch in-place (no chart recreate), click-queue while loading, cull off-screen overlays, event-driven sepShim, DPR cap 2, memoised calcTextWidth.
+- Screener manual scan (src/mscan.js): 33 indicators, n-bars-ago, 6 operators incl. cross, AND/OR, 9 presets, saved filters, CSV, chart link.
+- Phase 2 candidate: LWC migration (overlay-count scaling in KL remains: 160 fib overlays → 6fps).
+
+## v118 (done) — chart engine switched to Lightweight Charts
+- src/lwchart.js: LWChart.mount() with the same surface as TVChart (push/setMarks/setLines/setExt/fit/setPeriod/integrateBar/destroy).
+  Own drawing layer (single canvas, viewport-culled): 24 tools (lines, rays, channels, fib retr/seg/ext, rect/ellipse/triangle, brush/highlighter,
+  long/short position, measure, text/note, price line), select/move/handles, props panel (color/width/dash/text/hide/delete), magnet, undo, clear,
+  Esc/Delete keys, long-press cancel. Drawings share storage key fc_tv_draw_<sym> with the KL engine.
+  Indicators: EMA, EMA9/21, SMA, BOLL, VWAP, Supertrend, Donchian, Ichimoku (lines), VOL, RSI, MACD, ATR, ADX, OBV (sub-panes = synced charts).
+- replay.js: engine selector fc_engine (default lwc; 'kl' fallback via ƒx menu toggle). Lens line in stats() debounced (was ~100ms per step on phone).
+- Bench (CPU 4×, phone viewport, pan/zoom/crosshair fps): 0 drawings 48/46/56 · 40 → 50/45/54 · 160 → 41/38/37 (KL: 47/49/53 · 31/24/21 · 13/13/15).
+  Step cost 8–13ms (KL 27–45ms).
+- TODO next: Ichimoku cloud fill, props for sys lines, pinch-zoom check on real device, backtest page still uses btchart.js (LWC read-only) — could reuse LWChart.
+
+## v120 (done)
+- KLineCharts removed entirely (klinecharts.js/klpro.js/klpro.css/tvchart.js/tvtools.js → attic/, not bundled). Bundle 1.33 MB → 0.86 MB.
+- LWChart: global 🔒 lock + per-drawing lock; selection only by TAP (pan/pinch starting on a drawing never grabs it).
+- TV-style tools: fib retracement 11 levels w/ coloured bands, regression trend (Pearson R, two-colour fill), parallel/price channel (mid + quartiles).
+- Ichimoku cloud filled (overlay layer). 15 new indicators: KC, ENV, HMA, WMA, SAR, STOCH, STOCHRSI, CCI, WPR, MFI, CMF, AROON, ROC, SQZ (TTM), + existing.
+- HD toggle gone (was the DPR cap of the KL engine).
