@@ -316,7 +316,7 @@ function drawChart(k,sym,tf){const W=1600,H=900,padR=110,padB=40,volH=140;const 
   return c;}
 $('sendChart').onclick=()=>{if(!cur)return;try{const r=rows.find(x=>x.symbol===cur);let q=String((r&&r.display)||cur).toUpperCase().replace(/[-_:.]?(PERP|SWAP|\.P)$/,'').replace(/-USDT.*$/,'USDT').replace(/[^A-Z0-9]/g,'');if(!/USDT$/.test(q))q+='USDT';
   const base=q.replace(/USDT$/,'');$('tvSym').value=base;const iv={'5m':'5','15m':'15','1H':'60','4H':'240','1D':'D'}[$('dTf').value];if(iv)$('tvInt').value=iv;
-  window.openPage('chart');if(typeof loadTv==='function')loadTv();if(window.updToolsSym)updToolsSym();toast((t().chartOpened||'')+' '+q);}catch(e){toast(e.message);}};
+  window.openPage('tv');if(typeof loadTv==='function')loadTv();if(window.updToolsSym)updToolsSym();toast((t().chartOpened||'')+' '+q);}catch(e){toast(e.message);}};
 
 window.klinesAny=klinesAny;window.metaAny=metaAny;window.drawChart=drawChart;window.EX=EX;window.symFor=symFor;
 /* ---------- OpenAI settings ---------- */
