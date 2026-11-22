@@ -31,7 +31,7 @@ function stats(){if(!K.length||!K[cur])return;const n=trades.length,w=trades.fil
 function draw(){if(!K.length||!window.TVChart)return;if(TVC){try{TVC.destroy();}catch(e){}TVC=null;}
  TVC=window.__rpH=TVChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
   onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;setTimeout(()=>load(keep),0);return null;},
-  onLoaded:H=>{markers();priceLines();H.fit(NVIS);const tl=$('rpTools');if(tl){tl.innerHTML='';tl.appendChild(H.toolBar());}}});
+  onLoaded:H=>{markers();priceLines();H.fit(NVIS);integrateChartBar(H);}});
  $('rpLegend').innerHTML='';}
 function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}}
 function fitView(n){TVC&&TVC.fit(n||NVIS);}
@@ -53,23 +53,27 @@ function togglePlan(){if(!K.length){toast(t().rpLoadFirst);return;}if(plan){plan
 function flipPlan(){if(!plan)return;const e=K[cur].c;plan={sl:e+(e-plan.sl),tp:e-(plan.tp-e)};priceLines();planInfo();}
 function planToCalc(){if(!plan)return;const e=K[cur].c;$('cSym').value=sym;$('entry').value=e;$('sl').value=+plan.sl.toFixed(8);$('tp').value=+plan.tp.toFixed(8);if($('tp2'))$('tp2').value='';if(typeof render==='function')render();document.querySelector('[data-tab="calc"]').click();toast(t().sentToCalc);}
 function toolbar(){const tb=$('rpTb');if(!tb)return;const T=t();const strats=window.lens&&lens.STRATS?Object.keys(lens.STRATS):[];
-  tb.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0;direction:ltr"><span style="display:inline-flex;gap:2px">${['15m','1H','4H','1D'].map(v=>`<button class="ghost ${tf===v?'on':''}" data-tf="${v}" style="padding:4px 8px;font-size:11px">${v}</button>`).join('')}</span><select id="rpN" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px">${[60,120,240,400].map(n=>`<option value="${n}" ${n===NVIS?'selected':''}>${n} ${T.rpBarsN}</option>`).join('')}</select><button class="ghost" id="rpFit" style="padding:4px 8px;font-size:11px">⤢</button>${TVChart.EXTRA.map(([n,l])=>`<button class="ghost" data-extra="${n}" style="padding:4px 8px;font-size:11px">${l}</button>`).join('')}<button class="ghost ${swOn?'on':''}" id="rpSw" style="padding:4px 8px;font-size:11px">Swings</button><button class="ghost ${sigOn?'on':''}" id="rpSig" style="padding:4px 8px;font-size:11px">📣</button><span id="rpTools"></span><span style="flex:1"></span><button class="ghost" id="rpFs" style="padding:4px 8px;font-size:11px">⛶ ${T.rpLand}</button></div>
-  <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0"><span class="hint" style="margin:0;font-size:11px">${T.rpStratL}:</span><select id="rpStrat" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px"><option value="none">—</option>${strats.map(id=>`<option value="${id}" ${id===stratId?'selected':''}>${id} · ${lens.STRATS[id].name}</option>`).join('')}</select><label style="font-size:11px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="rpAuto" ${auto?'checked':''}>🤖 ${T.rpAutoL}</label></div>`;
-  tb.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>{if($('btTf')&&$('btTf').value===b.dataset.tf)return;if($('btTf'))$('btTf').value=b.dataset.tf;const keep=K[cur]?K[cur].t:null;load(keep);});
-  tb.querySelectorAll('[data-extra]').forEach(b=>b.onclick=()=>{if(TVC){TVC.toggleExtra(b.dataset.extra);refreshExtras();}});
-  $('rpN').onchange=()=>{NVIS=+$('rpN').value;localStorage.setItem('fc_rp_n',NVIS);fitView();};$('rpFit').onclick=()=>fitView();
-  $('rpSw').onclick=()=>{swOn=!swOn;localStorage.setItem('fc_rp_sw',swOn?'1':'0');$('rpSw').classList.toggle('on',swOn);markers();};$('rpSig').onclick=()=>{sigOn=!sigOn;localStorage.setItem('fc_rp_sig',sigOn?'1':'0');$('rpSig').classList.toggle('on',sigOn);markers();};
+  /* v114c: timeframe / indicators / fit / drawing tools / fullscreen now live INSIDE the chart's own bars (TradingView-style, see TVC.integrateBar) */
+  tb.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0"><span class="hint" style="margin:0;font-size:11px">${T.rpStratL}:</span><select id="rpStrat" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px"><option value="none">—</option>${strats.map(id=>`<option value="${id}" ${id===stratId?'selected':''}>${id} · ${lens.STRATS[id].name}</option>`).join('')}</select><label style="font-size:11px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="rpAuto" ${auto?'checked':''}>🤖 ${T.rpAutoL}</label><span style="flex:1"></span><button class="ghost" id="rpFs" style="padding:4px 8px;font-size:11px">⛶ ${T.rpLand}</button></div>`;
   $('rpStrat').onchange=()=>{stratId=$('rpStrat').value;localStorage.setItem('fc_rp_strat',stratId);markers();stats();};
   $('rpAuto').onchange=()=>{auto=$('rpAuto').checked;localStorage.setItem('fc_rp_auto',auto?'1':'0');if(auto&&stratId==='none'){toast(T.rpPickStrat);}};
   $('rpFs').onclick=()=>fsToggle();}
-function refreshExtras(){const tb=$('rpTb');if(!tb)return;tb.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('on',!!(TVC&&TVC.extras[b.dataset.extra])));}
+function integrateChartBar(H){try{H.integrateBar({nOptions:[60,120,240,400],getN:()=>NVIS,setN:n=>{NVIS=n;localStorage.setItem('fc_rp_n',NVIS);fitView();},onFullscreen:()=>fsToggle(),
+  toggles:[{label:'Swings',get:()=>swOn,set:v=>{swOn=v;localStorage.setItem('fc_rp_sw',swOn?'1':'0');markers();}},{label:'📣 '+((localStorage.getItem('fc_lang')||'fa')==='fa'?'سیگنال‌های استراتژی':'strategy signals'),get:()=>sigOn,set:v=>{sigOn=v;localStorage.setItem('fc_rp_sig',sigOn?'1':'0');markers();}}]});}catch(e){console.warn(e);}}
+function refreshExtras(){}
 
 async function fsToggle(force){const b=$('rpBox');const on=force!=null?force:!b.classList.contains('rpfs');b.classList.toggle('rpfs',on);document.body.classList.toggle('rpfsb',on);['rpLongF','rpShortF'].forEach(id=>{if($(id))$(id).style.display=on?'':'none';});$('rpFs').textContent=on?'✕':'⛶ '+t().rpLand;
   if(on){history.pushState({rpfs:1},'');try{await document.documentElement.requestFullscreen?.({navigationUI:'hide'});}catch(e){}try{await screen.orientation?.lock?.('landscape');}catch(e){if(window.innerWidth<window.innerHeight)toast('🔄 '+(t().rpRotate||'Rotate your phone for a wider chart'));}}
   else{try{screen.orientation?.unlock?.();}catch(e){}if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});}
-  setTimeout(()=>{if(K.length&&TVC){try{TVC.chart.resize();}catch(e){}fitView();}},350);}
+  setTimeout(()=>{if(K.length&&TVC){try{TVC.chart.resize();}catch(e){}fitView();_rfW=($('rpChart')||{}).clientWidth||0;}},350);setTimeout(()=>refitOnWidth(true),1200);}
 window.addEventListener('popstate',()=>{if($('rpBox')&&$('rpBox').classList.contains('rpfs'))fsToggle(false);});
-window.addEventListener('orientationchange',()=>setTimeout(()=>{if(TVC)try{TVC.chart.resize();}catch(e){}},300));
+/* v114b: the fullscreen fit used to run 350ms after the button press, i.e. BEFORE the phone actually rotated — bar spacing was computed from the
+   portrait width (≈2.7px/bar), so in landscape all candles were squeezed into a strip and the rest of the chart was blank (video 2026-11-22).
+   Now: refit whenever the chart element's width really changes (ResizeObserver), with a short debounce; orientationchange just triggers the same path. */
+let _rfT=null,_rfW=0;function refitOnWidth(force){const el=$('rpChart');if(!el||!TVC||!K.length)return;const w=el.clientWidth;if(!force&&Math.abs(w-_rfW)<24)return;_rfW=w;clearTimeout(_rfT);_rfT=setTimeout(()=>{try{TVC.chart.resize();}catch(e){}fitView();},120);}
+if(window.ResizeObserver){let ro=null;const arm=()=>{const el=$('rpChart');if(!el||ro)return;ro=new ResizeObserver(()=>refitOnWidth(false));ro.observe(el);};arm();document.addEventListener('DOMContentLoaded',arm);setTimeout(arm,2000);}
+window.addEventListener('orientationchange',()=>{setTimeout(()=>refitOnWidth(true),300);setTimeout(()=>refitOnWidth(true),900);});
+window.addEventListener('resize',()=>refitOnWidth(false));
 async function load(keepTime){const box=$('rpBox');box.style.display='';const q=(($('btSym')&&$('btSym').value)||'BTCUSDT').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(.*?)(USDT)?$/,'$1USDT');const tff=($('btTf')&&$('btTf').value)||'4H';$('rpMsg').textContent=t().loading;
   try{const [k,h]=await Promise.all([klinesAny(q,tff,1000),lens.HTF[tff]!==tff?klinesAny(q,lens.HTF[tff],300):null]);if(!k||k.length<100)throw new Error(t().lensNoData);K=k;HK=h||k;sym=q;tf=tff;ATR=atr(K);
     try{LS=lens.series(K,h||null);LX=lens.labSeries(K,LS);}catch(e){LS=null;LX=null;}

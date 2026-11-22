@@ -100,7 +100,7 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.chart.setStyles({candle:{tooltip:{showRule:'follow_cross',showType:'rect'},priceMark:{last:{show:true}}},indicator:{tooltip:{showRule:'follow_cross',showType:'rect'}},crosshair:{horizontal:{text:{paddingLeft:4,paddingRight:4}}}});
  H.chart.setStyles({candle:{tooltip:{showRule:'follow_cross'}},indicator:{tooltip:{showRule:'follow_cross'}}});
  H.chart.setStyles({separator:{size:3,color:light?'#d6dae3':'#3a4152',fill:true,activeBackgroundColor:'rgba(41,98,255,.25)'}});
- H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);
+ H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);try{H.chart.setLeftMinVisibleBarCount(12);H.chart.setRightMinVisibleBarCount(12);}catch(e){} /* v114b: never let a drag leave the chart looking empty */
  // --- separator touch-drag shim: the engine hit-tests separators by a 7px coordinate band (unusable with a finger). We enlarge the DOM band (CSS) and drive the engine's own drag methods from touch events. ---
  const sepShim=()=>{try{const m=H.chart.getAllSeparatorPanes&&H.chart.getAllSeparatorPanes();if(!m)return;m.forEach(sp=>{const w=sp.getWidget();const c=w.getContainer();if(!c||c.dataset.sepShim)return;c.dataset.sepShim='1';c.style.touchAction='none';let on=false;
   c.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;on=true;e.preventDefault();e.stopPropagation();w._mouseDownEvent({pageY:e.touches[0].pageY});},{passive:false});
@@ -121,8 +121,30 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.toggleExtra=name=>{const on=!H.extras[name];const def=EXTRA.find(e=>e[0]===name);if(!def)return on;if(on){const id=H.chart.createIndicator(name,def[2],def[2]?{id:'candle_pane'}:{height:90});H.extras[name]=id||true;}else{try{const pane=def[2]?'candle_pane':H.extras[name];H.chart.removeIndicator(pane,name);}catch(e){}delete H.extras[name];}saveExtras(H);return on;};
  H.scrollToTime=t=>{try{const i=H.bars.findIndex(b=>b.t>=t);if(i>=0)H.chart.scrollToDataIndex(i);}catch(e){}};
  H.scrollToEnd=()=>{try{H.chart.scrollToRealTime();}catch(e){}};
- H.fit=n=>{try{const W=el.clientWidth||360;H.chart.setBarSpace(Math.max(2,Math.min(20,(W-70)/(n||120))));H.chart.scrollToRealTime();}catch(e){}};
+ H.fit=n=>{try{const W=el.clientWidth||360;if(W<160)return;H.chart.setBarSpace(Math.max(2,Math.min(20,(W-70)/(n||120))));H.chart.scrollToRealTime();}catch(e){}};
  H.setTheme=l=>{try{H.pro.setTheme(l?'light':'dark');}catch(e){}};
+ /* v114c: TradingView-style integration — put our extras into the Pro chart's own bars instead of a second toolbar above the chart.
+    opts: {toggles:[{label,get,set}], nOptions:[60,...], getN, setN, onFullscreen, fsLabel} */
+ H.integrateBar=opts=>{opts=opts||{};const bar=el.querySelector('.klinecharts-pro-period-bar');if(!bar||bar.dataset.tvInt)return;bar.dataset.tvInt='1';const isFa=(localStorage.getItem('fc_lang')||'fa')==='fa';
+  const mkItem=(txt,title)=>{const d=document.createElement('div');d.className='item tools tv-int';d.title=title||'';d.style.cssText='display:flex;align-items:center;gap:4px;padding:0 8px;height:100%;font-size:12px;white-space:nowrap';d.innerHTML='<span>'+txt+'</span>';return d;};
+  let pop=null;const closePop=()=>{if(pop){pop.remove();pop=null;}};document.addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target)&&!e.target.closest('.tv-int'))closePop();},true);
+  const openPop=(anchor,build)=>{if(pop&&pop._for===anchor){closePop();return;}closePop();pop=document.createElement('div');pop._for=anchor;pop.className='tv-int-pop';pop.style.cssText='position:absolute;z-index:130;top:40px;background:var(--klinecharts-pro-popover-background-color,#1f2432);color:var(--klinecharts-pro-text-color,#ddd);border:1px solid var(--klinecharts-pro-border-color,#333);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px;min-width:160px;max-height:60vh;overflow:auto;font-size:12px;direction:ltr';
+   const r=anchor.getBoundingClientRect(),er=el.getBoundingClientRect();pop.style.left=Math.max(4,Math.min(r.left-er.left,er.width-200))+'px';build(pop);el.appendChild(pop);};
+  const row=(label,on,fn)=>{const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer';d.innerHTML='<span style="width:14px;text-align:center;color:var(--klinecharts-pro-primary-color,#2962ff)">'+(on?'✓':'')+'</span><span>'+label+'</span>';d.onclick=()=>{const v=fn();d.firstChild.textContent=v?'✓':'';};return d;};
+  const after=[...bar.querySelectorAll('.item.tools')].find(x=>/اندیکاتور|Indicator/i.test(x.textContent))||bar.lastElementChild;
+  // ƒx+ : our extra indicators + caller toggles
+  const fx=mkItem('ƒx<sup>+</sup>',isFa?'اندیکاتورهای بیشتر':'more indicators');fx.onclick=()=>openPop(fx,pp=>{EXTRA.forEach(([n,label])=>pp.appendChild(row(label,!!H.extras[n],()=>H.toggleExtra(n))));(opts.toggles||[]).forEach(t=>pp.appendChild(row(t.label,!!t.get(),()=>{t.set(!t.get());return !!t.get();})));});
+  after.insertAdjacentElement('beforebegin',fx); /* before the native indicator button so it is visible without scrolling the bar in portrait */
+  // ⤢ : visible bars / fit
+  if(opts.setN){const fit=mkItem('⤢ '+(opts.getN?opts.getN():''),isFa?'تعداد کندل قابل‌مشاهده':'visible candles');fit.onclick=()=>openPop(fit,pp=>{(opts.nOptions||[60,120,240,400]).forEach(n=>pp.appendChild(row(n+(isFa?' کندل':' bars'),opts.getN&&opts.getN()===n,()=>{opts.setN(n);fit.firstChild.textContent='⤢ '+n;closePop();return true;})));});fx.insertAdjacentElement('afterend',fit);}
+  // fullscreen: route the Pro button to the app's fullscreen (orientation lock + layout)
+  if(opts.onFullscreen){const fsIt=[...bar.querySelectorAll('.item.tools')].find(x=>/تمام‌صفحه|Full/i.test(x.textContent));if(fsIt){fsIt.addEventListener('click',ev=>{ev.stopImmediatePropagation();ev.preventDefault();opts.onFullscreen();},true);}}
+  // drawing bar: ✋ cancel + ↶ undo, styled like the Pro items
+  const db=el.querySelector('.klinecharts-pro-drawing-bar');if(db&&!db.dataset.tvInt){db.dataset.tvInt='1';const mk=(txt,title,fn)=>{const d=document.createElement('div');d.className='item';d.title=title;d.innerHTML='<span class="icon-overlay" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px">'+txt+'</span>';d.onclick=fn;return d;};
+   const sp=document.createElement('span');sp.className='split-line';db.appendChild(sp);db.appendChild(mk('✋',isFa?'لغو ترسیم / آزادکردن چارت':'cancel drawing / free the chart',()=>cancelDrawing(H)));db.appendChild(mk('↶',isFa?'حذف آخرین ترسیم':'undo last drawing',()=>{const all=allOverlays(H);const last=all[all.length-1];if(last){try{H.chart.removeOverlay({id:last.id});}catch(e){}saveDrawings(H,true);}}));}
+  // re-apply after Pro re-renders its bar (period change rebuilds it)
+  if(!H._intObs){H._intObs=new MutationObserver(()=>{const b2=el.querySelector('.klinecharts-pro-period-bar');if(b2&&!b2.dataset.tvInt){setTimeout(()=>H.integrateBar(opts),0);}});H._intObs.observe(el,{childList:true,subtree:true});}
+ };
  H.saveDrawings=()=>saveDrawings(H,true);
  H.toolBar=()=>toolBar(H);
  H.screenshot=()=>screenshot(H);
