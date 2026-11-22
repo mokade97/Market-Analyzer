@@ -9,7 +9,7 @@ let log=(()=>{try{const a=JSON.parse(LS('fc_aw_log')||'[]');return Array.isArray
 let timer=null,running=false;
 function symbols(){const c=cfg();const manual=c.syms.split(/[\s,]+/).filter(Boolean).map(s=>{s=s.toUpperCase().replace(/[^A-Z0-9]/g,'');return /USDT$/.test(s)?s:s+'USDT';});
   const w=JSON.parse(LS('fc_watch')||'[]');return [...new Set([...manual,...w])].slice(0,20);}
-function saveLog(){log=log.slice(0,40);localStorage.setItem('fc_aw_log',JSON.stringify(log));localStorage.setItem('fc_aw_seen',JSON.stringify(seen));}
+function saveLog(){log=log.slice(0,40);try{localStorage.setItem('fc_aw_log',JSON.stringify(log));localStorage.setItem('fc_aw_seen',JSON.stringify(seen));}catch(e){}}
 function notify(title,body){if(!('Notification' in window))return;if(Notification.permission==='granted'){try{navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:'./icon-192.png',tag:'aw-'+title})).catch(()=>{try{new Notification(title,{body});}catch(e){}});}catch(e){}}}
 async function scanOnce(manual){if(running)return;running=true;const c=cfg();const syms=symbols();const st=$('awStatus');const started=Date.now();let hits=0,ok=0;
   if(!syms.length){st.textContent=t().awNoSyms;running=false;return;}

@@ -1,7 +1,7 @@
 /* ---------------- Market Flow panel: real derivatives data (Bitget tickers + OKX rubik stats), transparent sources ---------------- */
 (function(){
 const $=id=>document.getElementById(id);const t=()=>T[lang];
-const J=async(u,ms=8000)=>{const r=await fetch(u,{signal:AbortSignal.timeout(ms)});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();};
+const J=async(u,ms=8000)=>{const r=await fetch(u,{signal:(AbortSignal.timeout?AbortSignal.timeout(ms):undefined)});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();};
 const STABLE=/^(USDC|USDE|FDUSD|DAI|TUSD|USDP|BUSD|PYUSD|USD1|USDD)USDT$/;
 let cache=null,cacheTs=0,busy=false;
 const fm=(n,d=1)=>{if(n==null||!isFinite(n))return '—';const a=Math.abs(n);const s=a>=1e9?(n/1e9).toFixed(d)+'B':a>=1e6?(n/1e6).toFixed(d)+'M':a>=1e3?(n/1e3).toFixed(d)+'K':n.toFixed(d);return s;};
@@ -53,7 +53,7 @@ window.marketFlow={fetchFlow,summary:()=>cache?summary(cache):null};
 const $=id=>document.getElementById(id);const t=()=>T[lang];let cache=null,ts=0;
 const fm=n=>{if(n==null||!isFinite(n))return '—';const a=Math.abs(n);return a>=1e9?(n/1e9).toFixed(2)+'B':a>=1e6?(n/1e6).toFixed(1)+'M':a>=1e3?(n/1e3).toFixed(0)+'K':n.toFixed(2);};
 const toN=s=>typeof s==='number'?s:parseFloat(String(s||'').replace(/[$,]/g,''));
-async function load(force){if(!force&&cache&&Date.now()-ts<5*60*1000)return cache;const r=await fetch('https://api.coingecko.com/api/v3/search/trending',{signal:AbortSignal.timeout(9000)});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();
+async function load(force){if(!force&&cache&&Date.now()-ts<5*60*1000)return cache;const r=await fetch('https://api.coingecko.com/api/v3/search/trending',{signal:(AbortSignal.timeout?AbortSignal.timeout(9000):undefined)});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();
   cache={asOf:Date.now(),coins:(d.coins||[]).map(x=>x.item).map(c=>({name:c.name,sym:(c.symbol||'').toUpperCase(),rank:c.market_cap_rank,px:c.data?.price,chg:c.data?.price_change_percentage_24h?.usd,mcap:toN(c.data?.market_cap),vol:toN(c.data?.total_volume),thumb:c.thumb})),
     cats:(d.categories||[]).slice(0,6).map(c=>({name:c.name,chg:c.data?.market_cap_change_percentage_24h?.usd,n:c.coins_count}))};ts=Date.now();
   window.trendingSummary={as_of:new Date(ts).toISOString(),source:'CoinGecko /search/trending (most searched in last 24h = attention, not a signal)',coins:cache.coins.slice(0,10).map(c=>({sym:c.sym,rank:c.rank,chg24h:c.chg==null?null:+c.chg.toFixed(1),mcap:Math.round(c.mcap||0)})),categories:cache.cats.map(c=>({name:c.name,chg24h:c.chg==null?null:+c.chg.toFixed(1)}))};return cache;}
