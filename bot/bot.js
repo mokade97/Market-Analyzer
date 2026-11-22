@@ -22,6 +22,7 @@ const CFG = Object.assign({
   exchanges: ['okx', 'bitget', 'gate'], keepAlerts: 60, keepClosed: 400
 }, readJSON(path.join(ROOT, 'config.json'), {}));
 const STATE_FILE = path.join(ROOT, 'state.json');
+try { lens.setThr && lens.setThr(CFG.minScore); } catch (e) { } // audit #14: threshold actually applied to the engine
 const S = Object.assign({ version: 1, positions: [], closed: [], alerts: [], seen: {}, lastRun: null, runs: 0, errors: [] }, readJSON(STATE_FILE, {}));
 
 function readJSON(f, d) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } }
@@ -32,8 +33,8 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 /* ---------------- data: same exchanges & fallbacks as the app ---------------- */
 async function J(u) { const c = new AbortController(); const t = setTimeout(() => c.abort(), 9000); try { const r = await fetch(u, { signal: c.signal, headers: { 'User-Agent': 'lens-bot/1.0' } }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(t); } }
 const EX = {
-  okx: async (s, tf, n) => { const d = await J(`https://www.okx.com/api/v5/market/candles?instId=${s.replace('USDT', '-USDT-SWAP')}&bar=${tf}&limit=${n}`); return d.data.map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })).reverse(); },
-  bitget: async (s, tf, n) => { const d = await J(`https://api.bitget.com/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${tf}&limit=${n}`); return d.data.map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })); },
+  okx: async (s, tf, n) => { const d = await J(`https://www.okx.com/api/v5/market/candles?instId=${s.replace('USDT', '-USDT-SWAP')}&bar=${tf === '1D' ? '1Dutc' : tf}&limit=${n}`); return d.data.map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })).reverse(); },
+  bitget: async (s, tf, n) => { const d = await J(`https://api.bitget.com/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${tf === '1D' ? '1Dutc' : tf}&limit=${n}`); return d.data.map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })); },
   gate: async (s, tf, n) => { const m = { '1D': '1d', '4H': '4h', '1H': '1h', '15m': '15m' }; const d = await J(`https://api.gateio.ws/api/v4/futures/usdt/candlesticks?contract=${s.replace('USDT', '_USDT')}&interval=${m[tf]}&limit=${n}`); return d.map(x => ({ t: x.t * 1000, o: +x.o, h: +x.h, l: +x.l, c: +x.c, v: +x.v })); }
 };
 let dataSrc = null;
@@ -62,10 +63,10 @@ PROPOSAL: side=${side}, entry=${p.trade.entry}, stop=${p.trade.stop}, t1=${p.tra
 RULE_CHECK: ${JSON.stringify(rc)}
 TIME_MACHINE: ${JSON.stringify(bt ? { all: bt.all, with_htf: bt.with_htf, against_htf: bt.against_htf, range: bt.from + '..' + bt.to } : null)}
 PACKET: ${JSON.stringify(p)}`;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent?key=${key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${CFG.geminiModel}:generateContent`;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json' } }) });
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json' } }) });
       const j = await r.json(); if (!r.ok) { if (r.status === 429 || r.status === 503) { await new Promise(s => setTimeout(s, 4000 * (attempt + 1))); continue; } throw new Error(j.error && j.error.message || ('HTTP ' + r.status)); }
       const txt = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts || []).map(x => x.text || '').join('');
       const m = txt.match(/\{[\s\S]*\}/); const d = JSON.parse(m ? m[0] : txt); d.judge = CFG.geminiModel; return d;
@@ -82,7 +83,7 @@ function manage(pos, k) {
   for (const b of closedBars) {
     pos.bars++; pos.lastBarT = b.t;
     const hs = LG ? b.l <= pos.stop : b.h >= pos.stop, h1 = LG ? b.h >= pos.t1 : b.l <= pos.t1, h2 = LG ? b.h >= pos.t2 : b.l <= pos.t2;
-    if (hs) { out = pos.t1hit ? 'T1_THEN_SL' : 'SL'; rr = pos.t1hit ? 0.25 : -1; break; }
+    if (hs) { const fill = LG ? Math.min(pos.stop, b.o) : Math.max(pos.stop, b.o); const m = (LG ? fill - pos.entry : pos.entry - fill) / R; out = pos.t1hit ? 'T1_THEN_SL' : 'SL'; rr = pos.t1hit ? 0.75 + 0.5 * m : m; break; } // audit #5: gap through the stop fills at the open
     if (h2) { out = 'T2'; rr = (pos.t1hit || h1) ? 2.25 : 3; break; }
     if (h1 && !pos.t1hit) pos.t1hit = true;
     if (pos.bars >= CFG.maxBars) { const m = (LG ? b.c - pos.entry : pos.entry - b.c) / R; rr = pos.t1hit ? 0.75 + m / 2 : m; out = 'TIMEOUT'; break; }
@@ -104,17 +105,18 @@ function by(arr, f) { const m = {}; arr.forEach(x => { const k = f(x) || '—'; 
       const htf = lens.HTF[tf]; const hk = htf !== tf ? await klinesAny(sym, htf, 120) : null;
       // 1) manage open paper positions of this sym/tf
       for (const pos of S.positions.filter(x => x.sym === sym && x.tf === tf)) {
-        const res = manage(pos, k); if (res) { Object.assign(pos, res, { status: 'CLOSED', closedAt: new Date().toISOString() }); S.closed.unshift(pos); S.positions = S.positions.filter(x => x !== pos); log('CLOSE', sym, tf, pos.side, res.out, res.rr + 'R'); }
+        const res = manage(pos, k); if (res) { Object.assign(pos, res, { status: 'CLOSED', closedAt: new Date().toISOString() }); S.cumR = +((S.cumR || 0) + res.rr).toFixed(4); S.cumUSD = +((S.cumUSD || 0) + res.rr * (pos.riskUSD || 0)).toFixed(2); S.closed.unshift(pos); S.positions = S.positions.filter(x => x !== pos); log('CLOSE', sym, tf, pos.side, res.out, res.rr + 'R'); }
       }
       // 2) analyse last CLOSED candle with the full engine
       const p = lens.packet(sym, tf, k, hk, hk ? htf : 'N/A'); if (!p) continue;
       let sweep = null; try { sweep = lens.sweepSignals(k.slice(0, k.length - 1), lens.series(k, null).atr).live; } catch (e) { }
       p.sweep_choch_fvg_live = sweep;
-      const side = p.event === 'LONG_SETUP' ? 'LONG' : p.event === 'SHORT_SETUP' ? 'SHORT' : (sweep && sweep.status === 'ENTRY_TRIGGERED' ? sweep.side : null);
+      const side = p.event === 'LONG_SETUP' ? 'LONG' : p.event === 'SHORT_SETUP' ? 'SHORT' : (sweep && sweep.status === 'ENTRY_TRIGGERED' && sweep.bars_ago === 0 ? sweep.side : null); // audit #2: only the entry bar, not the 3 bars after
       if (!side) continue;
       const score = side === 'LONG' ? p.scores.long : p.scores.short; const barKey = `${sym}|${tf}|${side}|${p.time}`;
       if (S.seen[barKey]) continue; S.seen[barKey] = Date.now();
       if (p.event === 'CANDLE' && score < CFG.minScore - 15) continue; // sweep model alone needs at least a decent score
+      if (p.trade && p.trade.side !== side) { const R0 = 1.5 * (p.volatility && p.volatility.atr || Math.abs(p.trade.entry - p.trade.stop) / 1.5); const sg = side === 'LONG' ? 1 : -1, e0 = p.trade.entry; p.trade = Object.assign({}, p.trade, { side, stop: r6(e0 - sg * R0), target_1: r6(e0 + sg * 1.5 * R0), target_2: r6(e0 + sg * 3 * R0) }); } /* audit #1 */
       const rc = ruleCheck(p, side); let bt = null; try { bt = lens.backtest(k, hk, { tf }); } catch (e) { }
       const alert = { ts: new Date().toISOString(), barTime: p.time, sym, tf, side, score, quad: p.regime_quadrant && p.regime_quadrant.quadrant, regime: p.regime, htf: p.trend.htf_bias, event: p.event, sweep: sweep && sweep.status, entry: p.trade.entry, stop: p.trade.stop, t1: p.trade.target_1, t2: p.trade.target_2, rr: rc.rr, fails: rc.fails, warns: rc.warns, tm: bt && bt.all ? { n: bt.all.n, win: bt.all.win_rate, avg: bt.all.avg_r, pf: bt.all.profit_factor } : null, src: dataSrc };
       if (rc.fails.length) { alert.status = 'REJECTED_RULES'; alert.reasons = rc.fails; S.alerts.unshift(alert); log('REJECT', sym, tf, side, rc.fails.join('; ')); continue; }
@@ -123,7 +125,7 @@ function by(arr, f) { const m = {}; arr.forEach(x => { const k = f(x) || '—'; 
       alert.judge = d.judge; alert.confidence = d.confidence; alert.reasons = d.reasons || []; alert.concerns = d.concerns || []; alert.invalidation = d.invalidation || '';
       const approved = (d.decision === side) && (d.confidence == null || d.confidence >= CFG.minConfidence);
       if (!approved) { alert.status = 'REJECTED_AI'; alert.aiDecision = d.decision; S.alerts.unshift(alert); log('AI-SKIP', sym, tf, side, d.decision, d.confidence); continue; }
-      if (d.entry > 0 && d.stop > 0 && d.target_1 > 0 && ((side === 'LONG' && d.stop < d.entry) || (side === 'SHORT' && d.stop > d.entry))) { alert.entry = d.entry; alert.stop = d.stop; alert.t1 = d.target_1; alert.t2 = d.target_2 > 0 ? d.target_2 : alert.t2; }
+      const _A = p.volatility && p.volatility.atr || 0, _R = Math.abs(d.entry - d.stop); if (d.entry > 0 && d.stop > 0 && d.target_1 > 0 && ((side === 'LONG' && d.stop < d.entry) || (side === 'SHORT' && d.stop > d.entry)) && (!_A || (Math.abs(d.entry - p.trade.entry) <= 0.5 * _A && _R >= 0.5 * _A && _R <= 3 * _A)) && (side === 'LONG' ? d.target_1 > d.entry : d.target_1 < d.entry)) { /* audit #3: sanity-check LLM levels */ alert.entry = d.entry; alert.stop = d.stop; alert.t1 = d.target_1; alert.t2 = d.target_2 > 0 ? d.target_2 : alert.t2; }
       // 4) open paper position (if capacity and not already in this symbol)
       const busy = S.positions.some(x => x.sym === sym); const cap = S.positions.length >= CFG.maxOpen;
       const R = Math.abs(alert.entry - alert.stop); const riskUSD = CFG.account * CFG.riskPct / 100 * rc.sizeMult; const size = R ? riskUSD / R : 0;
@@ -131,15 +133,14 @@ function by(arr, f) { const m = {}; arr.forEach(x => { const k = f(x) || '—'; 
       if (busy || cap) { alert.status = busy ? 'ALERT_ONLY_BUSY' : 'ALERT_ONLY_CAP'; S.alerts.unshift(alert); newAlerts.push(alert); log('ALERT', sym, tf, side, alert.status); continue; }
       const pos = { id: barKey, sym, tf, side, entry: alert.entry, stop: alert.stop, t1: alert.t1, t2: alert.t2, size: alert.size, riskUSD: alert.riskUSD, quad: alert.quad, score, confidence: d.confidence, openedAt: alert.ts, barTime: p.time, lastBarT: Date.parse(p.time), bars: 0, t1hit: false, mtm: 0, status: 'OPEN', reasons: alert.reasons };
       S.positions.push(pos); alert.status = 'OPENED_PAPER'; S.alerts.unshift(alert); newAlerts.push(alert); log('OPEN', sym, tf, side, '@', alert.entry, 'SL', alert.stop, 'T1', alert.t1, 'conf', d.confidence);
-    } catch (e) { S.errors.push(sym + ' ' + tf + ': ' + (e.message || e)); }
-    await new Promise(r => setTimeout(r, 250));
+    } catch (e) { S.errors.push(sym + ' ' + tf + ': ' + (e.message || e)); } finally { await new Promise(r => setTimeout(r, 250)); } // audit #15: throttle also on continue
   }
   // housekeeping
   S.alerts = S.alerts.slice(0, CFG.keepAlerts); S.closed = S.closed.slice(0, CFG.keepClosed);
   const cutoff = Date.now() - 14 * 864e5; Object.keys(S.seen).forEach(k => { if (S.seen[k] < cutoff) delete S.seen[k]; });
   S.lastRun = new Date().toISOString(); S.durationSec = Math.round((Date.now() - started) / 1000); S.dataSrc = dataSrc;
   S.stats = { all: stats(S.closed), byQuad: by(S.closed, x => x.quad), byTf: by(S.closed, x => x.tf), bySide: by(S.closed, x => x.side), bySym: by(S.closed, x => x.sym) };
-  S.equityR = +(S.closed.reduce((s, x) => s + x.rr, 0)).toFixed(2); S.equityUSD = +(S.closed.reduce((s, x) => s + x.rr * (x.riskUSD || 0), 0)).toFixed(2);
+  if (S.cumR == null) { S.cumR = +(S.closed.reduce((s, x) => s + x.rr, 0)).toFixed(4); S.cumUSD = +(S.closed.reduce((s, x) => s + x.rr * (x.riskUSD || 0), 0)).toFixed(2); } S.equityR = +S.cumR.toFixed(2); S.equityUSD = +S.cumUSD.toFixed(2); // audit #13: not truncated by keepClosed
   S.config = { symbols: CFG.symbols, timeframes: CFG.timeframes, minScore: CFG.minScore, account: CFG.account, riskPct: CFG.riskPct, maxOpen: CFG.maxOpen, judge: CFG.useGemini && process.env.GEMINI_API_KEY ? CFG.geminiModel : 'rules-only' };
   fs.writeFileSync(STATE_FILE, JSON.stringify(S, null, 1));
   const pub = { v: 1, lastRun: S.lastRun, durationSec: S.durationSec, dataSrc, config: S.config, equityR: S.equityR, equityUSD: S.equityUSD, stats: S.stats, positions: S.positions, alerts: S.alerts.slice(0, 40), closed: S.closed.slice(0, 60), errors: S.errors.slice(0, 10) };

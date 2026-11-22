@@ -1,0 +1,46 @@
+{
+ "version": 1,
+ "positions": [],
+ "closed": [],
+ "alerts": [],
+ "seen": {},
+ "lastRun": "2026-11-22T15:43:22.741Z",
+ "runs": 2,
+ "errors": [],
+ "durationSec": 11,
+ "dataSrc": "okx",
+ "stats": {
+  "all": null,
+  "byQuad": {},
+  "byTf": {},
+  "bySide": {},
+  "bySym": {}
+ },
+ "equityR": 0,
+ "equityUSD": 0,
+ "config": {
+  "symbols": [
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT",
+   "XRPUSDT",
+   "BNBUSDT",
+   "DOGEUSDT",
+   "ADAUSDT",
+   "LINKUSDT",
+   "AVAXUSDT",
+   "XAUUSDT"
+  ],
+  "timeframes": [
+   "4H",
+   "1H"
+  ],
+  "minScore": 70,
+  "account": 1000,
+  "riskPct": 1,
+  "maxOpen": 6,
+  "judge": "rules-only"
+ },
+ "cumR": 0,
+ "cumUSD": 0
+}
