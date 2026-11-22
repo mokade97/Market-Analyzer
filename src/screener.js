@@ -20,7 +20,7 @@ const EX={
  binance:{
   base:'https://fapi.binance.com',
   async top(n){const d=await J(this.base+'/fapi/v1/ticker/24hr');return d.filter(x=>x.symbol.endsWith('USDT')&&!/_/.test(x.symbol)).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,n).map(x=>({symbol:x.symbol,display:x.symbol,change24:+x.priceChangePercent,vol24:+x.quoteVolume,price:+x.lastPrice}));},
-  async klines(s,tf,limit){const m={'1D':'1d','4H':'4h','1H':'1h','15m':'15m'};const d=await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${limit}`);return d.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
+  async klines(s,tf,limit){const m={'1D':'1d','4H':'4h','1H':'1h','15m':'15m','5m':'5m'};const map=d=>d.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit,1500)}`));/* audit(Kimi) #8: Binance hard cap 1500 → page backwards with endTime */for(let g=0;g<4&&out.length<limit&&out.length;g++){const more=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit-out.length,1500)}&endTime=${out[0].t-1}`));if(!more.length)break;out=more.concat(out);}return out;},
   async meta(s){const p=await J(`${this.base}/fapi/v1/premiumIndex?symbol=${s}`);let oi=null,oiPrev=null;
     try{const o=await J(`${this.base}/fapi/v1/openInterest?symbol=${s}`);oi=+o.openInterest;}catch(e){}
     try{const h=await J(`${this.base}/futures/data/openInterestHist?symbol=${s}&period=1h&limit=2`);if(h.length>1){oiPrev=+h[0].sumOpenInterest;oi=+h[1].sumOpenInterest;}}catch(e){}
@@ -30,32 +30,32 @@ const EX={
   base:'https://api.bybit.com',
   async top(n){const d=await J(this.base+'/v5/market/tickers?category=linear');return d.result.list.filter(x=>x.symbol.endsWith('USDT')).sort((a,b)=>b.turnover24h-a.turnover24h).slice(0,n).map(x=>({symbol:x.symbol,display:x.symbol,change24:+x.price24hPcnt*100,vol24:+x.turnover24h,price:+x.lastPrice,_m:{mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.openInterest}}));},
   async klines(s,tf,limit){const m={'1D':'D','4H':'240','1H':'60','15m':'15'};const d=await J(`${this.base}/v5/market/kline?category=linear&symbol=${s}&interval=${m[tf]}&limit=${limit}`);return d.result.list.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]})).reverse();},
-  async meta(s){const d=await J(`${this.base}/v5/market/tickers?category=linear&symbol=${s}`);const x=d.result.list[0];let oiPrev=null,oi=+x.openInterest;
+  async meta(s){const d=await J(`${this.base}/v5/market/tickers?category=linear&symbol=${s}`);const x=d.result&&d.result.list&&d.result.list[0];if(!x)throw new Error('not listed on Bybit');let oiPrev=null,oi=+x.openInterest;
     try{const h=await J(`${this.base}/v5/market/open-interest?category=linear&symbol=${s}&intervalTime=1h&limit=2`);const l=h.result.list;if(l.length>1){oi=+l[0].openInterest;oiPrev=+l[1].openInterest;}}catch(e){}
     return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi,oiPrev,src:'Bybit'};}
  },
  bitget:{
   base:'https://api.bitget.com',
-  async klines(s,tf,limit){const m={'1D':'1D','4H':'4H','1H':'1H','15m':'15m'};const d=await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${limit}`);return d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
-  async meta(s){const d=await J(`${this.base}/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=${s}`);const x=d.data[0];return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.holdingAmount,oiPrev:null,src:'Bitget'};}
+  async klines(s,tf,limit){const m={'1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};const d=await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${limit}`);return d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
+  async meta(s){const d=await J(`${this.base}/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=${s}`);const x=d.data&&d.data[0];if(!x)throw new Error('not listed on Bitget');return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.holdingAmount,oiPrev:null,src:'Bitget'};}
  },
  gate:{
   base:'https://api.gateio.ws',
   gs:s=>s.replace('USDT','_USDT'),
   async klines(s,tf,limit){const m={'1D':'1d','4H':'4h','1H':'1h','15m':'15m'};const d=await J(`${this.base}/api/v4/futures/usdt/candlesticks?contract=${this.gs(s)}&interval=${m[tf]}&limit=${limit}`);return d.map(x=>({t:x.t*1000,o:+x.o,h:+x.h,l:+x.l,c:+x.c,v:+x.v}));},
-  async meta(s){const c=this.gs(s);const [tk,st]=await Promise.all([J(`${this.base}/api/v4/futures/usdt/tickers?contract=${c}`),J(`${this.base}/api/v4/futures/usdt/contract_stats?contract=${c}&interval=1h&limit=2`).catch(()=>[])]);const x=tk[0];
+  async meta(s){const c=this.gs(s);const [tk,st]=await Promise.all([J(`${this.base}/api/v4/futures/usdt/tickers?contract=${c}`),J(`${this.base}/api/v4/futures/usdt/contract_stats?contract=${c}&interval=1h&limit=2`).catch(()=>[])]);const x=tk&&tk[0];if(!x)throw new Error('not listed on Gate.io');
     let oi=+x.total_size,oiPrev=null;if(st.length>1){const a=st.sort((p,q)=>q.time-p.time);oi=a[0].open_interest;oiPrev=a[1].open_interest;}
     return {mark:+x.mark_price,index:+x.index_price,funding:+x.funding_rate*100,oi,oiPrev,src:'Gate.io'};}
  },
  okx:{
   base:'https://www.okx.com',
   async top(n){const d=await J(this.base+'/api/v5/market/tickers?instType=SWAP');return d.data.filter(x=>x.instId.endsWith('-USDT-SWAP')).map(x=>({symbol:x.instId,display:x.instId.replace('-USDT-SWAP','USDT'),change24:(+x.last/+x.open24h-1)*100,vol24:+x.volCcy24h*+x.last,price:+x.last})).sort((a,b)=>b.vol24-a.vol24).slice(0,n);},
-  async klines(s,tf,limit){const m={'1D':'1D','4H':'4H','1H':'1H','15m':'15m'};const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
+  async klines(s,tf,limit){const m={'1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};/* audit #8: UTC day like Binance/Bybit */const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
     while(out.length<limit&&out.length){const page=map(await J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${out[out.length-1].t}&limit=${Math.min(300,limit-out.length)}`));if(!page.length)break;out=out.concat(page);if(page.length<100)break;await new Promise(r=>setTimeout(r,120));}
     return out.reverse();},
   async meta(s){const ccy=s.split('-')[0];const [mk,ix,fr,oi]=await Promise.all([J(`${this.base}/api/v5/public/mark-price?instType=SWAP&instId=${s}`),J(`${this.base}/api/v5/market/index-tickers?instId=${ccy}-USDT`),J(`${this.base}/api/v5/public/funding-rate?instId=${s}`),J(`${this.base}/api/v5/public/open-interest?instType=SWAP&instId=${s}`)]);
-    let oiPrev=null,oiNow=+oi.data[0].oiCcy;try{const h=await J(`${this.base}/api/v5/rubik/stat/contracts/open-interest-volume?ccy=${ccy}&period=1H`);if(h.data.length>1){oiNow=+h.data[0][1];oiPrev=+h.data[1][1];}}catch(e){}
-    return {mark:+mk.data[0].markPx,index:+ix.data[0].idxPx,funding:+fr.data[0].fundingRate*100,oi:oiNow,oiPrev,src:'OKX'};}
+    if(!(mk.data&&mk.data.length)||!(oi.data&&oi.data.length))throw new Error('not listed on OKX');let oiPrev=null,oiNow=+oi.data[0].oiCcy;try{const h=await J(`${this.base}/api/v5/rubik/stat/contracts/open-interest-volume?ccy=${ccy}&period=1H`);if(h.data.length>1){oiNow=+h.data[0][1];oiPrev=+h.data[1][1];}}catch(e){}
+    return {mark:+mk.data[0].markPx,index:ix.data&&ix.data[0]?+ix.data[0].idxPx:null,funding:fr.data&&fr.data[0]?+fr.data[0].fundingRate*100:null,oi:oiNow,oiPrev,src:'OKX'};}
  }
 };
 const ex=()=>EX[$('exchange').value]||EX.okx;
@@ -73,7 +73,7 @@ async function okxScanFallback(body){if(!_okxT||Date.now()-_okxAt>60000){const r
    // keep the caller's exchange prefix so lookups by ticker string still match
    const pref={};body.symbols.tickers.forEach(t=>{pref[t.split(':').pop().replace(/\.P$/,'').replace(/USDT$/,'')]=t;});return {data:list.map(x=>{const r=row(x);const b=x.instId.replace('-USDT-SWAP','');if(pref[b])r.s=pref[b];return r;})};}
   list=[...list].sort((a,b)=>(+b.volCcy24h*+b.last)-(+a.volCcy24h*+a.last));if(body.range)list=list.slice(body.range[0],body.range[1]);return {data:list.map(row)};}
-const tvExch=()=>$('exchange').value.toUpperCase();window.tvExchNow=tvExch;window.renderRows=()=>renderRows();
+const tvExch=()=>({gate:'GATEIO'}[$('exchange').value]||$('exchange').value.toUpperCase()); /* audit #7 */window.tvExchNow=tvExch;window.renderRows=()=>renderRows();
 const tvTf={'15m':'15','1H':'60','4H':'240','1D':''};
 const tvCol=(k,t)=>t?`${k}|${t}`:k; // daily columns have no suffix on TradingView
 async function tvTop(n){
@@ -117,12 +117,12 @@ const KC_KEY='fc_kcache';function kcGet(){try{return JSON.parse(localStorage.get
 function kcPut(sym,tf,k){try{const c=kcGet();c[sym+'|'+tf]={t:Date.now(),k:k.slice(-320).map(x=>[x.t,x.o,x.h,x.l,x.c,x.v])};const keys=Object.keys(c).sort((a,b)=>c[b].t-c[a].t);keys.slice(8).forEach(x=>delete c[x]);localStorage.setItem(KC_KEY,JSON.stringify(c));}catch(e){}}
 window.dataSrc=null;
 async function klinesAny(sym,tf,limit){for(const n of chain()){try{const k=await withTimeout(EX[n].klines(symFor(n,sym),tf,limit),6000+2000*Math.ceil((limit||300)/300));if(k&&k.length>10){window.dataSrc=n;if(limit>=100)kcPut(sym,tf,k);return k;}}catch(e){}}
-  const c=kcGet()[sym+'|'+tf];if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
+  const c=kcGet()[sym+'|'+tf];const TFMS_={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5};if(c&&Date.now()-c.t>2*(TFMS_[tf]||144e5)){window.dataSrc='cache-stale';return null;} /* audit #9 */if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
 /* ---------- screener ---------- */
 let rows=[],filter='all',scanning=false,sortBy=localStorage.getItem('fc_sort')||'score';
-const watch=()=>JSON.parse(localStorage.getItem('fc_watch')||'[]');const isW=s=>watch().includes(s);
+const watch=()=>{try{const a=JSON.parse(localStorage.getItem('fc_watch')||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}};const isW=s=>watch().includes(s);
 function toggleW(s){let w=watch();w=w.includes(s)?w.filter(x=>x!==s):[...w,s];localStorage.setItem('fc_watch',JSON.stringify(w));renderRows();return w.includes(s);}
 window.toggleW=toggleW;window.isW=isW;
 async function pool(items,n,fn){const out=[];let i=0;await Promise.all(Array.from({length:n},async()=>{while(i<items.length){const idx=i++;try{out[idx]=await fn(items[idx],idx);}catch(e){out[idx]=null;}}}));return out;}
@@ -154,7 +154,7 @@ const scoreBadge=sc=>{if(!sc)return `<span class="score" style="background:var(-
 function renderRows(){const L=$('coinList');const w=watch();let f=rows.filter(r=>filter==='metals'?r.metal:(!r.metal||w.includes(r.symbol))&&(filter==='all'||(filter==='watch'&&w.includes(r.symbol))||(filter==='bull'&&r.d1.trend==='bullish'&&r.h4.trend==='bullish')||(filter==='bear'&&r.d1.trend==='bearish'&&r.h4.trend==='bearish')||(filter==='align'&&r.d1.trend!=='sideways'&&r.d1.trend===r.h4.trend)||(filter==='tt'&&r.tt&&r.tt.n>=6)));
   f=[...f].sort((a,b)=>sortBy==='lens'?((b.lens?Math.max(b.lens.l,b.lens.s):-1)-(a.lens?Math.max(a.lens.l,a.lens.s):-1)):sortBy==='tt'?((b.tt?b.tt.n:-1)-(a.tt?a.tt.n:-1))||((b.rs||0)-(a.rs||0)):sortBy==='score'?Math.abs(b.score||0)-Math.abs(a.score||0):sortBy==='chg'?Math.abs(b.change24||0)-Math.abs(a.change24||0):(b.vol24||0)-(a.vol24||0));
   $('cnt').textContent=rows.length?`${f.length}/${rows.length}`:'';
-  L.innerHTML=f.map((r,i)=>`<div class="coin" data-s="${r.symbol}"><span class="star ${w.includes(r.symbol)?'on':''}" data-w="${r.symbol}">${w.includes(r.symbol)?'★':'☆'}</span><div style="flex:1"><div class="sym">${r.display} ${/^(SPY|QQQ|TQQQ|SQQQ|NVDA|AMD|TSLA|AAPL|MSFT|META|AMZN|GOOGL?|NFLX|COIN|MSTR|HOOD|PLTR|SAMSUNG|CRCL|GME|AMC|INTC|BABA|CL|NG|XAU|XAG)USDT$/.test(r.symbol)?`<span class="pat n" title="${t().scTokStockT}">🏢 ${t().scTokStock}</span>`:''}${scoreBadge(r.score)}${lensBadge(r)}${r.tt?`<span class="pat ${r.tt.n>=6?'b':r.tt.n<=2?'s':'n'}" title="Trend Template">TT ${r.tt.n}/7</span>`:''}${r.ext!=null&&Math.abs(r.ext)>=4?`<span class="pat s" title="extension from SMA50 in ATR">⚠ ${r.ext>0?'+':''}${r.ext}×ATR</span>`:''}</div><div class="px">${fmt(r.price,6)} <span class="${r.change24>=0?'g':'r'}">${r.change24>=0?'+':''}${fmt(r.change24,2)}%</span>${(r.pats||[]).slice(0,3).map(p=>`<span class="pat ${p.c}">${p.l}</span>`).join('')}</div></div><div class="trs"><div>1D ${badge(r.d1.trend)} <small>RSI ${fmt(r.d1.rsi,0)}</small></div><div>4H ${badge(r.h4.trend)} <small>RSI ${fmt(r.h4.rsi,0)}</small></div></div></div>`).join('')||`<div class="hint" style="text-align:center">${rows.length?t().noMatch:t().pressScan}</div>`;
+  L.innerHTML=f.filter(r=>/^[A-Z0-9._:\-]{1,40}$/i.test(String(r.symbol))).map((r,i)=>`<div class="coin" data-s="${escH(r.symbol)}"><span class="star ${w.includes(r.symbol)?'on':''}" data-w="${escH(r.symbol)}">${w.includes(r.symbol)?'★':'☆'}</span><div style="flex:1"><div class="sym">${escH(r.display)} ${/^(SPY|QQQ|TQQQ|SQQQ|NVDA|AMD|TSLA|AAPL|MSFT|META|AMZN|GOOGL?|NFLX|COIN|MSTR|HOOD|PLTR|SAMSUNG|CRCL|GME|AMC|INTC|BABA|CL|NG|XAU|XAG)USDT$/.test(r.symbol)?`<span class="pat n" title="${t().scTokStockT}">🏢 ${t().scTokStock}</span>`:''}${scoreBadge(r.score)}${lensBadge(r)}${r.tt?`<span class="pat ${r.tt.n>=6?'b':r.tt.n<=2?'s':'n'}" title="Trend Template">TT ${r.tt.n}/7</span>`:''}${r.ext!=null&&Math.abs(r.ext)>=4?`<span class="pat s" title="extension from SMA50 in ATR">⚠ ${r.ext>0?'+':''}${r.ext}×ATR</span>`:''}</div><div class="px">${fmt(r.price,6)} <span class="${r.change24>=0?'g':'r'}">${r.change24>=0?'+':''}${fmt(r.change24,2)}%</span>${(r.pats||[]).slice(0,3).map(p=>`<span class="pat ${p.c}">${p.l}</span>`).join('')}</div></div><div class="trs"><div>1D ${badge(r.d1.trend)} <small>RSI ${fmt(r.d1.rsi,0)}</small></div><div>4H ${badge(r.h4.trend)} <small>RSI ${fmt(r.h4.rsi,0)}</small></div></div></div>`).join('')||`<div class="hint" style="text-align:center">${rows.length?t().noMatch:t().pressScan}</div>`;
   L.querySelectorAll('.coin').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('star')){const on=toggleW(e.target.dataset.w);toast(on?t().starred:t().unstarred);return;}openDetail(el.dataset.s);});}
 document.querySelectorAll('#sorts button').forEach(b=>b.onclick=()=>{sortBy=b.dataset.s;localStorage.setItem('fc_sort',sortBy);document.querySelectorAll('#sorts button').forEach(x=>x.classList.toggle('on',x===b));renderRows();});
 document.querySelectorAll('#sorts button').forEach(x=>x.classList.toggle('on',x.dataset.s===sortBy));
@@ -220,11 +220,11 @@ function mountChart(){const r=rows.find(x=>x.symbol===cur);const tvs=r?r.tv:`${t
   $('tvChart').innerHTML=`<iframe src="${url}" style="width:100%;height:320px;border:0;border-radius:10px" allowfullscreen loading="lazy"></iframe>`;}
 $('backBtn').onclick=()=>{$('detail').style.display='none';$('screenerMain').style.display='';};
 $('dTf').onchange=()=>{mountChart();loadDetail();$('scenBtns').style.display='none';scen=null;};
-async function loadDetail(){const tf=$('dTf').value;$('dStats').innerHTML=`<div class="hint"><span class="spin" style="border-color:var(--acc);border-top-color:transparent"></span>${t().loading}</div>`;$('aiReport').innerHTML='';
+let _ldTok=0;async function loadDetail(){const myTok=++_ldTok;const mySym=cur;const tf=$('dTf').value;$('dStats').innerHTML=`<div class="hint"><span class="spin" style="border-color:var(--acc);border-top-color:transparent"></span>${t().loading}</div>`;$('aiReport').innerHTML='';
   const r=rows.find(x=>x.symbol===cur);const tvs=r?r.tv:`${tvExch()}:${cur}.P`;
   try{
     // main data: TradingView (live). extras: exchange API (may be blocked -> optional)
-    const [a,k,m]=await Promise.all([tvDetail(tvs,tf),klinesAny(cur,tf,60),metaAny(cur)]);
+    const [a,k,m]=await Promise.all([tvDetail(tvs,tf),klinesAny(cur,tf,60),metaAny(cur)]);if(myTok!==_ldTok||cur!==mySym)return;/* audit #10: stale response after TF/symbol change */
     let sup=a.low1M,res=a.high1M,srSrc='1M';if(k&&k.length>10){const l50=k.slice(-50);sup=Math.min(...l50.map(x=>x.l));res=Math.max(...l50.map(x=>x.h));srSrc='50';}
     const last=k?k.slice(-12).map(x=>({o:x.o,h:x.h,l:x.l,c:x.c,v:x.v})):null;
     curData={symbol:(r?r.display:cur)+'_PERP',exchange:$('exchange').value,data_source:'TradingView (live)'+(m?' + '+m.src+' derivatives data':''),derivatives_source:m?m.src:null,timeframe:tf,last_price:a.price,mark_price:m?.mark??null,index_price:m?.index??null,premium:m?(m.mark-m.index):null,ema20:a.ema20,ema50:a.ema50,rsi14:a.rsi,trend_tf:a.trend,trend_1d:a.trend1d,trend_4h:a.trend4h,rsi_1d:a.rsi1d,rsi_4h:a.rsi4h,[`support_${srSrc}`]:sup,[`resistance_${srSrc}`]:res,atr14:a.atr,volume_last:a.volLast,volume_avg10d:a.volAvg,macd:a.macd,macd_signal:a.macdSig,adx:a.adx,tv_technical_rating:a.tvRating,perf_week_pct:a.perfW,volatility_day_pct:a.volD,open_interest:m?.oi??null,oi_change_pct:(m&&m.oi&&m.oiPrev)?(m.oi/m.oiPrev-1)*100:null,funding_rate_pct:m?.funding??null,change_24h_pct:a.change,last_candles:last};
@@ -284,7 +284,7 @@ $('aiBtn').onclick=async()=>{const key=localStorage.getItem('fc_openai_key')||''
   btn.disabled=false;btn.textContent=t().aiBtn;};
 window.getSYS=()=>SYSX();window.md=md;window.renderScenBtnsExt=(sc)=>{scen=sc;renderScenBtns();};
 $('copyReport').onclick=()=>{if(lastReport)navigator.clipboard.writeText(lastReport).then(()=>toast(t().copied));};
-function md(s){const esc=x=>x.replace(/&/g,'&amp;').replace(/</g,'&lt;');const inline=x=>esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/(?<!\*)\*(?!\*)(.+?)\*/g,'<i>$1</i>');
+function md(s){const esc=x=>x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');const inline=x=>esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>').replace(/(?<!\*)\*(?!\*)(.+?)\*/g,'<i>$1</i>');
   const lines=s.split('\n');let h='',inList=false;for(let l of lines){const m=l.match(/^(\s*)([*-]) (.*)/);if(m){if(!inList){h+='<ul>';inList=true;}h+=`<li style="margin-inline-start:${m[1].length*8}px">${inline(m[3])}</li>`;continue;}if(inList){h+='</ul>';inList=false;}
     if(/^###\s/.test(l))h+=`<h3>${inline(l.replace(/^###\s/,''))}</h3>`;else if(/^##\s/.test(l))h+=`<h3>${inline(l.replace(/^##\s/,''))}</h3>`;else if(/^#\s/.test(l))h+=`<h3>${inline(l.replace(/^#\s/,''))}</h3>`;else if(/^---+$/.test(l.trim()))h+='<hr>';else if(/^>\s?/.test(l))h+=`<blockquote>${inline(l.replace(/^>\s?/,''))}</blockquote>`;else if(l.trim())h+=`<p>${inline(l)}</p>`;}
   if(inList)h+='</ul>';return h;}

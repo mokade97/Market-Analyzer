@@ -10,7 +10,7 @@ const isEn=()=>(typeof lang!=='undefined'&&lang==='en');
 /* ---------- indicators (null = warm-up) ---------- */
 const ema=(a,n)=>{const k=2/(n+1);let e=null;return a.map((v,i)=>{if(v==null)return e;e=e==null?v:v*k+e*(1-k);return i<n-1?null:e;});};
 const sma=(a,n)=>{const o=[];let s=0,c=0;for(let i=0;i<a.length;i++){s+=a[i];c++;if(i>=n){s-=a[i-n];c--;}o.push(i>=n-1?s/n:null);}return o;};
-function rsi(c,n){const o=new Array(c.length).fill(null);let g=0,l=0;for(let i=1;i<c.length;i++){const d=c[i]-c[i-1],up=Math.max(d,0),dn=Math.max(-d,0);if(i<=n){g+=up/n;l+=dn/n;if(i===n)o[i]=100-100/(1+(l?g/l:1e9));}else{g=(g*(n-1)+up)/n;l=(l*(n-1)+dn)/n;o[i]=100-100/(1+(l?g/l:1e9));}}return o;}
+function rsi(c,n){const o=new Array(c.length).fill(null);let g=0,l=0;for(let i=1;i<c.length;i++){const d=c[i]-c[i-1],up=Math.max(d,0),dn=Math.max(-d,0);if(i<=n){g+=up/n;l+=dn/n;if(i===n)o[i]=g===0&&l===0?50:100-100/(1+(l?g/l:1e9));}else{g=(g*(n-1)+up)/n;l=(l*(n-1)+dn)/n;o[i]=g===0&&l===0?50:100-100/(1+(l?g/l:1e9));}}return o;}
 function trueRange(k){return k.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-k[i-1].c),Math.abs(x.l-k[i-1].c)):x.h-x.l);}
 function atr(k,n){const tr=trueRange(k);const o=[];let a=null;for(let i=0;i<tr.length;i++){if(i<n-1){o.push(null);continue;}if(a==null){a=0;for(let j=0;j<n;j++)a+=tr[j];a/=n;}else a=(a*(n-1)+tr[i])/n;o.push(a);}return o;}
 function adx(k,n){const N=k.length,pdm=[0],ndm=[0],tr=trueRange(k);for(let i=1;i<N;i++){const up=k[i].h-k[i-1].h,dn=k[i-1].l-k[i].l;pdm.push(up>dn&&up>0?up:0);ndm.push(dn>up&&dn>0?dn:0);}
@@ -85,9 +85,10 @@ function runBacktest(stratId,p,X){const S=STR[stratId];const n=K.length;const A=
   const LG=s==='LONG',entry=K[i].c;let R;if(X.slMode==='swing'){const lvl=LG?swl[i]:swh[i];if(lvl==null)continue;R=Math.abs(entry-lvl)+0.1*A[i];if(R<0.3*A[i])R=0.3*A[i];if(R>4*A[i])R=4*A[i];}else R=X.slAtr*A[i];if(!(R>0))continue;
   let sl=LG?entry-R:entry+R;const tp=LG?entry+X.tp*R:entry-X.tp*R,one=LG?entry+R:entry-R;let half=false,hl=LG?-Infinity:Infinity,rr=0,out='TO',end=Math.min(n-1,i+X.maxBars),exitPx=null;
   for(let j=i+1;j<=end;j++){const b=K[j];
-   if(X.t1&&!half&&(LG?b.h>=one:b.l<=one)){half=true;sl=entry;}
-   if(X.trail>0){hl=LG?Math.max(hl,b.h):Math.min(hl,b.l);const tsl=LG?hl-X.trail*A[j]:hl+X.trail*A[j];if(LG?tsl>sl:tsl<sl)sl=tsl;}
+   /* audit #6: SL is tested against the stop that was active BEFORE this bar; BE/trail from this bar only apply to later bars */
    const hs=LG?b.l<=sl:b.h>=sl,ht=LG?b.h>=tp:b.l<=tp;
+   if(!hs&&X.t1&&!half&&(LG?b.h>=one:b.l<=one)){half=true;sl=entry;}
+   if(!hs&&X.trail>0){hl=LG?Math.max(hl,b.h):Math.min(hl,b.l);const tsl=LG?hl-X.trail*A[j]:hl+X.trail*A[j];if(LG?tsl>sl:tsl<sl)sl=tsl;}
    if(hs){const m=(LG?sl-entry:entry-sl)/R;rr=half?0.5+0.5*m:m;out=sl===entry&&half?'BE':(X.trail>0&&m>-1?'TR':'SL');exitPx=sl;end=j;break;}
    if(ht){rr=half?0.5+0.5*X.tp:X.tp;out='TP';exitPx=tp;end=j;break;}
    if(X.flip){let o=null;try{o=S.sig(p,j);}catch(e){}if(o&&o!==s){const m=(LG?b.c-entry:entry-b.c)/R;rr=half?0.5+0.5*m:m;out='FL';exitPx=b.c;end=j;break;}}
@@ -194,7 +195,7 @@ function renderChart(){const T=t();const useLW=!!(window.BTChart&&window.Lightwe
  <div id="btTvWrap"><div id="btTv" style="width:100%;height:${Math.max(360,Math.min(560,Math.round(innerHeight*0.6)))}px;direction:ltr;border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative"></div></div><div class="hint" id="btCvInfo" style="margin:4px 0;direction:ltr;text-align:left;font-size:11px"></div>`;
  if(TVC)try{TVC.destroy();}catch(e){}TVC=null;
  if(useLW){/* v112: dedicated Lightweight-Charts viewer — entry/exit markers, SL/TP segments over the trade lifetime, strategy overlays */
-  TVC=BTChart.mount({el:'btTv',bars:K,tf:TF,ext:stratSeries(),trades:RES.tr,sel,onSelect:k=>{sel=k;$('btTrSel').value=String(k);chartInfo();}});TVC.lw=true;if(sel>=0)TVC.focus(sel,NVIS);else TVC.fit(NVIS);}
+  TVC=BTChart.mount({el:'btTv',bars:K,tf:TF,ext:stratSeries(),trades:RES.tr,sel,onSelect:k=>{sel=k;$('btTrSel').value=String(k);chartInfo();}});TVC.lw=true;if(sel>=0)TVC.focus(sel,NVIS);else TVC.fit(NVIS);setTimeout(()=>{try{$('btTvWrap').scrollIntoView({block:'start',behavior:'smooth'});}catch(e){}},50);}
  else TVC=TVChart.mount({el:'btTv',sym:SYM,tf:TF,bars:K,periods:[TF],mainIndicators:[],subIndicators:['VOL'],onLoaded:H=>{const S=STR[RES.strat];stratSeries().forEach(s=>H.setExt(s.id,s.series,s.colors,s.opts));H.setMarks(tradeMarks());H.fit(NVIS);if(sel>=0)focusTrade();}});
  const go=k=>{sel=Math.max(-1,Math.min(RES.tr.length-1,k));$('btTrSel').value=String(sel);if(TVC&&TVC.lw)TVC.setSel(sel);else TVC&&TVC.setMarks(tradeMarks());chartInfo();if(sel>=0)focusTrade();};
  $('btTrSel').onchange=e=>go(+e.target.value);$('btPrev').onclick=()=>go(sel<=0?RES.tr.length-1:sel-1);$('btNextT').onclick=()=>go(sel>=RES.tr.length-1?0:sel+1);$('btEnd').onclick=()=>TVC&&TVC.scrollToEnd();

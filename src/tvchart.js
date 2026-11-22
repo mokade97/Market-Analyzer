@@ -93,7 +93,7 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  const light=o.light!=null?o.light:(localStorage.getItem('fc_theme')||'dark')==='light';
  const prec=o.precision!=null?o.precision:(()=>{const c=H.bars.length?H.bars[H.bars.length-1].c:1;return c>=1000?1:c>=10?2:c>=1?3:c>=0.01?5:7;})();
  const datafeed={searchSymbols:async()=>[{ticker:H.sym,name:H.sym,pricePrecision:prec}],
-  getHistoryKLineData:async(s,p)=>{const tf=tfOf(p);if(tf!==H.tf&&o.onPeriod){saveDrawings(H,true);const nb=await o.onPeriod(tf);if(nb&&nb.length){H.tf=tf;H.bars=nb;H._fresh=false;H._dkey=null;setTimeout(()=>{restoreDrawings(H);H.marks.length&&applyMarks(H);applyLines(H);},50);return nb.map(toKL);}return [];}
+  getHistoryKLineData:async(s,p)=>{const tf=tfOf(p);if(tf!==H.tf&&o.onPeriod){saveDrawings(H,true);const rq=H._prq=(H._prq||0)+1;const nb=await o.onPeriod(tf);if(rq!==H._prq||H._dead)return [];/* audit(GPT): out-of-order period responses */if(nb&&nb.length){H.tf=tf;H.bars=nb;H._fresh=false;H._dkey=null;setTimeout(()=>{restoreDrawings(H);H.marks.length&&applyMarks(H);applyLines(H);},50);return nb.map(toKL);}return [];}
    if(!H._fresh)return [];H._fresh=false;const arr=H.bars.map(toKL);setTimeout(()=>{restoreDrawings(H);H.marks.length&&applyMarks(H);applyLines(H);Object.keys(H.ext).forEach(id=>applyExt(H,id));if(o.onLoaded)o.onLoaded(H);},30);return arr;},
   subscribe:(s,p,cb)=>{H._sub=cb;},unsubscribe:()=>{H._sub=null;}};
  const k=KL();const _init=k.init;k.init=function(...a){const c=_init.apply(this,a);H.chart=c;return c;};
@@ -105,9 +105,9 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);try{H.chart.setLeftMinVisibleBarCount(12);H.chart.setRightMinVisibleBarCount(12);}catch(e){} /* v114b: never let a drag leave the chart looking empty */
  // --- separator touch-drag shim: the engine hit-tests separators by a 7px coordinate band (unusable with a finger). We enlarge the DOM band (CSS) and drive the engine's own drag methods from touch events. ---
  const sepShim=()=>{try{const m=H.chart.getAllSeparatorPanes&&H.chart.getAllSeparatorPanes();if(!m)return;m.forEach(sp=>{const w=sp.getWidget();const c=w.getContainer();if(!c||c.dataset.sepShim)return;c.dataset.sepShim='1';c.style.touchAction='none';let on=false;
-  c.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;on=true;e.preventDefault();e.stopPropagation();w._mouseDownEvent({pageY:e.touches[0].pageY});},{passive:false});
-  c.addEventListener('touchmove',e=>{if(!on)return;e.preventDefault();e.stopPropagation();w._pressedTouchMouseMoveEvent({pageY:e.touches[0].pageY});},{passive:false});
-  const end=e=>{if(!on)return;on=false;e.stopPropagation();w._mouseUpEvent();};c.addEventListener('touchend',end);c.addEventListener('touchcancel',end);
+  c.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;on=true;e.preventDefault();e.stopPropagation();w._mouseDownEvent({pageY:e.touches[0].pageY});},Object.assign({passive:false},SIG));
+  c.addEventListener('touchmove',e=>{if(!on)return;e.preventDefault();e.stopPropagation();w._pressedTouchMouseMoveEvent({pageY:e.touches[0].pageY});},Object.assign({passive:false},SIG));
+  const end=e=>{if(!on)return;on=false;e.stopPropagation();w._mouseUpEvent();};c.addEventListener('touchend',end,SIG);c.addEventListener('touchcancel',end,SIG);
   c.addEventListener('mousedown',e=>{on=true;e.stopPropagation();w._mouseDownEvent({pageY:e.pageY});const mv=ev=>{if(on)w._pressedTouchMouseMoveEvent({pageY:ev.pageY});};const up=()=>{on=false;w._mouseUpEvent();window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);});});}catch(e){}};
  sepShim();H._sepTimer=setInterval(sepShim,1500);
  // --- keep canvas size in sync with the container (fullscreen / rotation / keyboard) ---

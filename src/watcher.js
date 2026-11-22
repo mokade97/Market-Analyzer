@@ -4,8 +4,8 @@ const $=id=>document.getElementById(id);
 const t=()=>T[lang];
 const LS=k=>localStorage.getItem(k);
 const cfg=()=>({on:LS('fc_aw_on')==='1',tf:LS('fc_aw_tf')||'4H',min:+(LS('fc_aw_min')||75),every:+(LS('fc_aw_every')||15),syms:(LS('fc_aw_syms')||'').trim()});
-const seen=JSON.parse(LS('fc_aw_seen')||'{}');   // key sym|tf|side|barTime -> 1 (avoid duplicate alerts for the same bar)
-let log=JSON.parse(LS('fc_aw_log')||'[]');
+const seen=(()=>{try{const o=JSON.parse(LS('fc_aw_seen')||'{}');return o&&typeof o==='object'?o:{};}catch(e){return {};}})();   // key sym|tf|side|barTime -> 1 (avoid duplicate alerts for the same bar)
+let log=(()=>{try{const a=JSON.parse(LS('fc_aw_log')||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}})();
 let timer=null,running=false;
 function symbols(){const c=cfg();const manual=c.syms.split(/[\s,]+/).filter(Boolean).map(s=>{s=s.toUpperCase().replace(/[^A-Z0-9]/g,'');return /USDT$/.test(s)?s:s+'USDT';});
   const w=JSON.parse(LS('fc_watch')||'[]');return [...new Set([...manual,...w])].slice(0,20);}

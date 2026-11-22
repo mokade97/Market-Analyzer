@@ -19,21 +19,17 @@ function mount(o){const L=LWC();if(!L)return null;const el=typeof o.el==='string
  const chart=L.createChart(el,{autoSize:true,layout:{background:{type:'solid',color:T.bg},textColor:T.txt,fontSize:11},grid:{vertLines:{color:T.grid},horzLines:{color:T.grid}},
   rightPriceScale:{borderColor:T.border,scaleMargins:{top:0.06,bottom:0.22}},timeScale:{borderColor:T.border,timeVisible:true,secondsVisible:false,rightOffset:4,barSpacing:7,minBarSpacing:0.5},
   crosshair:{mode:0},handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},handleScale:{axisPressedMouseMove:true,mouseWheel:true,pinch:true},
-  localization:{locale:(localStorage.getItem('fc_lang')||'fa')==='fa'?'fa-IR':'en-US',priceFormatter:fmtP}});
+  localization:{locale:'en-GB',dateFormat:'yyyy-MM-dd',priceFormatter:fmtP}});
  H.chart=chart;
  const tAt=i=>sec(H.bars[i].t);
  /* ---- 1. overlays (behind price) ---- */
  for(const e of H.ext){
-  // Ichimoku cloud: tinted area down from max(span) + background-coloured area down from min(span) acts as a mask (only hides grid; candles come later)
+  // Ichimoku cloud: exactly 4 series (bull tint, bull mask, bear tint, bear mask) using whitespace gaps — one series per run was far too heavy on phones
   if(e.opts&&e.opts.cloud&&e.opts.cloud.length===2){const A=e.series[e.opts.cloud[0]],B=e.series[e.opts.cloud[1]];if(A&&B){
-   const segs=[];let cur=null;// split into bull/bear runs so each run gets its own colour
-   for(let i=0;i<H.bars.length;i++){const x=A[i],y=B[i];if(x==null||y==null){cur=null;continue;}const bull=x>=y;if(!cur||cur.bull!==bull){cur={bull,up:[],dn:[]};segs.push(cur);}cur.up.push({time:tAt(i),value:Math.max(x,y)});cur.dn.push({time:tAt(i),value:Math.min(x,y)});
-    if(segs.length>1&&cur.up.length===1){const prev=segs[segs.length-2];// bridge the gap so runs touch
-     cur.up.unshift(prev.up[prev.up.length-1]);cur.dn.unshift(prev.dn[prev.dn.length-1]);}}
-   for(const s of segs){const col=s.bull?'rgba(38,166,154,.16)':'rgba(239,83,80,.16)';
-    const top=chart.addAreaSeries(Object.assign({lineColor:'rgba(0,0,0,0)',topColor:col,bottomColor:col,lineWidth:1},NOLINE));top.setData(s.up);
-    const bot=chart.addAreaSeries(Object.assign({lineColor:'rgba(0,0,0,0)',topColor:T.bg,bottomColor:T.bg,lineWidth:1},NOLINE));bot.setData(s.dn);
-    H.extS[e.id+'.cloud'+segs.indexOf(s)]=top;H.extS[e.id+'.mask'+segs.indexOf(s)]=bot;}}}
+   const bu=[],bm=[],ru=[],rm=[];for(let i=0;i<H.bars.length;i++){const x=A[i],y=B[i],t=tAt(i);if(x==null||y==null){bu.push({time:t});bm.push({time:t});ru.push({time:t});rm.push({time:t});continue;}
+    const hi=Math.max(x,y),lo=Math.min(x,y);if(x>=y){bu.push({time:t,value:hi});bm.push({time:t,value:lo});ru.push({time:t});rm.push({time:t});}else{ru.push({time:t,value:hi});rm.push({time:t,value:lo});bu.push({time:t});bm.push({time:t});}}
+   const area=(col,d)=>{const s=chart.addAreaSeries(Object.assign({lineColor:'rgba(0,0,0,0)',topColor:col,bottomColor:col,lineWidth:1},NOLINE));s.setData(d);return s;};
+   H.extS[e.id+'.bullTop']=area('rgba(38,166,154,.16)',bu);H.extS[e.id+'.bullMask']=area(T.bg,bm);H.extS[e.id+'.bearTop']=area('rgba(239,83,80,.16)',ru);H.extS[e.id+'.bearMask']=area(T.bg,rm);}}
   for(const k of Object.keys(e.series)){const arr=e.series[k];if(!arr)continue;const dash=e.opts&&e.opts.dash&&e.opts.dash[k];const inCloud=e.opts&&e.opts.cloud&&e.opts.cloud.includes(k);
    const s=chart.addLineSeries(Object.assign({color:e.colors[k]||'#94a3b8',lineWidth:inCloud?1:(k==='st'?2:1),lineStyle:dash?2:0,title:''},NOLINE));
    const d=[];for(let i=0;i<H.bars.length;i++){const v=arr[i];if(v!=null&&isFinite(v))d.push({time:tAt(i),value:v});}s.setData(d);H.extS[e.id+'.'+k]=s;}}

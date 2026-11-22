@@ -627,7 +627,7 @@ $('customModel').value=localStorage.getItem('fc_gemini_custom')||'';
   sel.value=saved;$('customModelField').style.display=saved==='__custom'?'':'none';})();
 $('model').onchange=()=>$('customModelField').style.display=$('model').value==='__custom'?'':'none';
 $('loadModels').onclick=async()=>{localStorage.setItem('fc_gemini_base',$('geminiBase').value.trim());const t=T[lang];const key=$('apiKey').value.trim();$('keyStatus').textContent=t.loading;
-  try{const r=await fetch(`${gemBase()}/v1beta/models?key=${key}&pageSize=200`);const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);
+  try{const r=await fetch(`${gemBase()}/v1beta/models${gemKeyQ(key)}${gemKeyQ(key)?'&':'?'}pageSize=200`,{headers:gemKeyH(key)});const j=await r.json();if(!r.ok)throw new Error(j.error?.message||r.status);
     const ms=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')&&/gemini/i.test(m.name)&&!/embedding|tts|audio|image-generation|live|native-audio/i.test(m.name)).map(m=>m.name.replace('models/',''));
     if(!ms.length)throw new Error('no models');
     const sel=$('model');sel.innerHTML='';ms.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);});
@@ -739,7 +739,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const isBusy=(status,msg)=>status===503||status===429||status===500||/high demand|overloaded|try again|resource.?exhausted|unavailable/i.test(msg||'');
 async function geminiCall(model,key,body){const r=await fetch(`${gemBase()}/v1beta/models/${model}:generateContent${gemKeyQ(key)}`,{method:'POST',headers:{'Content-Type':'application/json',...gemKeyH(key)},body:JSON.stringify(body),signal:AbortSignal.timeout?AbortSignal.timeout(90000):undefined});
   const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error?.message||('HTTP '+r.status));e.status=r.status;throw e;}return j;}
-async function geminiFallbacks(key,current){try{const r=await fetch(`${gemBase()}/v1beta/models?key=${key}&pageSize=200`);const j=await r.json();
+async function geminiFallbacks(key,current){try{const r=await fetch(`${gemBase()}/v1beta/models${gemKeyQ(key)}${gemKeyQ(key)?'&':'?'}pageSize=200`,{headers:gemKeyH(key)});const j=await r.json();
     const ms=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')&&/gemini/i.test(m.name)&&!/embedding|tts|audio|image|live|native-audio|thinking-exp/i.test(m.name)).map(m=>m.name.replace('models/',''));
     const ver=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0;};
     const rank=n=>(/flash/.test(n)&&!/lite/.test(n)?3:/pro/.test(n)?2:1)+ver(n)/10-(/preview|exp/.test(n)?0.5:0);
@@ -765,12 +765,14 @@ $('analyzeBtn').onclick=async()=>{
     let txt=j.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
     txt=txt.replace(/^```json\s*|```$/g,'').trim(); aiData=window.safeJSON(txt);
     renderAi();if(fallback){$('aiAlerts').innerHTML=`<div class="alert yellow">${t.usedFallback} <b>${model}</b></div>`+$('aiAlerts').innerHTML;}
-  }catch(e){$('aiCard').style.display='';$('aiRes').innerHTML='';$('aiNote').textContent='';$('aiAlerts').innerHTML=`<div class="alert red">${e.message}${isBusy(e.status,e.message)?'<br><small>'+t.busyHint+'</small>':''}</div>`;}
+  }catch(e){$('aiCard').style.display='';$('aiRes').innerHTML='';$('aiNote').textContent='';$('aiAlerts').innerHTML=`<div class="alert red">${escH(e.message)}${isBusy(e.status,e.message)?'<br><small>'+t.busyHint+'</small>':''}</div>`;}
   btn.disabled=false;btn.textContent=t.analyze;
 };
 function smcHtml(d){const t=T[lang];const m=d.smc||{};const li=a=>Array.isArray(a)&&a.length?a.map(x=>`<li>${x}</li>`).join(''):'';const blocks=[];if(m.bos_choch||li(m.order_blocks)||li(m.fvg)||li(m.liquidity))blocks.push(`<div class="item wide"><div class="k">${t.smcT}</div><div class="note" style="font-size:12px;text-align:start">${m.bos_choch?'<b>BOS/CHoCH:</b> '+m.bos_choch+'<br>':''}${li(m.order_blocks)?'<b>Order Blocks:</b><ul>'+li(m.order_blocks)+'</ul>':''}${li(m.fvg)?'<b>FVG:</b><ul>'+li(m.fvg)+'</ul>':''}${li(m.liquidity)?'<b>Liquidity:</b><ul>'+li(m.liquidity)+'</ul>':''}</div></div>`);if(d.fundamentals)blocks.push(`<div class="item wide"><div class="k">${t.fundT}</div><div class="note" style="font-size:12px;text-align:start">${d.fundamentals}</div></div>`);if(d.risk_notes)blocks.push(`<div class="item wide"><div class="k">${t.riskT}</div><div class="note" style="font-size:12px;text-align:start">${d.risk_notes}</div></div>`);return blocks.length?`<div class="res" style="margin-top:8px">${blocks.join('')}</div>`:'';}
+window.deepEsc=v=>typeof v==='string'?escH(v):Array.isArray(v)?v.map(deepEsc):(v&&typeof v==='object')?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,deepEsc(x)])):v; /* audit(Kimi) #5: model output is untrusted */
+window.__setAi=d=>{aiData=d;renderAi();};/* test hook */
 function renderAi(){
-  const t=T[lang],d=aiData;if(!d)return;$('aiCard').style.display='';
+  const t=T[lang],d0=aiData;if(!d0)return;const d=deepEsc(d0);$('aiCard').style.display='';
   const trendMap={bullish:['up','g'],bearish:['down','r'],sideways:['side','y']};const [tk,tc]=trendMap[d.trend]||['side','y'];
   const item=(k,v,cls='',wide=false)=>`<div class="item${wide?' wide':''}"><div class="k">${t[k]}</div><div class="v ${cls}">${v??'—'}</div></div>`;
   let al='';
@@ -786,7 +788,7 @@ function renderAi(){
     item('pattern',[(d.patterns||[]).join(', '),d.structure].filter(Boolean).join(' — ')||'—','',true)+
     item('inval',d.invalidation||'—','',true)+
     `<div class="item wide"><div class="k">${t.conf}</div><div class="v">${d.confidence??0}%</div><div class="conf"><i style="width:${d.confidence??0}%"></i></div></div>`;
-  $('aiNote').textContent=[d.reasoning,d.indicators].filter(Boolean).join('\n\n');
+  $('aiNote').textContent=[d0.reasoning,d0.indicators].filter(Boolean).join('\n\n');
   $('toCalc').style.display=(d.entry&&d.stop_loss&&d.take_profit)?'':'none';
   // multi-timeframe cards
   const tfs=d.timeframes||{};const tw={bullish:[t.up,'long'],bearish:[t.down,'short'],sideways:[t.side,'']};
