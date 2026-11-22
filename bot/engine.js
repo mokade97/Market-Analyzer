@@ -5,7 +5,7 @@ const window=globalThis;if(!globalThis.localStorage)globalThis.localStorage={get
 const r2=(x,d=2)=>x==null||!isFinite(x)?null:+x.toFixed(d);
 const ema=(a,n)=>{const k=2/(n+1);let e=null;return a.map(v=>e=e==null?v:v*k+e*(1-k));};
 const sma=(a,n)=>a.map((_,i)=>i<n-1?null:a.slice(i-n+1,i+1).reduce((s,v)=>s+v,0)/n);
-function rsi(c,n=14){const out=[null];let g=0,l=0;for(let i=1;i<c.length;i++){const d=c[i]-c[i-1];const up=Math.max(d,0),dn=Math.max(-d,0);if(i<=n){g+=up/n;l+=dn/n;out[i]=i===n?100-100/(1+(l?g/l:1e9)):null;}else{g=(g*(n-1)+up)/n;l=(l*(n-1)+dn)/n;out[i]=100-100/(1+(l?g/l:1e9));}}return out;}
+function rsi(c,n=14){const out=[null];let g=0,l=0;for(let i=1;i<c.length;i++){const d=c[i]-c[i-1];const up=Math.max(d,0),dn=Math.max(-d,0);if(i<=n){g+=up/n;l+=dn/n;out[i]=i===n?(g===0&&l===0?50:100-100/(1+(l?g/l:1e9))):null;}else{g=(g*(n-1)+up)/n;l=(l*(n-1)+dn)/n;out[i]=g===0&&l===0?50:100-100/(1+(l?g/l:1e9));}}return out;}
 function atr(k,n=14){const tr=k.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-k[i-1].c),Math.abs(x.l-k[i-1].c)):x.h-x.l);let a=null;return tr.map((v,i)=>{if(i<n-1)return null;if(a==null){a=tr.slice(0,n).reduce((s,q)=>s+q,0)/n;return a;}a=(a*(n-1)+v)/n;return a;});}
 function macdH(c){const f=ema(c,12),s=ema(c,26);const m=c.map((_,i)=>f[i]-s[i]);const sig=ema(m,9);return m.map((v,i)=>v-sig[i]);}
 function adxSeries(k,n=14){const N=k.length;const tr=[0],pdm=[0],ndm=[0];for(let i=1;i<N;i++){const up=k[i].h-k[i-1].h,dn=k[i-1].l-k[i].l;pdm.push(up>dn&&up>0?up:0);ndm.push(dn>up&&dn>0?dn:0);tr.push(Math.max(k[i].h-k[i].l,Math.abs(k[i].h-k[i-1].c),Math.abs(k[i].l-k[i-1].c)));}
