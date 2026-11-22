@@ -20,7 +20,7 @@ const EX={
  binance:{
   base:'https://fapi.binance.com',
   async top(n){const d=await J(this.base+'/fapi/v1/ticker/24hr');return d.filter(x=>x.symbol.endsWith('USDT')&&!/_/.test(x.symbol)).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,n).map(x=>({symbol:x.symbol,display:x.symbol,change24:+x.priceChangePercent,vol24:+x.quoteVolume,price:+x.lastPrice}));},
-  async klines(s,tf,limit){const m={'1D':'1d','4H':'4h','1H':'1h','15m':'15m','5m':'5m'};const map=d=>d.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit,1500)}`));/* audit(Kimi) #8: Binance hard cap 1500 → page backwards with endTime */for(let g=0;g<4&&out.length<limit&&out.length;g++){const more=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit-out.length,1500)}&endTime=${out[0].t-1}`));if(!more.length)break;out=more.concat(out);}return out;},
+  async klines(s,tf,limit){const m={'1W':'1w','1D':'1d','4H':'4h','1H':'1h','15m':'15m','5m':'5m'};const map=d=>d.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit,1500)}`));/* audit(Kimi) #8: Binance hard cap 1500 → page backwards with endTime */for(let g=0;g<4&&out.length<limit&&out.length;g++){const more=map(await J(`${this.base}/fapi/v1/klines?symbol=${s}&interval=${m[tf]}&limit=${Math.min(limit-out.length,1500)}&endTime=${out[0].t-1}`));if(!more.length)break;out=more.concat(out);}return out;},
   async meta(s){const p=await J(`${this.base}/fapi/v1/premiumIndex?symbol=${s}`);let oi=null,oiPrev=null;
     try{const o=await J(`${this.base}/fapi/v1/openInterest?symbol=${s}`);oi=+o.openInterest;}catch(e){}
     try{const h=await J(`${this.base}/futures/data/openInterestHist?symbol=${s}&period=1h&limit=2`);if(h.length>1){oiPrev=+h[0].sumOpenInterest;oi=+h[1].sumOpenInterest;}}catch(e){}
@@ -29,20 +29,20 @@ const EX={
  bybit:{
   base:'https://api.bybit.com',
   async top(n){const d=await J(this.base+'/v5/market/tickers?category=linear');return d.result.list.filter(x=>x.symbol.endsWith('USDT')).sort((a,b)=>b.turnover24h-a.turnover24h).slice(0,n).map(x=>({symbol:x.symbol,display:x.symbol,change24:+x.price24hPcnt*100,vol24:+x.turnover24h,price:+x.lastPrice,_m:{mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.openInterest}}));},
-  async klines(s,tf,limit){const m={'1D':'D','4H':'240','1H':'60','15m':'15'};const d=await J(`${this.base}/v5/market/kline?category=linear&symbol=${s}&interval=${m[tf]}&limit=${limit}`);return d.result.list.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]})).reverse();},
+  async klines(s,tf,limit){const m={'1W':'W','1D':'D','4H':'240','1H':'60','15m':'15'};const d=await J(`${this.base}/v5/market/kline?category=linear&symbol=${s}&interval=${m[tf]}&limit=${limit}`);return d.result.list.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]})).reverse();},
   async meta(s){const d=await J(`${this.base}/v5/market/tickers?category=linear&symbol=${s}`);const x=d.result&&d.result.list&&d.result.list[0];if(!x)throw new Error('not listed on Bybit');let oiPrev=null,oi=+x.openInterest;
     try{const h=await J(`${this.base}/v5/market/open-interest?category=linear&symbol=${s}&intervalTime=1h&limit=2`);const l=h.result.list;if(l.length>1){oi=+l[0].openInterest;oiPrev=+l[1].openInterest;}}catch(e){}
     return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi,oiPrev,src:'Bybit'};}
  },
  bitget:{
   base:'https://api.bitget.com',
-  async klines(s,tf,limit){const m={'1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};const d=await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${limit}`);return d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
+  async klines(s,tf,limit){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};const d=await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${limit}`);return d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
   async meta(s){const d=await J(`${this.base}/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=${s}`);const x=d.data&&d.data[0];if(!x)throw new Error('not listed on Bitget');return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.holdingAmount,oiPrev:null,src:'Bitget'};}
  },
  gate:{
   base:'https://api.gateio.ws',
   gs:s=>s.replace('USDT','_USDT'),
-  async klines(s,tf,limit){const m={'1D':'1d','4H':'4h','1H':'1h','15m':'15m'};const d=await J(`${this.base}/api/v4/futures/usdt/candlesticks?contract=${this.gs(s)}&interval=${m[tf]}&limit=${limit}`);return d.map(x=>({t:x.t*1000,o:+x.o,h:+x.h,l:+x.l,c:+x.c,v:+x.v}));},
+  async klines(s,tf,limit){const m={'1W':'7d','1D':'1d','4H':'4h','1H':'1h','15m':'15m'};const d=await J(`${this.base}/api/v4/futures/usdt/candlesticks?contract=${this.gs(s)}&interval=${m[tf]}&limit=${limit}`);return d.map(x=>({t:x.t*1000,o:+x.o,h:+x.h,l:+x.l,c:+x.c,v:+x.v}));},
   async meta(s){const c=this.gs(s);const [tk,st]=await Promise.all([J(`${this.base}/api/v4/futures/usdt/tickers?contract=${c}`),J(`${this.base}/api/v4/futures/usdt/contract_stats?contract=${c}&interval=1h&limit=2`).catch(()=>[])]);const x=tk&&tk[0];if(!x)throw new Error('not listed on Gate.io');
     let oi=+x.total_size,oiPrev=null;if(st.length>1){const a=st.sort((p,q)=>q.time-p.time);oi=a[0].open_interest;oiPrev=a[1].open_interest;}
     return {mark:+x.mark_price,index:+x.index_price,funding:+x.funding_rate*100,oi,oiPrev,src:'Gate.io'};}
@@ -50,7 +50,7 @@ const EX={
  okx:{
   base:'https://www.okx.com',
   async top(n){const d=await J(this.base+'/api/v5/market/tickers?instType=SWAP');return d.data.filter(x=>x.instId.endsWith('-USDT-SWAP')).map(x=>({symbol:x.instId,display:x.instId.replace('-USDT-SWAP','USDT'),change24:(+x.last/+x.open24h-1)*100,vol24:+x.volCcy24h*+x.last,price:+x.last})).sort((a,b)=>b.vol24-a.vol24).slice(0,n);},
-  async klines(s,tf,limit){const m={'1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};/* audit #8: UTC day like Binance/Bybit */const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
+  async klines(s,tf,limit){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};/* audit #8: UTC day like Binance/Bybit */const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
     while(out.length<limit&&out.length){const page=map(await J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${out[out.length-1].t}&limit=${Math.min(300,limit-out.length)}`));if(!page.length)break;out=out.concat(page);if(page.length<100)break;await new Promise(r=>setTimeout(r,120));}
     return out.reverse();},
   async meta(s){const ccy=s.split('-')[0];const [mk,ix,fr,oi]=await Promise.all([J(`${this.base}/api/v5/public/mark-price?instType=SWAP&instId=${s}`),J(`${this.base}/api/v5/market/index-tickers?instId=${ccy}-USDT`),J(`${this.base}/api/v5/public/funding-rate?instId=${s}`),J(`${this.base}/api/v5/public/open-interest?instType=SWAP&instId=${s}`)]);
@@ -117,7 +117,7 @@ const KC_KEY='fc_kcache';function kcGet(){try{return JSON.parse(localStorage.get
 function kcPut(sym,tf,k){try{const c=kcGet();c[sym+'|'+tf]={t:Date.now(),k:k.slice(-320).map(x=>[x.t,x.o,x.h,x.l,x.c,x.v])};const keys=Object.keys(c).sort((a,b)=>c[b].t-c[a].t);keys.slice(8).forEach(x=>delete c[x]);localStorage.setItem(KC_KEY,JSON.stringify(c));}catch(e){}}
 window.dataSrc=null;
 async function klinesAny(sym,tf,limit){for(const n of chain()){try{const k=await withTimeout(EX[n].klines(symFor(n,sym),tf,limit),6000+2000*Math.ceil((limit||300)/300));if(k&&k.length>10){window.dataSrc=n;if(limit>=100)kcPut(sym,tf,k);return k;}}catch(e){}}
-  const c=kcGet()[sym+'|'+tf];const TFMS_={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5};if(c&&Date.now()-c.t>2*(TFMS_[tf]||144e5)){window.dataSrc='cache-stale';return null;} /* audit #9 */if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
+  const c=kcGet()[sym+'|'+tf];const TFMS_={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5};if(c&&Date.now()-c.t>2*(TFMS_[tf]||144e5)){window.dataSrc='cache-stale';return null;} /* audit #9 */if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
 /* ---------- screener ---------- */
@@ -318,7 +318,7 @@ $('sendChart').onclick=()=>{if(!cur)return;try{const r=rows.find(x=>x.symbol===c
   const base=q.replace(/USDT$/,'');$('tvSym').value=base;const iv={'5m':'5','15m':'15','1H':'60','4H':'240','1D':'D'}[$('dTf').value];if(iv)$('tvInt').value=iv;
   window.openPage('tv');if(typeof loadTv==='function')loadTv();if(window.updToolsSym)updToolsSym();toast((t().chartOpened||'')+' '+q);}catch(e){toast(e.message);}};
 
-window.klinesAny=klinesAny;window.metaAny=metaAny;window.drawChart=drawChart;window.EX=EX;window.symFor=symFor;
+window.klinesAny=klinesAny;window.scrX={rows:()=>rows,watch,pool,openDetail}; /* v117: manual scan */window.metaAny=metaAny;window.drawChart=drawChart;window.EX=EX;window.symFor=symFor;
 /* ---------- OpenAI settings ---------- */
 $('openaiKey').value=localStorage.getItem('fc_openai_key')||'';$('openaiBase').value=localStorage.getItem('fc_openai_base')||'';
 $('showOpenai').onchange=()=>$('openaiKey').type=$('showOpenai').checked?'text':'password';

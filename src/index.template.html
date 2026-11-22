@@ -9,7 +9,6 @@
 <title>تحلیل‌گر بازار | Market Analyzer</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
-<link rel="stylesheet" href="klpro.css">
 <style>html{overscroll-behavior-y:contain}
   :root{--bg:#0f1420;--card:#171e2e;--card2:#1e2739;--txt:#e8ecf4;--muted:#8b95a9;--acc:#4f8cff;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--border:#283248;--fs:15px}
   html[data-theme=light]{--bg:#f3f5f9;--card:#ffffff;--card2:#eef1f6;--txt:#111827;--muted:#5b6475;--acc:#2563eb;--green:#16a34a;--red:#dc2626;--yellow:#d97706;--border:#d5dae3}
@@ -34,7 +33,9 @@
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
   .card h2{font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:600}
   .field{margin-bottom:10px}
-  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .msRow select,.msRow input[type=number]{background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:8px;padding:6px 8px;font-size:13px;outline:none;direction:ltr;font-family:inherit;width:auto}
+.msRow{direction:ltr}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
   .field input[type=number]{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:10px;padding:12px;font-size:17px;outline:none;direction:ltr;text-align:left}
   .field input:focus{border-color:var(--acc)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -99,21 +100,7 @@
 #mkLive .item{padding:5px 6px}#mkLive .k{font-size:10px}#mkLive .v{font-size:12px}#mkLive .v small{font-size:10px}
 .pill{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:999px;padding:2px 9px;font-size:12px;line-height:1.6;white-space:nowrap}
 .tools4{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tools4 button{margin:0;padding:14px 8px;font-size:14px}
-  /* v109 TVChart (KLineChart Pro) tweaks */
-  .klinecharts-pro{direction:ltr;text-align:left;font-family:inherit;--klinecharts-pro-primary-color:var(--acc,#2962ff);height:100%}
-  .klinecharts-pro .klinecharts-pro-period-bar{overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
-  .klinecharts-pro .klinecharts-pro-period-bar::-webkit-scrollbar{display:none}
-  .klinecharts-pro .klinecharts-pro-period-bar .item{flex-shrink:0}
-  .klinecharts-pro .klinecharts-pro-period-bar,.klinecharts-pro .klinecharts-pro-drawing-bar{touch-action:manipulation}.klinecharts-pro .klinecharts-pro-period-bar .menu-container{cursor:pointer;min-width:44px}
   /* v114c: compact Pro header on phones so ƒx+ / fit are visible without scrolling */
-  @media (max-width:600px){.klinecharts-pro .klinecharts-pro-period-bar .symbol{font-size:13px;padding:0 6px}.klinecharts-pro .klinecharts-pro-period-bar .menu-container{width:36px}.klinecharts-pro .klinecharts-pro-period-bar .period{margin:0 1px;padding:2px 4px;font-size:12px}.klinecharts-pro .klinecharts-pro-period-bar .item.tools span{font-size:11px}.klinecharts-pro .klinecharts-pro-period-bar .item.tools{padding:0 5px}}
-  .klinecharts-pro .klinecharts-pro-drawing-bar{overflow:visible}
-  .klinecharts-pro .klinecharts-pro-modal{z-index:120}
-  .klinecharts-pro div[style*="ns-resize"][style*="width: 100%"][style*="z-index: 20"]{height:22px!important;top:-10px!important}
-  .klinecharts-pro .klinecharts-pro-modal .inner{max-height:94%;max-width:96vw;display:flex;flex-direction:column;overflow:hidden}
-  .klinecharts-pro .klinecharts-pro-modal .inner .content-container{overflow:auto;flex:1;min-height:0;padding:0 14px}
-  .klinecharts-pro .klinecharts-pro-modal .inner .button-container{flex-shrink:0;padding:8px 14px}
-  @media (max-height:560px){.klinecharts-pro .klinecharts-pro-drawing-bar{overflow-y:auto!important;overflow-x:hidden;scrollbar-width:none;width:40px}.klinecharts-pro .klinecharts-pro-drawing-bar .item{min-height:30px}}
   #rpBox.rpfs #rpChartWrap{height:auto!important;min-height:0!important}
   #btTvWrap.tvfs{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column}#btTvWrap.tvfs #btTv{flex:1;height:auto!important;border-radius:0}
 </style>
@@ -245,6 +232,9 @@
         <div style="display:flex;gap:8px"><input type="text" id="customSym" placeholder="PEPE  یا  PEPEUSDT" style="flex:1;min-width:0"><button class="primary" id="customGo" data-i="customGo" style="padding:0 18px;border:0;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">برو</button></div></div>
       <div class="hint" id="scanStatus"></div>
       <div class="hint" data-i="scrHint">روند با EMA20/EMA50 و قیمت تعیین می‌شود: صعودی = قیمت > EMA20 > EMA50 ، نزولی = قیمت < EMA20 < EMA50. داده‌ها از API عمومی صرافی (بدون نیاز به کلید) گرفته می‌شود.</div>
+    </div>
+    <div class="card">
+      <details class="op" id="mscanDet"><summary>🔬 اسکن دستی (شرط‌ساز)</summary><div id="mscanBox"></div></details>
     </div>
     <div class="card">
       <div class="seg wrap" id="filters">
@@ -582,7 +572,7 @@ $('saveTrade').onclick=()=>{const r=window._last;if(!r||r.errors.length){toast(T
   const j=JSON.parse(localStorage.getItem('fc_journal')||'[]');
   j.unshift({id:Date.now(),ts:Date.now(),symbol:($('cSym').value||'').toUpperCase()||'—',dir:r.isLong?'LONG':'SHORT',entry:n('entry'),sl:n('sl'),tp:n('tp'),tp2:n('tp2')||null,tp3:n('tp3')||null,size:r.size,notional:r.notional,margin:r.margin,lev:r.lev,maxLoss:r.maxloss,potential:r.profit,rr:r.rr,status:'open',pnl:null,rMult:null,note:'',why:(window.askWhy?askWhy():''),lesson:'',closedAt:null});
   localStorage.setItem('fc_journal',JSON.stringify(j));if(window.circuitBreaker){const cb=circuitBreaker();if(cb.state!=='ok')toast(cb.text);}toast(T[lang].tradeSaved);render();if(window.renderJournal)renderJournal();};
-function setLang(l){lang=l;localStorage.setItem('fc_lang',l);
+function setLang(l){lang=l;localStorage.setItem('fc_lang',l);try{document.dispatchEvent(new CustomEvent('fc:lang',{detail:l}));}catch(e){}
   document.documentElement.lang=l;document.documentElement.dir=l==='fa'?'rtl':'ltr';
   document.querySelectorAll('[data-i]').forEach(el=>{const v=T[l][el.dataset.i];if(v!=null)el.textContent=v;});document.querySelectorAll('[data-ph]').forEach(el=>el.placeholder=T[l][el.dataset.ph]||'');
   $('langBtn').textContent=l==='fa'?'EN':'فا';render();['renderJournal','renderAlerts','renderRows','renderHelp','renderCost'].forEach(f=>{try{window[f]&&window[f]();}catch(e){}});try{if(aiData&&typeof renderAi==='function')renderAi();}catch(e){}try{document.dispatchEvent(new Event('fc:lang'));}catch(e){}}
@@ -805,15 +795,13 @@ $('copyAi').onclick=()=>{const d=aiData;if(!d)return;const t=T[lang];
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 <script src="screener.js"></script>
+<script src="mscan.js"></script>
 <script src="features.js"></script>
 <script src="lens.js"></script>
 <script src="lensui.js"></script>
 <script src="agents.js"></script>
-<script src="klinecharts.js"></script>
-<script src="klpro.js"></script>
-<script src="tvtools.js"></script>
-<script src="tvchart.js"></script>
 <script src="lwc.js"></script>
+<script src="lwchart.js"></script>
 <script src="btchart.js"></script>
 <script src="replay.js"></script>
 <script src="backtest.js"></script>

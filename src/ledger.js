@@ -9,7 +9,7 @@ function record(o){if(!o||!o.sym||!o.side||!(o.entry>0)||!(o.stop>0)||!(o.t1>0)|
   /* one OPEN signal per symbol/timeframe/side: a re-signal on a later bar of the same move is not a new, independent trade (v95: skipped, counted) */
   if(L.some(x=>x.status==='OPEN'&&x.sym===o.sym&&x.tf===o.tf&&x.side===o.side)){try{const d=JSON.parse(localStorage.getItem('fc_ledger_dup')||'{}');d.n=(d.n||0)+1;d.last=`${o.sym} ${o.tf} ${o.side}`;localStorage.setItem('fc_ledger_dup',JSON.stringify(d));}catch(e){}return false;}
   L.unshift(Object.assign({key,ts:Date.now(),status:'OPEN'},o));save();render();return true;}
-const TFMS={'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5};
+const TFMS={'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5};
 async function settle(force){reload();dedupe();const open=L.filter(x=>x.status==='OPEN');if(!open.length){render();return;}const groups={};open.forEach(x=>{(groups[x.sym+'|'+x.tf]=groups[x.sym+'|'+x.tf]||[]).push(x);});
   for(const g in groups){const [sym,tf]=g.split('|');const ms=TFMS[tf]||144e5;const items=groups[g];const oldest=Math.min(...items.map(x=>x.time));const need=Math.min(300,Math.ceil((Date.now()-oldest)/ms)+5);if(need<3&&!force)continue;
     let k=null;try{k=await klinesAny(sym,tf,need);}catch(e){}if(!k)continue;const closedBars=k.slice(0,-1); /* last bar is still open */

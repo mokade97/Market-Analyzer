@@ -1,4 +1,4 @@
-/* ==== Replay & Strategy Tester (v109): bar-by-bar replay on a TradingView-style chart (TVChart / KLineChart Pro) + manual trades + rule-based backtests (local, no API) ==== */
+/* ==== Replay & Strategy Tester (v109): bar-by-bar replay on a TradingView-style chart (LWChart = Lightweight Charts + own drawing layer, v120) + manual trades + rule-based backtests (local, no API) ==== */
 (function(){
 const $=id=>document.getElementById(id);const t=()=>T[lang];
 const ema=(a,n)=>{const k=2/(n+1);let e=null;return a.map(v=>e=e==null?v:v*k+e*(1-k));};
@@ -10,9 +10,11 @@ let NVIS=+(localStorage.getItem('fc_rp_n')||120),stratId=localStorage.getItem('f
 let TVC=null,sig=[],swOn=localStorage.getItem('fc_rp_sw')==='1',sigOn=localStorage.getItem('fc_rp_sig')!=='0';
 const acctCfg=()=>({acct:+(localStorage.getItem('fc_acct')||1000),risk:+(localStorage.getItem('fc_risk')||1)});
 const R=(x,d=6)=>fmt(x,d);
-function reset(){cur=start;open=null;trades=[];stop();draw();stats();planInfo();}
+function resetState(){cur=start;open=null;trades=[];stop();}
+function reset(){resetState();draw();stats();planInfo();}
 function stop(){if(timer){clearInterval(timer);timer=null;$('rpPlay').textContent='▶▶';}}
-function stratSig(i){if(stratId==='none'||!LS||!window.lens||!lens.STRATS[stratId]||i<2)return null;try{const g=lens.STRATS[stratId].sig(K,LS,LX,i);return g?(typeof g==='string'?g:g.side):null;}catch(e){return null;}}
+let SIGC=[],SIGK='';/* v117: per-bar signal cache (markers() used to recompute 600 bars on every step) */
+function stratSig(i){if(stratId==='none'||!LS||!window.lens||!lens.STRATS[stratId]||i<2)return null;const ck=stratId+'|'+sym+'|'+tf+'|'+K.length;if(ck!==SIGK){SIGK=ck;SIGC=[];}if(SIGC[i]!==undefined)return SIGC[i];let r=null;try{const g=lens.STRATS[stratId].sig(K,LS,LX,i);r=g?(typeof g==='string'?g:g.side):null;}catch(e){r=null;}SIGC[i]=r;return r;}
 function step(n=1){if(!K.length)return;for(let s=0;s<n;s++){if(cur>=K.length-1){stop();break;}cur++;if(open)checkOpen();if(auto&&!open){const sg=stratSig(cur);if(sg)enter(sg,true);}TVC&&TVC.push(K[cur]);}stepRender();stats();planInfo();}
 function checkOpen(){const b=K[cur];const o=open;const hitSL=o.side==='LONG'?b.l<=o.sl:b.h>=o.sl;const hitTP=o.side==='LONG'?b.h>=o.tp:b.l<=o.tp;
   if(hitSL){close(o.sl,'SL');}else if(hitTP){close(o.tp,'TP');}else if(cur-o.i>=(+$('stMax').value||40)){close(b.c,'TIME');}}
@@ -25,17 +27,20 @@ function stats(){if(!K.length||!K[cur])return;const n=trades.length,w=trades.fil
   $('rpStats').innerHTML=`<div class="item"><div class="k">${t().rpBar}</div><div class="v" style="font-size:12px">${cur+1}/${K.length} · ${new Date(K[cur].t).toISOString().slice(0,16).replace('T',' ')}</div></div><div class="item"><div class="k">${t().rpClose}</div><div class="v">${R(K[cur].c)}</div></div><div class="item"><div class="k">${t().rpTrades}</div><div class="v">${n} · ${n?Math.round(100*w/n):0}%</div></div><div class="item"><div class="k">${t().rpTotalR}</div><div class="v ${sum>=0?'g':'r'}">${sum>=0?'+':''}${sum.toFixed(2)}R</div></div><div class="item"><div class="k">Max DD</div><div class="v r">${dd.toFixed(2)}R</div></div>`+(open?`<div class="item" style="grid-column:1/-1"><div class="k">${open.auto?'🤖 ':''}${open.side} @ ${R(open.entry)} · SL ${R(open.sl)} · TP ${R(open.tp)}</div><div class="v ${o>=0?'g':'r'}">${o>=0?'+':''}${o.toFixed(2)}R</div></div>`:'');
   $('rpLong').disabled=!!open;$('rpShort').disabled=!!open;$('rpClose').disabled=!open;
   // Lens score + strategy signal on current bar (closed bars only, future hidden)
-  try{const p=window.lens&&lens.packet(sym,tf,[...K.slice(0,cur+1),K[cur]],HK,lens.HTF[tf]);const sg=stratSig(cur);$('rpLens').innerHTML=(p?`Lens L${p.scores.long}/S${p.scores.short} · ${p.regime} · HTF ${p.trend.htf_bias} · ${p.candle.pattern}`:'')+(sg?` · <b style="color:${sg==='LONG'?'var(--green)':'var(--red)'}">📣 ${stratId}: ${sg}</b>`:'');}catch(e){$('rpLens').textContent='';}
+  clearTimeout(_lensT);_lensT=setTimeout(lensLine,timer?400:120); /* v118: the Lens packet (~100ms on a phone) no longer runs synchronously inside every step */
   $('rpLog').innerHTML=trades.slice(-10).reverse().map(x=>`<span class="pill" style="font-size:11px;background:${x.rr>0?'rgba(22,163,74,.15)':'rgba(220,38,38,.15)'}">${x.auto?'🤖':''}${x.side} ${R(x.entry)}→${R(x.exit)} ${x.why} ${x.rr>0?'+':''}${x.rr}R</span>`).join(' ');}
-/* ==== Chart layer: TVChart (KLineChart Pro) — data pushed bar-by-bar so the future is never in the chart ==== */
-function draw(){if(!K.length||!window.TVChart)return;if(TVC){try{TVC.destroy();}catch(e){}TVC=null;}
- TVC=window.__rpH=TVChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
-  onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;setTimeout(()=>load(keep),0);return null;},
+let _lensT=null;function lensLine(){if(!K.length||!K[cur])return;
+  try{const p=window.lens&&lens.packet(sym,tf,[...K.slice(0,cur+1),K[cur]],HK,lens.HTF[tf]);const sg=stratSig(cur);$('rpLens').innerHTML=(p?`Lens L${p.scores.long}/S${p.scores.short} · ${p.regime} · HTF ${p.trend.htf_bias} · ${p.candle.pattern}`:'')+(sg?` · <b style="color:${sg==='LONG'?'var(--green)':'var(--red)'}">📣 ${stratId}: ${sg}</b>`:'');}catch(e){$('rpLens').textContent='';}}
+/* ==== Chart layer: LWChart — data pushed bar-by-bar so the future is never in the chart ==== */
+function draw(){if(!K.length||!window.LWChart)return;if(TVC){try{TVC.destroy();}catch(e){}TVC=null;}
+ TVC=window.__rpH=LWChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D','1W'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
+  onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;/* v117: switch timeframe INSIDE the existing chart (no destroy/mount) — the old path rebuilt everything (1.3 s on a phone) and re-attached drawings/indicators late */const ok=await load(keep,true);if(ok==='stale')return null;if(!ok){setTimeout(()=>load(keep),0);return null;}return K.slice(0,cur+1);},
+  onPeriodApplied:(H,applied)=>{try{markers();priceLines();H.fit(NVIS);stats();planInfo();}catch(e){}},
   onLoaded:H=>{markers();priceLines();H.fit(NVIS);integrateChartBar(H);}});
  $('rpLegend').innerHTML='';}
 /* v114d: some Android WebViews stop repainting the candle pane during auto-play (only the time axis kept moving in the user's screenshots).
    A throttled resize() forces a full layout+redraw; cheap at replay speeds. */
-let _lastForce=0;function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}const now=Date.now();if(now-_lastForce>700){_lastForce=now;try{TVC.chart.resize();}catch(e){}}}
+let _lastForce=0;function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}const now=Date.now();if(timer&&now-_lastForce>1500){_lastForce=now;try{TVC.chart.resize();}catch(e){}}/* v117: only during auto-play (WebView repaint workaround), half as often */}
 function fitView(n){TVC&&TVC.fit(n||NVIS);}
 function markers(){if(!TVC)return;const m=[];const end=cur;
   if(sigOn&&stratId!=='none'){for(let i=Math.max(2,end-600);i<=end;i++){const sg=stratSig(i);if(!sg)continue;const L=sg==='LONG';m.push({kind:'mark',t:K[i].t,price:L?K[i].l:K[i].h,side:sg,color:L?'rgba(38,166,154,.75)':'rgba(239,83,80,.75)'});}}
@@ -76,11 +81,11 @@ let _rfT=null,_rfW=0;function refitOnWidth(force){const el=$('rpChart');if(!el||
 if(window.ResizeObserver){let ro=null;const arm=()=>{const el=$('rpChart');if(!el||ro)return;ro=new ResizeObserver(()=>refitOnWidth(false));ro.observe(el);};arm();document.addEventListener('DOMContentLoaded',arm);setTimeout(arm,2000);}
 window.addEventListener('orientationchange',()=>{setTimeout(()=>refitOnWidth(true),300);setTimeout(()=>refitOnWidth(true),900);});
 window.addEventListener('resize',()=>refitOnWidth(false));
-let _rpTok=0;async function load(keepTime){const myTok=++_rpTok;try{stop();}catch(e){}const box=$('rpBox');box.style.display='';const q=(($('btSym')&&$('btSym').value)||'BTCUSDT').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(.*?)(USDT)?$/,'$1USDT');const tff=($('btTf')&&$('btTf').value)||'4H';$('rpMsg').textContent=t().loading;
-  try{const [k,h]=await Promise.all([klinesAny(q,tff,1000),lens.HTF[tff]!==tff?klinesAny(q,lens.HTF[tff],300):null]);if(myTok!==_rpTok)return;/* audit #10 */if(!k||k.length<100)throw new Error(t().lensNoData);K=k;HK=h||k;sym=q;tf=tff;ATR=atr(K);
+let _rpTok=0;async function load(keepTime,inPlace){const myTok=++_rpTok;try{stop();}catch(e){}const box=$('rpBox');box.style.display='';const q=(($('btSym')&&$('btSym').value)||'BTCUSDT').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(.*?)(USDT)?$/,'$1USDT');const tff=($('btTf')&&$('btTf').value)||'4H';$('rpMsg').textContent=t().loading;if(inPlace&&(!TVC||q!==sym))inPlace=false;
+  try{const [k,h]=await Promise.all([klinesAny(q,tff,1000),lens.HTF[tff]!==tff?klinesAny(q,lens.HTF[tff],300):null]);if(myTok!==_rpTok)return 'stale';/* audit #10 */if(!k||k.length<(tff==='1W'?70:100))throw new Error(t().lensNoData);K=k;HK=h||k;sym=q;tf=tff;ATR=atr(K);
     try{LS=lens.series(K,h||null);LX=lens.labSeries(K,LS);}catch(e){LS=null;LX=null;}
-    toolbar();$('rpBack').max=K.length-60;$('rpBack').value=Math.min(300,K.length-60);start=K.length-1-(+$('rpBack').value);if(typeof keepTime==='number'){let idx=K.findIndex(x=>x.t>keepTime)-1;if(idx<0)idx=K.length-1;idx=Math.max(59,Math.min(K.length-1,idx));$('rpBack').value=K.length-1-idx;start=idx;}$('rpBackV').textContent=$('rpBack').value;$('rpMsg').textContent=`${K.length} ${t().rpBarsLoaded}`;reset();}
-  catch(e){$('rpMsg').textContent=e.message||e;}}
+    toolbar();$('rpBack').max=K.length-60;$('rpBack').value=Math.min(300,K.length-60);start=K.length-1-(+$('rpBack').value);if(typeof keepTime==='number'){let idx=K.findIndex(x=>x.t>keepTime)-1;if(idx<0)idx=K.length-1;idx=Math.max(59,Math.min(K.length-1,idx));$('rpBack').value=K.length-1-idx;start=idx;}$('rpBackV').textContent=$('rpBack').value;$('rpMsg').textContent=`${K.length} ${t().rpBarsLoaded}`;if(inPlace){resetState();$('rpLegend').innerHTML='';return true;}reset();return true;}
+  catch(e){$('rpMsg').textContent=e.message||e;return false;}}
 /* ---- rule-based strategy tester (same trade management as Time Machine: SL = x ATR, TP = RR * SL, one trade at a time, max hold) ---- */
 function strategyBacktest(k,rule,opt){const c=k.map(x=>x.c);const e20=ema(c,20),e50=ema(c,50),e200=ema(c,200),rs=rsi(c),A=atr(k);const slA=opt.slAtr,rr=opt.rr,maxB=opt.maxBars;const tr=[];
   /* Zone Break (3-candle swing BOS): direction flips when a candle CLOSES beyond the last confirmed swing high/low */
