@@ -107,6 +107,8 @@
   .klinecharts-pro .klinecharts-pro-period-bar{overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
   .klinecharts-pro .klinecharts-pro-period-bar::-webkit-scrollbar{display:none}
   .klinecharts-pro .klinecharts-pro-period-bar .item{flex-shrink:0}
+  /* v114c: compact Pro header on phones so ƒx+ / fit are visible without scrolling */
+  @media (max-width:600px){.klinecharts-pro .klinecharts-pro-period-bar .symbol{font-size:13px;padding:0 6px}.klinecharts-pro .klinecharts-pro-period-bar .menu-container{width:36px}.klinecharts-pro .klinecharts-pro-period-bar .period{margin:0 1px;padding:2px 4px;font-size:12px}.klinecharts-pro .klinecharts-pro-period-bar .item.tools span{font-size:11px}.klinecharts-pro .klinecharts-pro-period-bar .item.tools{padding:0 5px}}
   .klinecharts-pro .klinecharts-pro-drawing-bar{overflow:visible}
   .klinecharts-pro .klinecharts-pro-modal{z-index:120}
   .klinecharts-pro div[style*="ns-resize"][style*="width: 100%"][style*="z-index: 20"]{height:22px!important;top:-10px!important}
@@ -2039,7 +2041,7 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.chart.setStyles({candle:{tooltip:{showRule:'follow_cross',showType:'rect'},priceMark:{last:{show:true}}},indicator:{tooltip:{showRule:'follow_cross',showType:'rect'}},crosshair:{horizontal:{text:{paddingLeft:4,paddingRight:4}}}});
  H.chart.setStyles({candle:{tooltip:{showRule:'follow_cross'}},indicator:{tooltip:{showRule:'follow_cross'}}});
  H.chart.setStyles({separator:{size:3,color:light?'#d6dae3':'#3a4152',fill:true,activeBackgroundColor:'rgba(41,98,255,.25)'}});
- H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);
+ H.chart.setOffsetRightDistance(60);H.chart.setBarSpace(o.barSpace||7);try{H.chart.setLeftMinVisibleBarCount(12);H.chart.setRightMinVisibleBarCount(12);}catch(e){} /* v114b: never let a drag leave the chart looking empty */
  // --- separator touch-drag shim: the engine hit-tests separators by a 7px coordinate band (unusable with a finger). We enlarge the DOM band (CSS) and drive the engine's own drag methods from touch events. ---
  const sepShim=()=>{try{const m=H.chart.getAllSeparatorPanes&&H.chart.getAllSeparatorPanes();if(!m)return;m.forEach(sp=>{const w=sp.getWidget();const c=w.getContainer();if(!c||c.dataset.sepShim)return;c.dataset.sepShim='1';c.style.touchAction='none';let on=false;
   c.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;on=true;e.preventDefault();e.stopPropagation();w._mouseDownEvent({pageY:e.touches[0].pageY});},{passive:false});
@@ -2060,8 +2062,30 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.toggleExtra=name=>{const on=!H.extras[name];const def=EXTRA.find(e=>e[0]===name);if(!def)return on;if(on){const id=H.chart.createIndicator(name,def[2],def[2]?{id:'candle_pane'}:{height:90});H.extras[name]=id||true;}else{try{const pane=def[2]?'candle_pane':H.extras[name];H.chart.removeIndicator(pane,name);}catch(e){}delete H.extras[name];}saveExtras(H);return on;};
  H.scrollToTime=t=>{try{const i=H.bars.findIndex(b=>b.t>=t);if(i>=0)H.chart.scrollToDataIndex(i);}catch(e){}};
  H.scrollToEnd=()=>{try{H.chart.scrollToRealTime();}catch(e){}};
- H.fit=n=>{try{const W=el.clientWidth||360;H.chart.setBarSpace(Math.max(2,Math.min(20,(W-70)/(n||120))));H.chart.scrollToRealTime();}catch(e){}};
+ H.fit=n=>{try{const W=el.clientWidth||360;if(W<160)return;H.chart.setBarSpace(Math.max(2,Math.min(20,(W-70)/(n||120))));H.chart.scrollToRealTime();}catch(e){}};
  H.setTheme=l=>{try{H.pro.setTheme(l?'light':'dark');}catch(e){}};
+ /* v114c: TradingView-style integration — put our extras into the Pro chart's own bars instead of a second toolbar above the chart.
+    opts: {toggles:[{label,get,set}], nOptions:[60,...], getN, setN, onFullscreen, fsLabel} */
+ H.integrateBar=opts=>{opts=opts||{};const bar=el.querySelector('.klinecharts-pro-period-bar');if(!bar||bar.dataset.tvInt)return;bar.dataset.tvInt='1';const isFa=(localStorage.getItem('fc_lang')||'fa')==='fa';
+  const mkItem=(txt,title)=>{const d=document.createElement('div');d.className='item tools tv-int';d.title=title||'';d.style.cssText='display:flex;align-items:center;gap:4px;padding:0 8px;height:100%;font-size:12px;white-space:nowrap';d.innerHTML='<span>'+txt+'</span>';return d;};
+  let pop=null;const closePop=()=>{if(pop){pop.remove();pop=null;}};document.addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target)&&!e.target.closest('.tv-int'))closePop();},true);
+  const openPop=(anchor,build)=>{if(pop&&pop._for===anchor){closePop();return;}closePop();pop=document.createElement('div');pop._for=anchor;pop.className='tv-int-pop';pop.style.cssText='position:absolute;z-index:130;top:40px;background:var(--klinecharts-pro-popover-background-color,#1f2432);color:var(--klinecharts-pro-text-color,#ddd);border:1px solid var(--klinecharts-pro-border-color,#333);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px;min-width:160px;max-height:60vh;overflow:auto;font-size:12px;direction:ltr';
+   const r=anchor.getBoundingClientRect(),er=el.getBoundingClientRect();pop.style.left=Math.max(4,Math.min(r.left-er.left,er.width-200))+'px';build(pop);el.appendChild(pop);};
+  const row=(label,on,fn)=>{const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer';d.innerHTML='<span style="width:14px;text-align:center;color:var(--klinecharts-pro-primary-color,#2962ff)">'+(on?'✓':'')+'</span><span>'+label+'</span>';d.onclick=()=>{const v=fn();d.firstChild.textContent=v?'✓':'';};return d;};
+  const after=[...bar.querySelectorAll('.item.tools')].find(x=>/اندیکاتور|Indicator/i.test(x.textContent))||bar.lastElementChild;
+  // ƒx+ : our extra indicators + caller toggles
+  const fx=mkItem('ƒx<sup>+</sup>',isFa?'اندیکاتورهای بیشتر':'more indicators');fx.onclick=()=>openPop(fx,pp=>{EXTRA.forEach(([n,label])=>pp.appendChild(row(label,!!H.extras[n],()=>H.toggleExtra(n))));(opts.toggles||[]).forEach(t=>pp.appendChild(row(t.label,!!t.get(),()=>{t.set(!t.get());return !!t.get();})));});
+  after.insertAdjacentElement('beforebegin',fx); /* before the native indicator button so it is visible without scrolling the bar in portrait */
+  // ⤢ : visible bars / fit
+  if(opts.setN){const fit=mkItem('⤢ '+(opts.getN?opts.getN():''),isFa?'تعداد کندل قابل‌مشاهده':'visible candles');fit.onclick=()=>openPop(fit,pp=>{(opts.nOptions||[60,120,240,400]).forEach(n=>pp.appendChild(row(n+(isFa?' کندل':' bars'),opts.getN&&opts.getN()===n,()=>{opts.setN(n);fit.firstChild.textContent='⤢ '+n;closePop();return true;})));});fx.insertAdjacentElement('afterend',fit);}
+  // fullscreen: route the Pro button to the app's fullscreen (orientation lock + layout)
+  if(opts.onFullscreen){const fsIt=[...bar.querySelectorAll('.item.tools')].find(x=>/تمام‌صفحه|Full/i.test(x.textContent));if(fsIt){fsIt.addEventListener('click',ev=>{ev.stopImmediatePropagation();ev.preventDefault();opts.onFullscreen();},true);}}
+  // drawing bar: ✋ cancel + ↶ undo, styled like the Pro items
+  const db=el.querySelector('.klinecharts-pro-drawing-bar');if(db&&!db.dataset.tvInt){db.dataset.tvInt='1';const mk=(txt,title,fn)=>{const d=document.createElement('div');d.className='item';d.title=title;d.innerHTML='<span class="icon-overlay" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px">'+txt+'</span>';d.onclick=fn;return d;};
+   const sp=document.createElement('span');sp.className='split-line';db.appendChild(sp);db.appendChild(mk('✋',isFa?'لغو ترسیم / آزادکردن چارت':'cancel drawing / free the chart',()=>cancelDrawing(H)));db.appendChild(mk('↶',isFa?'حذف آخرین ترسیم':'undo last drawing',()=>{const all=allOverlays(H);const last=all[all.length-1];if(last){try{H.chart.removeOverlay({id:last.id});}catch(e){}saveDrawings(H,true);}}));}
+  // re-apply after Pro re-renders its bar (period change rebuilds it)
+  if(!H._intObs){H._intObs=new MutationObserver(()=>{const b2=el.querySelector('.klinecharts-pro-period-bar');if(b2&&!b2.dataset.tvInt){setTimeout(()=>H.integrateBar(opts),0);}});H._intObs.observe(el,{childList:true,subtree:true});}
+ };
  H.saveDrawings=()=>saveDrawings(H,true);
  H.toolBar=()=>toolBar(H);
  H.screenshot=()=>screenshot(H);
@@ -2253,7 +2277,7 @@ function stats(){if(!K.length||!K[cur])return;const n=trades.length,w=trades.fil
 function draw(){if(!K.length||!window.TVChart)return;if(TVC){try{TVC.destroy();}catch(e){}TVC=null;}
  TVC=window.__rpH=TVChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
   onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;setTimeout(()=>load(keep),0);return null;},
-  onLoaded:H=>{markers();priceLines();H.fit(NVIS);const tl=$('rpTools');if(tl){tl.innerHTML='';tl.appendChild(H.toolBar());}}});
+  onLoaded:H=>{markers();priceLines();H.fit(NVIS);integrateChartBar(H);}});
  $('rpLegend').innerHTML='';}
 function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}}
 function fitView(n){TVC&&TVC.fit(n||NVIS);}
@@ -2275,23 +2299,27 @@ function togglePlan(){if(!K.length){toast(t().rpLoadFirst);return;}if(plan){plan
 function flipPlan(){if(!plan)return;const e=K[cur].c;plan={sl:e+(e-plan.sl),tp:e-(plan.tp-e)};priceLines();planInfo();}
 function planToCalc(){if(!plan)return;const e=K[cur].c;$('cSym').value=sym;$('entry').value=e;$('sl').value=+plan.sl.toFixed(8);$('tp').value=+plan.tp.toFixed(8);if($('tp2'))$('tp2').value='';if(typeof render==='function')render();document.querySelector('[data-tab="calc"]').click();toast(t().sentToCalc);}
 function toolbar(){const tb=$('rpTb');if(!tb)return;const T=t();const strats=window.lens&&lens.STRATS?Object.keys(lens.STRATS):[];
-  tb.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0;direction:ltr"><span style="display:inline-flex;gap:2px">${['15m','1H','4H','1D'].map(v=>`<button class="ghost ${tf===v?'on':''}" data-tf="${v}" style="padding:4px 8px;font-size:11px">${v}</button>`).join('')}</span><select id="rpN" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px">${[60,120,240,400].map(n=>`<option value="${n}" ${n===NVIS?'selected':''}>${n} ${T.rpBarsN}</option>`).join('')}</select><button class="ghost" id="rpFit" style="padding:4px 8px;font-size:11px">⤢</button>${TVChart.EXTRA.map(([n,l])=>`<button class="ghost" data-extra="${n}" style="padding:4px 8px;font-size:11px">${l}</button>`).join('')}<button class="ghost ${swOn?'on':''}" id="rpSw" style="padding:4px 8px;font-size:11px">Swings</button><button class="ghost ${sigOn?'on':''}" id="rpSig" style="padding:4px 8px;font-size:11px">📣</button><span id="rpTools"></span><span style="flex:1"></span><button class="ghost" id="rpFs" style="padding:4px 8px;font-size:11px">⛶ ${T.rpLand}</button></div>
-  <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0"><span class="hint" style="margin:0;font-size:11px">${T.rpStratL}:</span><select id="rpStrat" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px"><option value="none">—</option>${strats.map(id=>`<option value="${id}" ${id===stratId?'selected':''}>${id} · ${lens.STRATS[id].name}</option>`).join('')}</select><label style="font-size:11px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="rpAuto" ${auto?'checked':''}>🤖 ${T.rpAutoL}</label></div>`;
-  tb.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>{if($('btTf')&&$('btTf').value===b.dataset.tf)return;if($('btTf'))$('btTf').value=b.dataset.tf;const keep=K[cur]?K[cur].t:null;load(keep);});
-  tb.querySelectorAll('[data-extra]').forEach(b=>b.onclick=()=>{if(TVC){TVC.toggleExtra(b.dataset.extra);refreshExtras();}});
-  $('rpN').onchange=()=>{NVIS=+$('rpN').value;localStorage.setItem('fc_rp_n',NVIS);fitView();};$('rpFit').onclick=()=>fitView();
-  $('rpSw').onclick=()=>{swOn=!swOn;localStorage.setItem('fc_rp_sw',swOn?'1':'0');$('rpSw').classList.toggle('on',swOn);markers();};$('rpSig').onclick=()=>{sigOn=!sigOn;localStorage.setItem('fc_rp_sig',sigOn?'1':'0');$('rpSig').classList.toggle('on',sigOn);markers();};
+  /* v114c: timeframe / indicators / fit / drawing tools / fullscreen now live INSIDE the chart's own bars (TradingView-style, see TVC.integrateBar) */
+  tb.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0"><span class="hint" style="margin:0;font-size:11px">${T.rpStratL}:</span><select id="rpStrat" style="background:var(--card2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px;font-size:11px"><option value="none">—</option>${strats.map(id=>`<option value="${id}" ${id===stratId?'selected':''}>${id} · ${lens.STRATS[id].name}</option>`).join('')}</select><label style="font-size:11px;display:flex;align-items:center;gap:3px"><input type="checkbox" id="rpAuto" ${auto?'checked':''}>🤖 ${T.rpAutoL}</label><span style="flex:1"></span><button class="ghost" id="rpFs" style="padding:4px 8px;font-size:11px">⛶ ${T.rpLand}</button></div>`;
   $('rpStrat').onchange=()=>{stratId=$('rpStrat').value;localStorage.setItem('fc_rp_strat',stratId);markers();stats();};
   $('rpAuto').onchange=()=>{auto=$('rpAuto').checked;localStorage.setItem('fc_rp_auto',auto?'1':'0');if(auto&&stratId==='none'){toast(T.rpPickStrat);}};
   $('rpFs').onclick=()=>fsToggle();}
-function refreshExtras(){const tb=$('rpTb');if(!tb)return;tb.querySelectorAll('[data-extra]').forEach(b=>b.classList.toggle('on',!!(TVC&&TVC.extras[b.dataset.extra])));}
+function integrateChartBar(H){try{H.integrateBar({nOptions:[60,120,240,400],getN:()=>NVIS,setN:n=>{NVIS=n;localStorage.setItem('fc_rp_n',NVIS);fitView();},onFullscreen:()=>fsToggle(),
+  toggles:[{label:'Swings',get:()=>swOn,set:v=>{swOn=v;localStorage.setItem('fc_rp_sw',swOn?'1':'0');markers();}},{label:'📣 '+((localStorage.getItem('fc_lang')||'fa')==='fa'?'سیگنال‌های استراتژی':'strategy signals'),get:()=>sigOn,set:v=>{sigOn=v;localStorage.setItem('fc_rp_sig',sigOn?'1':'0');markers();}}]});}catch(e){console.warn(e);}}
+function refreshExtras(){}
 
 async function fsToggle(force){const b=$('rpBox');const on=force!=null?force:!b.classList.contains('rpfs');b.classList.toggle('rpfs',on);document.body.classList.toggle('rpfsb',on);['rpLongF','rpShortF'].forEach(id=>{if($(id))$(id).style.display=on?'':'none';});$('rpFs').textContent=on?'✕':'⛶ '+t().rpLand;
   if(on){history.pushState({rpfs:1},'');try{await document.documentElement.requestFullscreen?.({navigationUI:'hide'});}catch(e){}try{await screen.orientation?.lock?.('landscape');}catch(e){if(window.innerWidth<window.innerHeight)toast('🔄 '+(t().rpRotate||'Rotate your phone for a wider chart'));}}
   else{try{screen.orientation?.unlock?.();}catch(e){}if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});}
-  setTimeout(()=>{if(K.length&&TVC){try{TVC.chart.resize();}catch(e){}fitView();}},350);}
+  setTimeout(()=>{if(K.length&&TVC){try{TVC.chart.resize();}catch(e){}fitView();_rfW=($('rpChart')||{}).clientWidth||0;}},350);setTimeout(()=>refitOnWidth(true),1200);}
 window.addEventListener('popstate',()=>{if($('rpBox')&&$('rpBox').classList.contains('rpfs'))fsToggle(false);});
-window.addEventListener('orientationchange',()=>setTimeout(()=>{if(TVC)try{TVC.chart.resize();}catch(e){}},300));
+/* v114b: the fullscreen fit used to run 350ms after the button press, i.e. BEFORE the phone actually rotated — bar spacing was computed from the
+   portrait width (≈2.7px/bar), so in landscape all candles were squeezed into a strip and the rest of the chart was blank (video 2026-11-22).
+   Now: refit whenever the chart element's width really changes (ResizeObserver), with a short debounce; orientationchange just triggers the same path. */
+let _rfT=null,_rfW=0;function refitOnWidth(force){const el=$('rpChart');if(!el||!TVC||!K.length)return;const w=el.clientWidth;if(!force&&Math.abs(w-_rfW)<24)return;_rfW=w;clearTimeout(_rfT);_rfT=setTimeout(()=>{try{TVC.chart.resize();}catch(e){}fitView();},120);}
+if(window.ResizeObserver){let ro=null;const arm=()=>{const el=$('rpChart');if(!el||ro)return;ro=new ResizeObserver(()=>refitOnWidth(false));ro.observe(el);};arm();document.addEventListener('DOMContentLoaded',arm);setTimeout(arm,2000);}
+window.addEventListener('orientationchange',()=>{setTimeout(()=>refitOnWidth(true),300);setTimeout(()=>refitOnWidth(true),900);});
+window.addEventListener('resize',()=>refitOnWidth(false));
 async function load(keepTime){const box=$('rpBox');box.style.display='';const q=(($('btSym')&&$('btSym').value)||'BTCUSDT').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(.*?)(USDT)?$/,'$1USDT');const tff=($('btTf')&&$('btTf').value)||'4H';$('rpMsg').textContent=t().loading;
   try{const [k,h]=await Promise.all([klinesAny(q,tff,1000),lens.HTF[tff]!==tff?klinesAny(q,lens.HTF[tff],300):null]);if(!k||k.length<100)throw new Error(t().lensNoData);K=k;HK=h||k;sym=q;tf=tff;ATR=atr(K);
     try{LS=lens.series(K,h||null);LX=lens.labSeries(K,LS);}catch(e){LS=null;LX=null;}

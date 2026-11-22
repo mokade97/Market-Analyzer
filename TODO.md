@@ -28,3 +28,5 @@
 - Laws of Trading checklist (7 questions) in the roundtable risk-manager prompt (agents.js).
 - Screener: tvScan falls back to OKX tickers (price/24h/volume only; indicator columns null) when scanner.tradingview.com fails.
 Parked items from the previous list are now all applied; the list is empty.
+- v114b (video 2026-11-22): landscape replay showed candles squeezed into a strip + blank chart. Cause: fullscreen fit ran 350ms after the tap, before the phone rotated → bar spacing from portrait width. Fix: ResizeObserver-based refit on real width change (replay.js), fit() ignores widths <160px, min 12 visible bars on both scroll limits (tvchart.js).
+- v114c: replay chart integrated TradingView-style — the duplicate toolbar above the chart is gone; timeframes use the Pro header, extra indicators (Ichimoku…Stoch, Swings, strategy signals) live in a ƒx+ dropdown in the header, visible-candle count in ⤢, the Pro fullscreen button routes to the app fullscreen (orientation lock), ✋ cancel + ↶ undo appended to the Pro drawing bar (TVChart.integrateBar). Compact header CSS on phones.
