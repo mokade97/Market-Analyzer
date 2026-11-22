@@ -3,7 +3,7 @@
 import re,pathlib
 root=pathlib.Path(__file__).parent
 html=(root/'src/index.template.html').read_text(encoding='utf-8')
-for f in ['screener.js','features.js','lens.js','lensui.js','agents.js','klinecharts.js','klpro.js','tvchart.js','lwc.js','btchart.js','replay.js','backtest.js','watcher.js','flow.js','ledger.js','botui.js','paper.js','help.js']:
+for f in ['screener.js','features.js','lens.js','lensui.js','agents.js','klinecharts.js','klpro.js','tvchart.js','lwc.js','btchart.js','replay.js','backtest.js','chartbar.js','watcher.js','flow.js','ledger.js','botui.js','paper.js','help.js']:
     js=(root/'src'/f).read_text(encoding='utf-8')
     html=html.replace(f'<script src="{f}"></script>',f'<script>/* ==== {f} ==== */\n'+js+'\n</script>')
 css=(root/'src'/'klpro.css').read_text(encoding='utf-8')
