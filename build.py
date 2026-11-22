@@ -12,6 +12,12 @@ assert 'klpro.css' not in html.replace('==== klpro.css ====','')
 ver=re.search(r"fcalc-(v\d+)",(root/'sw.js').read_text(encoding='utf-8')).group(1)
 html=re.sub(r'(<small id="appVer"[^>]*>)v\d+(</small>)',lambda m:m.group(1)+ver+m.group(2),html)
 print('app version label ->',ver)
+# audit(Kimi) #9: the SW cache name always carries a hash of the bundle, so a forgotten manual bump can never serve a stale offline shell
+import hashlib
+swp=root/'sw.js';sw=swp.read_text(encoding='utf-8');h=hashlib.sha256(html.encode('utf-8')).hexdigest()[:8]
+base=re.search(r"fcalc-(v\d+[a-z]?)",sw).group(1)
+sw2=re.sub(r"const CACHE = 'fcalc-[^']+'",f"const CACHE = 'fcalc-{base}-{h}'",sw)
+if sw2!=sw: swp.write_text(sw2,encoding='utf-8');print('sw cache ->',f'fcalc-{base}-{h}')
 assert '<script src=' not in html, 'unbundled script left'
 (root/'index.html').write_text(html,encoding='utf-8')
 print('built index.html',len(html))
