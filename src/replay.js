@@ -33,7 +33,9 @@ function draw(){if(!K.length||!window.TVChart)return;if(TVC){try{TVC.destroy();}
   onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;setTimeout(()=>load(keep),0);return null;},
   onLoaded:H=>{markers();priceLines();H.fit(NVIS);integrateChartBar(H);}});
  $('rpLegend').innerHTML='';}
-function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}}
+/* v114d: some Android WebViews stop repainting the candle pane during auto-play (only the time axis kept moving in the user's screenshots).
+   A throttled resize() forces a full layout+redraw; cheap at replay speeds. */
+let _lastForce=0;function stepRender(){if(!TVC)return draw();markers();priceLines();try{TVC.chart.scrollToRealTime();}catch(e){}const now=Date.now();if(now-_lastForce>700){_lastForce=now;try{TVC.chart.resize();}catch(e){}}}
 function fitView(n){TVC&&TVC.fit(n||NVIS);}
 function markers(){if(!TVC)return;const m=[];const end=cur;
   if(sigOn&&stratId!=='none'){for(let i=Math.max(2,end-600);i<=end;i++){const sg=stratSig(i);if(!sg)continue;const L=sg==='LONG';m.push({kind:'mark',t:K[i].t,price:L?K[i].l:K[i].h,side:sg,color:L?'rgba(38,166,154,.75)':'rgba(239,83,80,.75)'});}}

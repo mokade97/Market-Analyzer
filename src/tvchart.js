@@ -87,7 +87,8 @@ const periodOf=tf=>{const m=/^(\d+)([mHDW])$/.exec(tf);if(!m)return {multiplier:
 const tfOf=p=>p.text||(p.multiplier+{minute:'m',hour:'H',day:'D',week:'W'}[p.timespan]);
 /* ---------- mount ---------- */
 function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.el==='string'?document.getElementById(o.el):o.el;if(!el)return null;el.innerHTML='';el.style.direction='ltr';
- const H={el,sym:o.sym,tf:o.tf,bars:o.bars||[],chart:null,pro:null,marks:[],lines:{},ext:{},extras:{},_sub:null,_fresh:true,_dkey:null,_saveT:null};
+ const H={el,sym:o.sym,tf:o.tf,bars:o.bars||[],chart:null,pro:null,marks:[],lines:{},ext:{},extras:{},_sub:null,_fresh:true,_dkey:null,_saveT:null,_id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),_ac:(typeof AbortController!=='undefined'?new AbortController():null)};
+ const SIG=H._ac?{signal:H._ac.signal}:{};
  const light=o.light!=null?o.light:(localStorage.getItem('fc_theme')||'dark')==='light';
  const prec=o.precision!=null?o.precision:(()=>{const c=H.bars.length?H.bars[H.bars.length-1].c:1;return c>=1000?1:c>=10?2:c>=1?3:c>=0.01?5:7;})();
  const datafeed={searchSymbols:async()=>[{ticker:H.sym,name:H.sym,pricePrecision:prec}],
@@ -110,7 +111,7 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  sepShim();H._sepTimer=setInterval(sepShim,1500);
  // --- keep canvas size in sync with the container (fullscreen / rotation / keyboard) ---
  try{let rt=null;H._ro=new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(()=>{try{H.chart.resize();}catch(e){}},60);});H._ro.observe(el);}catch(e){}
- el.addEventListener('click',ev=>{const it=ev.target.closest&&ev.target.closest('.klinecharts-pro-period-bar .item');if(!it)return;const tx=(it.textContent||'').trim();if(/اسکرین‌شات|Screenshot|screenshot/.test(tx)){ev.stopImmediatePropagation();ev.preventDefault();screenshot(H);}},true);
+ el.addEventListener('click',ev=>{const it=ev.target.closest&&ev.target.closest('.klinecharts-pro-period-bar .item');if(!it)return;const tx=(it.textContent||'').trim();if(/اسکرین‌شات|Screenshot|screenshot/.test(tx)){ev.stopImmediatePropagation();ev.preventDefault();screenshot(H);}},Object.assign({capture:true},SIG));
  // --- API ---
  H.setBars=bars=>{H.bars=bars||[];H._fresh=true;H.pro.setSymbol({ticker:H.sym,name:H.sym,pricePrecision:prec,volumePrecision:0});};
  H.push=bar=>{if(H._sub)H._sub(toKL(bar));else try{H.chart.updateData(toKL(bar));}catch(e){}};
@@ -125,12 +126,14 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.setTheme=l=>{try{H.pro.setTheme(l?'light':'dark');}catch(e){}};
  /* v114c: TradingView-style integration — put our extras into the Pro chart's own bars instead of a second toolbar above the chart.
     opts: {toggles:[{label,get,set}], nOptions:[60,...], getN, setN, onFullscreen, fsLabel} */
- H.integrateBar=opts=>{opts=opts||{};const bar=el.querySelector('.klinecharts-pro-period-bar');if(!bar||bar.dataset.tvInt)return;bar.dataset.tvInt='1';const isFa=(localStorage.getItem('fc_lang')||'fa')==='fa';
+ H.integrateBar=opts=>{opts=opts||{};if(H._dead||!H.chart)return;const bar=el.querySelector('.klinecharts-pro-period-bar');if(!bar)return;const needBar=bar.dataset.tvInt!==H._id;if(needBar){if(bar.dataset.tvInt){bar.querySelectorAll('.tv-int').forEach(x=>x.remove());}bar.dataset.tvInt=H._id;}const isFa=(localStorage.getItem('fc_lang')||'fa')==='fa';
+  if(needBar){
   const mkItem=(txt,title)=>{const d=document.createElement('div');d.className='item tools tv-int';d.title=title||'';d.style.cssText='display:flex;align-items:center;gap:4px;padding:0 8px;height:100%;font-size:12px;white-space:nowrap';d.innerHTML='<span>'+txt+'</span>';return d;};
-  let pop=null;const closePop=()=>{if(pop){pop.remove();pop=null;}};document.addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target)&&!e.target.closest('.tv-int'))closePop();},true);
+  let pop=null;const closePop=()=>{if(pop){pop.remove();pop=null;}};document.addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target)&&!e.target.closest('.tv-int'))closePop();},Object.assign({capture:true},SIG));
   const openPop=(anchor,build)=>{if(pop&&pop._for===anchor){closePop();return;}closePop();pop=document.createElement('div');pop._for=anchor;pop.className='tv-int-pop';pop.style.cssText='position:absolute;z-index:130;top:40px;background:var(--klinecharts-pro-popover-background-color,#1f2432);color:var(--klinecharts-pro-text-color,#ddd);border:1px solid var(--klinecharts-pro-border-color,#333);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:6px;min-width:160px;max-height:60vh;overflow:auto;font-size:12px;direction:ltr';
    const r=anchor.getBoundingClientRect(),er=el.getBoundingClientRect();pop.style.left=Math.max(4,Math.min(r.left-er.left,er.width-200))+'px';build(pop);el.appendChild(pop);};
   const row=(label,on,fn)=>{const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer';d.innerHTML='<span style="width:14px;text-align:center;color:var(--klinecharts-pro-primary-color,#2962ff)">'+(on?'✓':'')+'</span><span>'+label+'</span>';d.onclick=()=>{const v=fn();d.firstChild.textContent=v?'✓':'';};return d;};
+  const mc=bar.querySelector('.menu-container');if(mc&&!mc.dataset.tvMc){mc.dataset.tvMc='1';mc.addEventListener('click',e=>{if(e.target===mc){const sv=mc.querySelector('svg');if(sv)sv.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});}
   const after=[...bar.querySelectorAll('.item.tools')].find(x=>/اندیکاتور|Indicator/i.test(x.textContent))||bar.lastElementChild;
   // ƒx+ : our extra indicators + caller toggles
   const fx=mkItem('ƒx<sup>+</sup>',isFa?'اندیکاتورهای بیشتر':'more indicators');fx.onclick=()=>openPop(fx,pp=>{EXTRA.forEach(([n,label])=>pp.appendChild(row(label,!!H.extras[n],()=>H.toggleExtra(n))));(opts.toggles||[]).forEach(t=>pp.appendChild(row(t.label,!!t.get(),()=>{t.set(!t.get());return !!t.get();})));});
@@ -139,28 +142,29 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
   if(opts.setN){const fit=mkItem('⤢ '+(opts.getN?opts.getN():''),isFa?'تعداد کندل قابل‌مشاهده':'visible candles');fit.onclick=()=>openPop(fit,pp=>{(opts.nOptions||[60,120,240,400]).forEach(n=>pp.appendChild(row(n+(isFa?' کندل':' bars'),opts.getN&&opts.getN()===n,()=>{opts.setN(n);fit.firstChild.textContent='⤢ '+n;closePop();return true;})));});fx.insertAdjacentElement('afterend',fit);}
   // fullscreen: route the Pro button to the app's fullscreen (orientation lock + layout)
   if(opts.onFullscreen){const fsIt=[...bar.querySelectorAll('.item.tools')].find(x=>/تمام‌صفحه|Full/i.test(x.textContent));if(fsIt){fsIt.addEventListener('click',ev=>{ev.stopImmediatePropagation();ev.preventDefault();opts.onFullscreen();},true);}}
+  }
   // drawing bar: ✋ cancel + ↶ undo, styled like the Pro items
-  const db=el.querySelector('.klinecharts-pro-drawing-bar');if(db&&!db.dataset.tvInt){db.dataset.tvInt='1';const mk=(txt,title,fn)=>{const d=document.createElement('div');d.className='item';d.title=title;d.innerHTML='<span class="icon-overlay" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px">'+txt+'</span>';d.onclick=fn;return d;};
-   const sp=document.createElement('span');sp.className='split-line';db.appendChild(sp);db.appendChild(mk('✋',isFa?'لغو ترسیم / آزادکردن چارت':'cancel drawing / free the chart',()=>cancelDrawing(H)));db.appendChild(mk('↶',isFa?'حذف آخرین ترسیم':'undo last drawing',()=>{const all=allOverlays(H);const last=all[all.length-1];if(last){try{H.chart.removeOverlay({id:last.id});}catch(e){}saveDrawings(H,true);}}));}
+  const db=el.querySelector('.klinecharts-pro-drawing-bar');if(db&&db.dataset.tvInt!==H._id){db.querySelectorAll('.tv-int-d').forEach(x=>x.remove());db.dataset.tvInt=H._id;const mk=(txt,title,fn)=>{const d=document.createElement('div');d.className='item tv-int-d';d.title=title;d.innerHTML='<span class="icon-overlay" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px">'+txt+'</span>';d.onclick=fn;return d;};
+   const sp=document.createElement('span');sp.className='split-line tv-int-d';db.appendChild(sp);db.appendChild(mk('✋',isFa?'لغو ترسیم / آزادکردن چارت':'cancel drawing / free the chart',()=>cancelDrawing(H)));db.appendChild(mk('↶',isFa?'حذف آخرین ترسیم':'undo last drawing',()=>{const all=allOverlays(H);const last=all[all.length-1];if(last){try{H.chart.removeOverlay({id:last.id});}catch(e){}saveDrawings(H,true);}}));}
   // re-apply after Pro re-renders its bar (period change rebuilds it)
-  if(!H._intObs){H._intObs=new MutationObserver(()=>{const b2=el.querySelector('.klinecharts-pro-period-bar');if(b2&&!b2.dataset.tvInt){setTimeout(()=>H.integrateBar(opts),0);}});H._intObs.observe(el,{childList:true,subtree:true});}
+  if(!H._intObs){H._intObs=new MutationObserver(()=>{if(H._dead)return;const b2=el.querySelector('.klinecharts-pro-period-bar'),d2=el.querySelector('.klinecharts-pro-drawing-bar');if((b2&&b2.dataset.tvInt!==H._id)||(d2&&d2.dataset.tvInt!==H._id)){setTimeout(()=>H.integrateBar(opts),0);}});H._intObs.observe(el,{childList:true,subtree:true});}
  };
  H.saveDrawings=()=>saveDrawings(H,true);
  H.toolBar=()=>toolBar(H);
  H.screenshot=()=>screenshot(H);
- H.destroy=()=>{saveDrawings(H,true);clearInterval(H._saveT);clearInterval(H._sepTimer);try{H._ro&&H._ro.disconnect();}catch(e){}try{KL().dispose(H.chart);}catch(e){}el.innerHTML='';H.chart=null;};
+ H.destroy=()=>{H._dead=true;saveDrawings(H,true);clearInterval(H._saveT);clearInterval(H._sepTimer);try{H._ro&&H._ro.disconnect();}catch(e){}try{H._intObs&&H._intObs.disconnect();}catch(e){}try{H._ac&&H._ac.abort();}catch(e){}try{KL().dispose(H.chart);}catch(e){}el.innerHTML='';H.chart=null;};
  H._saveT=setInterval(()=>saveDrawings(H),2000);
  /* v114 FREEZE FIX: KLineCharts enters a sticky 'long-tap crosshair' mode when the finger rests >=500ms before dragging (common in fullscreen after drawing);
     while that mode is set, drags move the crosshair instead of panning and it survives touchend — so the chart feels frozen. Release the mode on every touchend (TradingView behaviour). */
  (function(){const ev=Object.values(H.chart).find(v=>v&&typeof v==='object'&&('_touchCoordinate' in v));if(!ev)return;H._ev=ev;const rel=()=>{if(window.__tvNoRel)return;if(ev._touchCoordinate!==null&&ev._touchCoordinate!==undefined){ev._touchCoordinate=null;try{H.chart.getChartStore().getTooltipStore().setCrosshair();}catch(e){}}};
-  H.el.addEventListener('touchend',rel,{passive:true});H.el.addEventListener('touchcancel',rel,{passive:true});
+  H.el.addEventListener('touchend',rel,Object.assign({passive:true},SIG));H.el.addEventListener('touchcancel',rel,Object.assign({passive:true},SIG));
   /* a touch that lands on a LOCKED (unselected) drawing must start a pan, not a dead 'pressed overlay' gesture */
   const oTS=ev.touchStartEvent;ev.touchStartEvent=function(t){const r=oTS.apply(this,arguments);try{const cs=H.chart.getChartStore(),st=cs.getOverlayStore();const pi=st.getPressedInstanceInfo&&st.getPressedInstanceInfo();
     if(pi&&pi.instance&&pi.instance.lock&&!pi.instance.isDrawing()){st.setPressedInstanceInfo({paneId:'',instance:null,figureType:0,figureKey:'',figureIndex:-1,attrsIndex:-1});
       const w=ev._findWidgetByEvent(t);if(w&&w.widget){const e2=ev._makeWidgetEvent(t,w.widget);ev._startScrollCoordinate={x:e2.x,y:e2.y};ev._flingStartTime=Date.now();ev._touchZoomed=false;cs.getTimeScaleStore().startScroll();}}}catch(e){}return r;};})();
  /* v114: long-press (650ms without moving) cancels an unfinished drawing and frees pan/zoom — touch users have no Esc key */
- (function(){let t=null,x0=0,y0=0;const el=H.el;el.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;clearTimeout(t);t=setTimeout(()=>{cancelDrawing(H);},650);},{passive:true});
-  el.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-x0)>8||Math.abs(e.clientY-y0)>8)clearTimeout(t);},{passive:true});['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(t),{passive:true}));})();
+ (function(){let t=null,x0=0,y0=0;const el=H.el;el.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;clearTimeout(t);t=setTimeout(()=>{cancelDrawing(H);},650);},Object.assign({passive:true},SIG));
+  el.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-x0)>8||Math.abs(e.clientY-y0)>8)clearTimeout(t);},Object.assign({passive:true},SIG));['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(t),Object.assign({passive:true},SIG)));})();
  // extras bar (indicators that are not in the Pro modal)
  if(o.extrasBar!==false)buildExtras(H,o);
  return H;}
