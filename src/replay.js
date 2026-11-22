@@ -29,7 +29,7 @@ function stats(){if(!K.length||!K[cur])return;const n=trades.length,w=trades.fil
   $('rpLog').innerHTML=trades.slice(-10).reverse().map(x=>`<span class="pill" style="font-size:11px;background:${x.rr>0?'rgba(22,163,74,.15)':'rgba(220,38,38,.15)'}">${x.auto?'🤖':''}${x.side} ${R(x.entry)}→${R(x.exit)} ${x.why} ${x.rr>0?'+':''}${x.rr}R</span>`).join(' ');}
 /* ==== Chart layer: TVChart (KLineChart Pro) — data pushed bar-by-bar so the future is never in the chart ==== */
 function draw(){if(!K.length||!window.TVChart)return;if(TVC){try{TVC.destroy();}catch(e){}TVC=null;}
- TVC=TVChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
+ TVC=window.__rpH=TVChart.mount({el:'rpChart',sym,tf,bars:K.slice(0,cur+1),periods:['15m','1H','4H','1D'],mainIndicators:['EMA'],subIndicators:['VOL'],extrasBar:false,
   onPeriod:async nt=>{if($('btTf'))$('btTf').value=nt;const keep=K[cur]?K[cur].t:null;setTimeout(()=>load(keep),0);return null;},
   onLoaded:H=>{markers();priceLines();H.fit(NVIS);const tl=$('rpTools');if(tl){tl.innerHTML='';tl.appendChild(H.toolBar());}}});
  $('rpLegend').innerHTML='';}

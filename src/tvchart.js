@@ -76,7 +76,12 @@ function toolBar(H){const isFa=(localStorage.getItem('fc_lang')||'fa')==='fa';co
  const bv=btn('👁',isFa?'نمایش/پنهان':'show/hide',()=>{vis=!vis;bv.style.opacity=vis?'1':'.5';H.chart.overrideOverlay({visible:vis});});
  const bd=btn('🗑',isFa?'حذف همه‌ی ترسیم‌ها':'delete all',()=>{if(!confirm(isFa?'همه‌ی ترسیم‌های این چارت حذف شود؟':'Delete all drawings?'))return;allOverlays(H).forEach(o=>{try{H.chart.removeOverlay({id:o.id});}catch(e){}});saveDrawings(H,true);});
  const bu=btn('↶',isFa?'حذف آخرین ترسیم':'undo last',()=>{const all=allOverlays(H);const last=all[all.length-1];if(last){try{H.chart.removeOverlay({id:last.id});}catch(e){}saveDrawings(H,true);}});
- [sel,bm,bl,bv,bu,bd].forEach(x=>wrap.appendChild(x));return wrap;}
+ /* v114: ✋ escape — an unfinished drawing (tool picked, first point placed) swallows every pan/zoom gesture; this drops it and re-enables scroll/zoom */
+ const bh=btn('✋',isFa?'لغو ترسیم و آزادکردن چارت':'cancel drawing / free the chart',()=>cancelDrawing(H));
+ [sel,bh,bm,bl,bv,bu,bd].forEach(x=>wrap.appendChild(x));return wrap;}
+function cancelDrawing(H){if(!H.chart)return;try{const st=H.chart.getChartStore().getOverlayStore();const pi=st.getProgressInstanceInfo&&st.getProgressInstanceInfo();if(pi&&pi.instance){try{H.chart.removeOverlay({id:pi.instance.id});}catch(e){}}
+  const panes=['candle_pane'].concat((H.chart.getPaneOptions?H.chart.getPaneOptions():[]).map(x=>x.id).filter(Boolean));panes.forEach(pid=>{try{(st.getInstances(pid)||[]).forEach(o=>{if(o.isDrawing&&o.isDrawing())H.chart.removeOverlay({id:o.id});});}catch(e){}});}catch(e){}
+  try{H.chart.setScrollEnabled(true);H.chart.setZoomEnabled(true);}catch(e){}if(H._ev){H._ev._touchCoordinate=null;}H._drawing=0;}
 const toKL=b=>({timestamp:b.t,open:b.o,high:b.h,low:b.l,close:b.c,volume:b.v||0});
 const periodOf=tf=>{const m=/^(\d+)([mHDW])$/.exec(tf);if(!m)return {multiplier:1,timespan:'hour',text:tf};return {multiplier:+m[1],timespan:{m:'minute',H:'hour',D:'day',W:'week'}[m[2]],text:tf};};
 const tfOf=p=>p.text||(p.multiplier+{minute:'m',hour:'H',day:'D',week:'W'}[p.timespan]);
@@ -123,6 +128,17 @@ function mount(o){registerAll();if(!KL()||!PRO())return null;const el=typeof o.e
  H.screenshot=()=>screenshot(H);
  H.destroy=()=>{saveDrawings(H,true);clearInterval(H._saveT);clearInterval(H._sepTimer);try{H._ro&&H._ro.disconnect();}catch(e){}try{KL().dispose(H.chart);}catch(e){}el.innerHTML='';H.chart=null;};
  H._saveT=setInterval(()=>saveDrawings(H),2000);
+ /* v114 FREEZE FIX: KLineCharts enters a sticky 'long-tap crosshair' mode when the finger rests >=500ms before dragging (common in fullscreen after drawing);
+    while that mode is set, drags move the crosshair instead of panning and it survives touchend — so the chart feels frozen. Release the mode on every touchend (TradingView behaviour). */
+ (function(){const ev=Object.values(H.chart).find(v=>v&&typeof v==='object'&&('_touchCoordinate' in v));if(!ev)return;H._ev=ev;const rel=()=>{if(window.__tvNoRel)return;if(ev._touchCoordinate!==null&&ev._touchCoordinate!==undefined){ev._touchCoordinate=null;try{H.chart.getChartStore().getTooltipStore().setCrosshair();}catch(e){}}};
+  H.el.addEventListener('touchend',rel,{passive:true});H.el.addEventListener('touchcancel',rel,{passive:true});
+  /* a touch that lands on a LOCKED (unselected) drawing must start a pan, not a dead 'pressed overlay' gesture */
+  const oTS=ev.touchStartEvent;ev.touchStartEvent=function(t){const r=oTS.apply(this,arguments);try{const cs=H.chart.getChartStore(),st=cs.getOverlayStore();const pi=st.getPressedInstanceInfo&&st.getPressedInstanceInfo();
+    if(pi&&pi.instance&&pi.instance.lock&&!pi.instance.isDrawing()){st.setPressedInstanceInfo({paneId:'',instance:null,figureType:0,figureKey:'',figureIndex:-1,attrsIndex:-1});
+      const w=ev._findWidgetByEvent(t);if(w&&w.widget){const e2=ev._makeWidgetEvent(t,w.widget);ev._startScrollCoordinate={x:e2.x,y:e2.y};ev._flingStartTime=Date.now();ev._touchZoomed=false;cs.getTimeScaleStore().startScroll();}}}catch(e){}return r;};})();
+ /* v114: long-press (650ms without moving) cancels an unfinished drawing and frees pan/zoom — touch users have no Esc key */
+ (function(){let t=null,x0=0,y0=0;const el=H.el;el.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;clearTimeout(t);t=setTimeout(()=>{cancelDrawing(H);},650);},{passive:true});
+  el.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-x0)>8||Math.abs(e.clientY-y0)>8)clearTimeout(t);},{passive:true});['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(t),{passive:true}));})();
  // extras bar (indicators that are not in the Pro modal)
  if(o.extrasBar!==false)buildExtras(H,o);
  return H;}
@@ -144,7 +160,13 @@ function applyExt(H,id){if(!H.chart)return;const e=H.ext[id];if(!e)return;const 
 const dkey=H=>'fc_tv_draw_'+H.sym;
 // drawings are anchored by timestamp+price, so they are stored per SYMBOL (not per timeframe) like TradingView; one-time merge of old per-timeframe keys
 function migrateDraw(H){const k=dkey(H);if(localStorage.getItem(k)!=null)return;const acc=[];Object.keys(localStorage).filter(x=>x.startsWith(k+'_')).forEach(x=>{try{acc.push(...JSON.parse(localStorage.getItem(x)));}catch(e){}localStorage.removeItem(x);});if(acc.length)localStorage.setItem(k,JSON.stringify(acc));}
-function trackOverlays(H){const c=H.chart;if(!c||c.__tvTracked)return;c.__tvTracked=true;H._ids=new Set();const orig=c.createOverlay.bind(c);c.createOverlay=function(v,paneId){const ids=orig(v,paneId);const grp=(v&&v.groupId)||(Array.isArray(v)&&v[0]&&v[0].groupId)||'';if(!/^tv/.test(grp)){(Array.isArray(ids)?ids:[ids]).forEach(id=>{if(id)H._ids.add(id);});}return ids;};}
+/* v114 touch-safe drawings: on touch screens a finished drawing is locked (one-finger drag near it PANS instead of grabbing it — the cause of the
+   'chart stuck / lines jump around' report). Tapping a drawing selects it and unlocks it for dragging; tapping elsewhere deselects and re-locks (TradingView behaviour). */
+const IS_TOUCH=(typeof window!=='undefined')&&(('ontouchstart' in window)||(navigator.maxTouchPoints>0));
+function touchSafe(H,o){if(!IS_TOUCH||!o||typeof o!=='object'||/^tv/.test(o.groupId||''))return o;const oS=o.onSelected,oD=o.onDeselected,oE=o.onDrawEnd;const lk=(e,v)=>{try{e.overlay.setLock(v);}catch(x){}};
+  const w=Object.assign({},o,{onDrawEnd:e=>{lk(e,true);return oE?oE(e):void 0;},onSelected:e=>{lk(e,false);return oS?oS(e):void 0;},onDeselected:e=>{lk(e,true);return oD?oD(e):void 0;}});
+  if(w.points&&w.points.length)w.lock=true;return w;}
+function trackOverlays(H){const c=H.chart;if(!c||c.__tvTracked)return;c.__tvTracked=true;H._ids=new Set();const orig=c.createOverlay.bind(c);c.createOverlay=function(v,paneId){v=Array.isArray(v)?v.map(x=>touchSafe(H,x)):touchSafe(H,v);const ids=orig(v,paneId);const grp=(v&&v.groupId)||(Array.isArray(v)&&v[0]&&v[0].groupId)||'';if(!/^tv/.test(grp)){(Array.isArray(ids)?ids:[ids]).forEach(id=>{if(id)H._ids.add(id);});}return ids;};}
 function allOverlays(H){const out=[];if(!H._ids)return out;H._ids.forEach(id=>{const o=H.chart.getOverlayById(id);if(o)out.push(o);else H._ids.delete(id);});return out;}
 function saveDrawings(H,force){if(!H.chart)return;try{const all=allOverlays(H);const mine=all.filter(o=>!o.groupId||!/^tv/.test(o.groupId)).filter(o=>o.points&&o.points.length&&o.points.every(p=>p.timestamp!=null&&p.value!=null)).map(o=>({name:o.name,points:o.points.map(p=>({timestamp:p.timestamp,value:p.value})),styles:o.styles||undefined,extendData:typeof o.extendData==='string'?o.extendData:undefined,lock:!!o.lock}));
   const j=JSON.stringify(mine);if(force||j!==H._dlast){H._dlast=j;if(mine.length)localStorage.setItem(dkey(H),j);else if(H._dkey===dkey(H))localStorage.removeItem(dkey(H));H._dkey=dkey(H);}}catch(e){}}

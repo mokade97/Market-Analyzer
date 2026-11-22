@@ -62,7 +62,17 @@ const ex=()=>EX[$('exchange').value]||EX.okx;
 
 /* ---------- TradingView scanner (live, same data as tradingview.com screener) ---------- */
 const TV_URL='https://scanner.tradingview.com/crypto/scan';
-async function tvScan(body){/* no Content-Type header: TradingView CORS preflight rejects it */const r=await fetch(TV_URL,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw new Error('TradingView HTTP '+r.status);return r.json();}
+async function tvScan(body){/* no Content-Type header: TradingView CORS preflight rejects it */try{const r=await fetch(TV_URL,{method:'POST',body:JSON.stringify(body)});if(!r.ok)throw new Error('TradingView HTTP '+r.status);window.__tvDown=false;return await r.json();}
+  catch(e){/* v114: TradingView's public scanner endpoint is unofficial and may vanish — degrade to OKX tickers (price / 24h change / volume only; indicator columns come back null) so the list, quick refresh and price alerts keep working */
+   window.__tvDown=true;console.warn('tvScan fallback -> OKX',e&&e.message);return okxScanFallback(body);}}
+let _okxT=null,_okxAt=0;
+async function okxScanFallback(body){if(!_okxT||Date.now()-_okxAt>60000){const r=await fetch('https://www.okx.com/api/v5/market/tickers?instType=SWAP');const j=await r.json();_okxT=(j.data||[]).filter(x=>/-USDT-SWAP$/.test(x.instId));_okxAt=Date.now();}
+  const cols=body.columns||[];const row=x=>{const last=+x.last,open=+x.open24h,base=x.instId.replace('-USDT-SWAP','');const name=base+'USDT.P';const vol=+x.volCcy24h*last||+x.vol24h||0;
+   const d=cols.map(c=>c==='name'?name:c==='close'?last:c==='change'?(open?(last/open-1)*100:null):c==='volume'?vol:c==='update_mode'?'okx_fallback':null);return {s:'OKX:'+name,d};};
+  let list=_okxT;if(body.symbols&&body.symbols.tickers){const want=new Set(body.symbols.tickers.map(t=>t.split(':').pop().replace(/\.P$/,'').replace(/USDT$/,'')));list=_okxT.filter(x=>want.has(x.instId.replace('-USDT-SWAP','')));
+   // keep the caller's exchange prefix so lookups by ticker string still match
+   const pref={};body.symbols.tickers.forEach(t=>{pref[t.split(':').pop().replace(/\.P$/,'').replace(/USDT$/,'')]=t;});return {data:list.map(x=>{const r=row(x);const b=x.instId.replace('-USDT-SWAP','');if(pref[b])r.s=pref[b];return r;})};}
+  list=[...list].sort((a,b)=>(+b.volCcy24h*+b.last)-(+a.volCcy24h*+a.last));if(body.range)list=list.slice(body.range[0],body.range[1]);return {data:list.map(row)};}
 const tvExch=()=>$('exchange').value.toUpperCase();window.tvExchNow=tvExch;window.renderRows=()=>renderRows();
 const tvTf={'15m':'15','1H':'60','4H':'240','1D':''};
 const tvCol=(k,t)=>t?`${k}|${t}`:k; // daily columns have no suffix on TradingView
