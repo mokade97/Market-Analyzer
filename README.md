@@ -204,3 +204,9 @@ node tests/run.js
 ---
 
 کتابخانه‌های شخص ثالث و مجوزها: `THIRD_PARTY.md`.
+
+## v127 — 🎓 Trading Academy
+- New header button 🎓 (next to 📓 journal) → `#page-learn`. Curriculum in `src/learn_data1..3.js` (9 modules, 38 lessons, 55 exercises: local quizzes, AI-graded exercises, hands-on tasks in Backtest Studio / Paper Exchange / Journal). Reference library (22 books) and the tutor skill prompt `LEARN_SKILL` live in `learn_data3.js`; it embeds the app's own research evidence (TEP/VAB/ICHI stats, negative results).
+- UI/logic in `src/learn.js`: progress in `localStorage.fc_learn_prog` (done / quiz % / tutor grade), lesson view with markdown-lite, Socratic hints, "explain simpler / go deeper", free tutor chat.
+- Separate **Tutor AI** settings card (`fc_tut_prov/base/key/model`): OpenAI, OpenRouter, Anthropic (messages API, browser CORS header), Gemini (generateContent with systemInstruction), DeepSeek, **AvalAI** (`https://api.avalai.ir/v1`, OpenAI-compatible, Iran), custom. Host preset dropdown, model datalist, list-models, test. Falls back to the chat OpenAI/Gemini key when empty.
+- Tests: `tests/learn_check.js` (jsdom e2e: render, quiz, grading → progress, provider URL/headers for AvalAI/Anthropic/Gemini, chat).
