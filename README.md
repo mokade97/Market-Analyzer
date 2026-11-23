@@ -235,3 +235,12 @@ node tests/run.js
 - **Bot**: `judgeShadow:true` + `judgeShadowMinBudgetFrac:0.5` (v129) is the fix for "the judge is only called after a setup passes the rules, so the free quota is never used" — the judge now also scores shadow-only cards while ≥50 % of the daily LLM budget remains, so the shadow-judge scorecard reaches n≥40 faster.
 - TODO: 35 more items ticked (several were already shipped in v125–v127 and only needed verification). #140 and #220 closed by a 5-year backtest (10 OKX perps, 4H; `research/REPORT.md` §۶): retest entry destroys the VAB edge (+0.13R → +0.03R, DD ×2) and an ADX regime filter is not stable across years/symbols — neither is ported. **TODO list is now empty.**
 - Tests: `node tests/run.js` → 78 pass.
+
+## v131 — 🎯 Academy Chart Lab, LWC chart tab, UI polish
+- **Chart tab**: new source **LWC** (our Lightweight-Charts engine, `loadLw` in `screener.js`): live klines via `klinesAny`, 20-s refresh (`H.push`), in-chart timeframe switch, drawings/indicators as in Backtest/Replay. TheFreeChart & FreeCharting removed (hidden buttons, code kept). Controls in one compact row; browser button is icon-only ↗.
+- **Academy Chart Lab** (`src/learnchart.js`, home button 🎯 + `type:'chart'` exercises in m1l2/m1l3/m3l3/m5l5/m8l1):
+  - deterministic tasks graded by the app with ATR tolerance — swing high/low, open FVG, live order block, nearest unbroken R/S, logical stop, 20-bar hidden prediction (reveals the real bars afterwards), trend-line drawing (anchors must sit on confirmed swings); the answer is drawn on the chart; score persisted in `fc_learn_prog.chartlab`;
+  - **AI-authored tasks**: the tutor model gets a compact numeric description of the visible chart (`chartLab.describe`) and returns one JSON question (tap-a-price or multiple choice) plus marks to draw; the app poses, grades and draws it; **🤖 Tutor explains** sends facts + the student's answer (never a screenshot).
+  - engine hook: `H.onClick({t,price,i})` in `lwchart.js` (fires only when no drawing tool is active).
+- **UI**: AI-market preset-question button now matches the send button; Auto-watch's 4 fields in one row with smaller labels; daily-cap message is a quiet hint instead of a red alert.
+- Tests: `node tests/run.js` → 83 pass.
