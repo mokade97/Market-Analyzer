@@ -210,3 +210,7 @@ node tests/run.js
 - UI/logic in `src/learn.js`: progress in `localStorage.fc_learn_prog` (done / quiz % / tutor grade), lesson view with markdown-lite, Socratic hints, "explain simpler / go deeper", free tutor chat.
 - Separate **Tutor AI** settings card (`fc_tut_prov/base/key/model`): OpenAI, OpenRouter, Anthropic (messages API, browser CORS header), Gemini (generateContent with systemInstruction), DeepSeek, **AvalAI** (`https://api.avalai.ir/v1`, OpenAI-compatible, Iran), custom. Host preset dropdown, model datalist, list-models, test. Falls back to the chat OpenAI/Gemini key when empty.
 - Tests: `tests/learn_check.js` (jsdom e2e: render, quiz, grading → progress, provider URL/headers for AvalAI/Anthropic/Gemini, chat).
+
+## v128 — 🏪 Market-making lab
+- Bot tab now has a segment [🤖 ربات | 🏪 مارکت‌میکینگ]. The MM card (`src/mmui.js`) reads `mm.json` from the VPS-hosted `mm-lab` (`mm-lab/mm.js`, see `mm-lab/README.md`): sim (pessimistic queue model) or OKX demo mode; ADAPTIVE vs FIXED baseline; PnL split spread/fees/inventory; 10 s adverse-selection metric; equity sparklines; params + metric guide.
+- lens-bot workflow fetches `http://<vps>:8787/mm.json` into `public/mm.json` each run.
