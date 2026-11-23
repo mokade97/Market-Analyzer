@@ -214,3 +214,24 @@ node tests/run.js
 ## v128 — 🏪 Market-making lab
 - Bot tab now has a segment [🤖 ربات | 🏪 مارکت‌میکینگ]. The MM card (`src/mmui.js`) reads `mm.json` from the VPS-hosted `mm-lab` (`mm-lab/mm.js`, see `mm-lab/README.md`): sim (pessimistic queue model) or OKX demo mode; ADAPTIVE vs FIXED baseline; PnL split spread/fees/inventory; 10 s adverse-selection metric; equity sparklines; params + metric guide.
 - lens-bot workflow fetches `http://<vps>:8787/mm.json` into `public/mm.json` each run.
+
+## v129 — 📐 Honest-stats toolkit, scorecard indicators, multi-chart
+- **`src/quant.js`** (new, bundled before `lens.js`, also inside `engine.js` for the bot): GARCH(1,1) MLE (Nelder-Mead), GARCH σ-forecast stop, weekly-clustered t-stat, Benjamini-Hochberg FDR across strategy variants, Kelly (binary + continuous from R-multiples), and a built-in `plantedEdgeTest()` (one planted edge among noise variants must be the only approval — asserted in `tests/run.js`).
+- **Backtest Studio**: stop mode ATR | GARCH; **Stops** tab (ATR vs GARCH, MAE/MFE in ATR units); **Factors** tab (avg R with/without volume / regime / extended / HTF / session filter); **Kelly card**; **TWRB** time-window range breakout strategy (00:00 UTC & 13:30 UTC presets).
+- **Lens strategy lab**: `t_clustered`, `p_value`, `fdr_approved` per strategy; `EDGE` → `EDGE_UNCONFIRMED` when BH-FDR (q=0.1) does not approve; `strategies._fdr` summary; lab card shows it.
+- **Calculator**: half-Kelly card from journal/ledger closed trades (n≥10) vs current risk %.
+- **Indicators** (`ind2.js` + `indhelp.js`): **SDZ** (2-candle supply/demand boxes), **SCORE** (0–6 setup scorecard, plan, ✓/✗, on-chart stats, provisional last bar), **LVLT** (level power 1–5 + nearest-strongest table).
+- **Multi-symbol scan**: universe floor (min $vol avg20, min ATR%, persisted `fc_ms_uni`) + **🧭 All scans** card dashboard.
+- **Chart page**: `src/multichart.js` — collapsible 🗂 multi-chart grid of the watchlist (≤8 SVG mini-charts, EMA20/50, Δ%, nearest unbroken S/R), shared timeframe, tap → main chart. No external libs.
+- **Academy**: m5l1 adds the 6th family (market making: spread edge, adverse selection + inventory, mm-lab result), Black-Litterman paragraph, Polymarket 0.99 / absorption examples; m6l2 adds the "correct stat, zero edge" NQ inside-bar example; QuantJourney (quants.md) in LEARN_BOOKS; two-row academy home buttons.
+- **Bot** (`lens-bot`): `judgeShadow:true` (judge also scores shadow-only cards while ≥50 % of the daily LLM budget remains, `judgeShadowMinBudgetFrac`); judge v2 asks for a calibrated `p_t1` and `judgeReport.calibration` reports Brier score vs base-rate, skill and 5 calibration buckets; the research `<evidence>` block is now part of SKILL_TXT → `skill.txt`. SWEEP and chase/extended entries were already shadow-only via `liveStrategies`/`chaseShadow` (applies to scan and watch sources alike).
+- Tests: `node tests/run.js` → 71 pass; `cd tests && node learn_check.js` green.
+
+## v130 — 🎨 Drawing layers, STP/PLAN/DIP indicators, anti-repaint
+- **Chart engine (`lwchart.js`)**: `_barColors` (per-bar candle colour from an indicator), `fill` shape kind (polygon between two series, per-segment colour), and a `~` prefix on indicator markers that sit on the forming candle (anti-repaint, TODO #162).
+- **`src/ind3.js`** (new): **STPSR** (swing S/R 100 → STP / STP PB / ✗ failed), **MAFILL** (state-coloured EMA21 + price fill + double ribbon fill, coloured candles), **DIP** (Ichimoku cloud + Supertrend 10/2 & 20/4 + stepped pivots + EMA50/200, DIP marker), **STRONG** (strong buy/sell 3-of-4 + ⚡ momentum), **PLAN** (ENTRY/STOP/TARGET1-3 from the last SCORE≥4 signal, risk/reward boxes, active window). **ATRTS** upgraded in place (coloured candles + fill).
+- **ind2 patches**: WOLFE → TP3 apex, broadening targets W×0.618/1/1.618, weak-R:R warning; FVG → opening gaps (OG). All have `indhelp.js` entries.
+- **Auto-watch**: opt-in SMC alerts (`awSmc`, key `fc_aw_smc`): new order block (VOB) / price inside an open FVG, closed candles only.
+- **Bot**: `judgeShadow:true` + `judgeShadowMinBudgetFrac:0.5` (v129) is the fix for "the judge is only called after a setup passes the rules, so the free quota is never used" — the judge now also scores shadow-only cards while ≥50 % of the daily LLM budget remains, so the shadow-judge scorecard reaches n≥40 faster.
+- TODO: 35 more items ticked (several were already shipped in v125–v127 and only needed verification). #140 and #220 closed by a 5-year backtest (10 OKX perps, 4H; `research/REPORT.md` §۶): retest entry destroys the VAB edge (+0.13R → +0.03R, DD ×2) and an ADX regime filter is not stable across years/symbols — neither is ported. **TODO list is now empty.**
+- Tests: `node tests/run.js` → 78 pass.
