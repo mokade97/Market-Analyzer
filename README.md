@@ -243,4 +243,5 @@ node tests/run.js
   - **AI-authored tasks**: the tutor model gets a compact numeric description of the visible chart (`chartLab.describe`) and returns one JSON question (tap-a-price or multiple choice) plus marks to draw; the app poses, grades and draws it; **🤖 Tutor explains** sends facts + the student's answer (never a screenshot).
   - engine hook: `H.onClick({t,price,i})` in `lwchart.js` (fires only when no drawing tool is active).
 - **UI**: AI-market preset-question button now matches the send button; Auto-watch's 4 fields in one row with smaller labels; daily-cap message is a quiet hint instead of a red alert.
+- Fullscreen (⛶) now shows only the chart (both TradingView and LWC): the tool strip, multi-chart card and other pages are hidden; LWC in-chart ⛶ toggles the same mode.
 - Tests: `node tests/run.js` → 83 pass.

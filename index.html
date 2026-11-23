@@ -99,7 +99,9 @@
   #rpBox.rpfs #rpTb>div{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;margin:2px 0!important}#rpBox.rpfs #rpTb>div::-webkit-scrollbar{display:none}#rpBox.rpfs #rpTb>div>*{flex-shrink:0}
   #rpTb .ghost.on{background:var(--acc);color:#fff}
   body.tvfs .tabs,body.tvfs header,body.tvfs #tvCtl{display:none!important}
-  body.tvfs #tvWrap{position:fixed;inset:0;height:100vh!important;border-radius:0;z-index:50}
+  body.tvfs #tvWrap{position:fixed;inset:0;width:100vw;height:100vh!important;height:100dvh!important;border-radius:0;z-index:50;margin:0}
+  body.tvfs #page-tv>*:not(#tvWrap),body.tvfs .page:not(#page-tv),body.tvfs #chartToolStrip,body.tvfs .toast{display:none!important}
+  body.tvfs #page-tv{padding:0;margin:0}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .rp5{grid-template-columns:repeat(5,1fr)}.rp5 .field{margin:0}.rp5 label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rp5 input{padding:6px 4px;font-size:13px;text-align:center}
   @media(max-width:520px){.rp5{grid-template-columns:repeat(3,1fr)}}
@@ -1230,7 +1232,7 @@ let LWH=null,lwTimer=null;const TFOF={'5':'5m','15':'15m','60':'1H','240':'4H','
 function lwStop(){if(lwTimer){clearInterval(lwTimer);lwTimer=null;}if(LWH){try{LWH.destroy();}catch(e){}LWH=null;}}
 /* v131: LWC — our own Lightweight-Charts engine with live exchange data (same chart as Backtest/Replay: drawing tools, 90+ indicators, shapes) */
 async function loadLw(){const {q}=tvSymbol();const tf=TFOF[$('tvInt').value]||'4H';lwStop();const box=$('tvBox');box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⏳ ${q} ${tf}…</div>`;let k=null;try{k=await klinesAny(q,tf,1000);}catch(e){}if(!k||k.length<50){box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⚠️ ${q}: no data</div>`;return;}
-  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],mainIndicators:['EMA'],subIndicators:['VOL'],onPeriod:async nt=>{try{const nb=await klinesAny(q,nt,1000);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));return nb;}}catch(e){}return null;}});
+  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],onFullscreen:()=>{if(document.body.classList.contains('tvfs')){exitFs();if(history.state?.tvfs)history.back();}else enterFs();},mainIndicators:['EMA'],subIndicators:['VOL'],onPeriod:async nt=>{try{const nb=await klinesAny(q,nt,1000);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));return nb;}}catch(e){}return null;}});
   if(!LWH)return;try{LWH.fit(160);}catch(e){}
   lwTimer=setInterval(async()=>{if(!LWH||LWH._dead){lwStop();return;}try{const nb=await klinesAny(q,LWH.tf,3);if(nb&&nb.length)nb.forEach(b=>LWH.push(b));}catch(e){}},20000);
   localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));}
@@ -1247,10 +1249,10 @@ document.querySelector('[data-tab="tv"]').addEventListener('click',()=>{if(!load
 if(document.getElementById('page-tv').classList.contains('on')){loaded=true;loadTv();}
 $('tvLoad').onclick=loadTv;$('tvSym').addEventListener('keydown',e=>{if(e.key==='Enter')loadTv();});
 // fullscreen landscape
-async function enterFs(){document.body.classList.add('tvfs');$('tvExit').style.display='';history.pushState({tvfs:1},'');
+async function enterFs(){document.body.classList.add('tvfs');setTimeout(()=>{try{LWH&&LWH.chart&&LWH.chart.resize();LWH&&LWH.fit&&LWH.fit();}catch(e){}},300);$('tvExit').style.display='';history.pushState({tvfs:1},'');
   try{await document.documentElement.requestFullscreen?.({navigationUI:'hide'});}catch(e){}
   try{await screen.orientation?.lock?.('landscape');}catch(e){}}
-function exitFs(){if(!document.body.classList.contains('tvfs'))return;document.body.classList.remove('tvfs');$('tvExit').style.display='none';
+function exitFs(){if(!document.body.classList.contains('tvfs'))return;document.body.classList.remove('tvfs');setTimeout(()=>{try{LWH&&LWH.chart&&LWH.chart.resize();}catch(e){}},300);$('tvExit').style.display='none';
   try{screen.orientation?.unlock?.();}catch(e){}if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});}
 $('tvFull').onclick=enterFs;$('tvExit').onclick=()=>{exitFs();if(history.state?.tvfs)history.back();};
 window.addEventListener('popstate',()=>exitFs());
