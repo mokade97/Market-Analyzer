@@ -907,7 +907,12 @@ const EX={
  },
  bitget:{
   base:'https://api.bitget.com',
-  async klines(s,tf,limit){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};const d=await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${limit}`);return d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));},
+  async klines(s,tf,limit){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m','5m':'5m'};const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v2/mix/market/candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&limit=${Math.min(limit,1000)}`));
+    /* v132b: Bitget silently caps `candles` (≈90 bars on 1D) → page older history in parallel via history-candles?endTime (≤200/page) */
+    if(out.length<limit&&out.length){const TF={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5}[tf]||144e5;const pages=Math.min(8,Math.ceil((limit-out.length)/200));const oldest=out[0].t;
+      const res=await Promise.all(Array.from({length:pages},(_,i)=>J(`${this.base}/api/v2/mix/market/history-candles?productType=USDT-FUTURES&symbol=${s}&granularity=${m[tf]}&endTime=${oldest-i*200*TF}&limit=200`).then(map).catch(()=>[])));
+      const seen=new Set(out.map(x=>x.t));res.flat().forEach(x=>{if(!seen.has(x.t)){seen.add(x.t);out.push(x);}});out.sort((a,b)=>a.t-b.t);out=out.slice(-limit);}
+    return out;},
   async meta(s){const d=await J(`${this.base}/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=${s}`);const x=d.data&&d.data[0];if(!x)throw new Error('not listed on Bitget');return {mark:+x.markPrice,index:+x.indexPrice,funding:+x.fundingRate*100,oi:+x.holdingAmount,oiPrev:null,src:'Bitget'};}
  },
  gate:{
@@ -922,7 +927,10 @@ const EX={
   base:'https://www.okx.com',
   async top(n){const d=await J(this.base+'/api/v5/market/tickers?instType=SWAP');return d.data.filter(x=>x.instId.endsWith('-USDT-SWAP')).map(x=>({symbol:x.instId,display:x.instId.replace('-USDT-SWAP','USDT'),change24:(+x.last/+x.open24h-1)*100,vol24:+x.volCcy24h*+x.last,price:+x.last})).sort((a,b)=>b.vol24-a.vol24).slice(0,n);},
   async klines(s,tf,limit){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m'};/* audit #8: UTC day like Binance/Bybit */const map=d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));let out=map(await J(`${this.base}/api/v5/market/candles?instId=${s}&bar=${m[tf]}&limit=${Math.min(limit,300)}`));
-    while(out.length<limit&&out.length){const page=map(await J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${out[out.length-1].t}&limit=${Math.min(300,limit-out.length)}`));if(!page.length)break;out=out.concat(page);if(page.length<100)break;await new Promise(r=>setTimeout(r,120));}
+    /* v132b: history pages are fetched IN PARALLEL by time window (history-candles returns ≤100 bars/page) — 1000 bars = 1 + 7 concurrent requests instead of 8 sequential ones */
+    if(out.length<limit&&out.length){const TF={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5}[tf]||144e5;const need=limit-out.length;const pages=Math.min(12,Math.ceil(need/100));const oldest=out[out.length-1].t;
+      const res=await Promise.all(Array.from({length:pages},(_,i)=>J(`${this.base}/api/v5/market/history-candles?instId=${s}&bar=${m[tf]}&after=${oldest-i*100*TF}&limit=100`).then(map).catch(()=>[])));
+      const seen=new Set(out.map(x=>x.t));res.flat().forEach(x=>{if(!seen.has(x.t)){seen.add(x.t);out.push(x);}});out.sort((a,b)=>b.t-a.t);out=out.slice(0,limit);}
     return out.reverse();},
   async meta(s){const ccy=s.split('-')[0];const [mk,ix,fr,oi]=await Promise.all([J(`${this.base}/api/v5/public/mark-price?instType=SWAP&instId=${s}`),J(`${this.base}/api/v5/market/index-tickers?instId=${ccy}-USDT`),J(`${this.base}/api/v5/public/funding-rate?instId=${s}`),J(`${this.base}/api/v5/public/open-interest?instType=SWAP&instId=${s}`)]);
     if(!(mk.data&&mk.data.length)||!(oi.data&&oi.data.length))throw new Error('not listed on OKX');let oiPrev=null,oiNow=+oi.data[0].oiCcy;try{const h=await J(`${this.base}/api/v5/rubik/stat/contracts/open-interest-volume?ccy=${ccy}&period=1H`);if(h.data.length>1){oiNow=+h.data[0][1];oiPrev=+h.data[1][1];}}catch(e){}
@@ -1223,12 +1231,18 @@ function setSrc(v){chartSrc=v;localStorage.setItem('fc_chartsrc',v);$('srcSeg').
 window.extChartUrl=()=>{const {full,q}=tvSymbol();const i=$('tvInt').value;return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(full)}&interval=${i}`;};
 $('tvExt').onclick=()=>{window.open(extChartUrl(),'_blank','noopener');};
 $('srcSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{setSrc(b.dataset.src);loadTv();});setSrc(chartSrc);
-let LWH=null,lwTimer=null;const TFOF={'5':'5m','15':'15m','60':'1H','240':'4H','D':'1D','W':'1W'},IVOF={'5m':'5','15m':'15','1H':'60','4H':'240','1D':'D','1W':'W'};
+let LWH=null,lwTimer=null,lwGen=0;const TFOF={'5':'5m','15':'15m','60':'1H','240':'4H','D':'1D','W':'1W'},IVOF={'5m':'5','15m':'15','1H':'60','4H':'240','1D':'D','1W':'W'};
 function lwStop(){if(lwTimer){clearInterval(lwTimer);lwTimer=null;}if(LWH){try{LWH.destroy();}catch(e){}LWH=null;}}
 /* v131: LWC — our own Lightweight-Charts engine with live exchange data (same chart as Backtest/Replay: drawing tools, 90+ indicators, shapes) */
-async function loadLw(){const {q}=tvSymbol();const tf=TFOF[$('tvInt').value]||'4H';lwStop();const box=$('tvBox');box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⏳ ${q} ${tf}…</div>`;let k=null;try{k=await klinesAny(q,tf,1000);}catch(e){}if(!k||k.length<50){box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⚠️ ${q}: no data</div>`;return;}
-  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],onFullscreen:()=>{if(document.body.classList.contains('tvfs')){exitFs();if(history.state?.tvfs)history.back();}else enterFs();},mainIndicators:['EMA'],subIndicators:['VOL'],onPeriod:async nt=>{try{const nb=await klinesAny(q,nt,1000);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));return nb;}}catch(e){}return null;}});
+/* v132b: memory cache (90 s) so switching back and forth between timeframes is instant; staged load = 300 bars first (one request), 1000 in the background */
+const LWK={};const LWK_TTL=90e3;async function lwBars(q,tf,n){const key=q+'|'+tf;const c=LWK[key];if(c&&c.k.length>=Math.min(n,c.full?1e9:n)&&Date.now()-c.t<LWK_TTL)return c.k;const k=await klinesAny(q,tf,n);if(k&&k.length){const prev=LWK[key];if(!prev||k.length>=prev.k.length||Date.now()-prev.t>=LWK_TTL)LWK[key]={t:Date.now(),k,full:n>=1000};}return k;}
+window.lwBars=lwBars;
+async function loadLw(){const {q}=tvSymbol();const tf=TFOF[$('tvInt').value]||'4H';lwStop();const box=$('tvBox');box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⏳ ${q} ${tf}…</div>`;const t0=Date.now();let k=null;try{k=await lwBars(q,tf,300);}catch(e){}if(!k||k.length<50){box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⚠️ ${q}: no data (${window.dataSrc||'—'})</div>`;return;}
+  const mine=++lwGen;
+  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],onFullscreen:()=>{if(document.body.classList.contains('tvfs')){exitFs();if(history.state?.tvfs)history.back();}else enterFs();},mainIndicators:['EMA'],subIndicators:['VOL'],onPeriod:async nt=>{try{const nb=await lwBars(q,nt,300);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));const g=++lwGen;if(nb.length<1000)lwBars(q,nt,1000).then(full=>{if(g!==lwGen||!LWH||LWH._dead||LWH.tf!==nt||!full||full.length<=nb.length)return;try{LWH.extend(full);}catch(e){}}).catch(()=>{});return nb;}}catch(e){}return null;}});
   if(!LWH)return;try{LWH.fit(160);}catch(e){}
+  /* background: extend to 1000 bars (visible range is kept — only older bars are added) */
+  if(k.length<1000)lwBars(q,tf,1000).then(full=>{if(mine!==lwGen||!LWH||LWH._dead||!full||full.length<=k.length)return;try{LWH.extend(full);}catch(e){}}).catch(()=>{});
   lwTimer=setInterval(async()=>{if(!LWH||LWH._dead){lwStop();return;}try{const nb=await klinesAny(q,LWH.tf,3);if(nb&&nb.length)nb.forEach(b=>LWH.push(b));}catch(e){}},20000);
   localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));}
 window.loadLw=loadLw;
@@ -2443,6 +2457,8 @@ function mount(o){const L=LWC();if(!L)return null;const el=typeof o.el==='string
   const j=H.bars.length-1;H.indOn.forEach(id=>{const d=IND[id];if(!d||!d.calc)return;const r=d.calc(H.bars);if(d.pane==='main'){const rec=H.ind[id];if(!rec)return;rec.vals=r;rec.keys.forEach((key,i)=>{const v=r[key][j];if(v==null||!isFinite(v))return;try{rec.series[i].update({time:sec(b.t),value:v});}catch(e){}});}else{const s=H.subs.find(x=>x.id===id);if(!s)return;s.vals=r;Object.keys(s.series).forEach(key=>{const v=r[key][j];if(v==null||!isFinite(v))return;try{s.series[key].update({time:sec(b.t),value:v});}catch(e){}});if(s.hist){const v=r[d.hist][j];if(v!=null&&isFinite(v))try{s.hist.update({time:sec(b.t),value:v,color:v>=0?'rgba(38,166,154,.6)':'rgba(239,83,80,.6)'});}catch(e){}}}});
   Object.keys(H.ext).forEach(id=>{const e=H.ext[id];Object.keys(e.series).forEach((key,i)=>{const v=e.series[key][j];if(e._s[i]&&v!=null&&isFinite(v))try{e._s[i].update({time:sec(b.t),value:v});}catch(x){}});});if(!H._mk||H._mk++%5===0){H._mk=H._mk||1;try{applyMarks();}catch(e){}}legendUpd();draw();};
  H.setBars=bars=>{H.bars=(bars||[]).slice();setAll();applyStyle();};
+ /* v132b: merge a longer history in place — visible window stays where the user is looking */
+ H.extend=full=>{if(!full||!full.length)return;const first=H.bars.length?H.bars[0].t:Infinity;const older=full.filter(b=>b.t<first);if(!older.length)return;const r=chart.timeScale().getVisibleLogicalRange();H.bars=older.concat(H.bars);setAll();applyStyle();if(r)chart.timeScale().setVisibleLogicalRange({from:r.from+older.length,to:r.to+older.length});try{H.subs.forEach(s=>s.sync());draw();}catch(e){}};
  H.fit=n=>{const W=mainWrap.clientWidth||360;if(W<160)return;const bs=Math.max(1.5,Math.min(20,(W-70)/(n||120)));chart.timeScale().applyOptions({barSpacing:bs,rightOffset:6});toEnd();H.subs.forEach(s=>s.sync());draw();};
  H.scrollToEnd=toEnd;H.scrollToTime=t=>{const i=H.idxOf(t);const r=chart.timeScale().getVisibleLogicalRange();if(!r)return;const w=r.to-r.from;chart.timeScale().setVisibleLogicalRange({from:i-w/2,to:i+w/2});};
  function resizeAll(){const w=mainWrap.clientWidth,h=mainWrap.clientHeight;if(w>0&&h>0){chart.resize(w,h);cv.width=Math.round(w*(window.devicePixelRatio||1));cv.height=Math.round(h*(window.devicePixelRatio||1));cv.style.width=w+'px';cv.style.height=h+'px';}H.subs.forEach(s=>{const sw=s.el.clientWidth,sh=s.el.clientHeight;if(sw>0&&sh>0)s.chart.resize(sw,sh);});draw();}
