@@ -997,6 +997,17 @@ function kcPut(sym,tf,k){try{const c=kcGet();c[sym+'|'+tf]={t:Date.now(),k:k.sli
 window.dataSrc=null;
 async function klinesAny(sym,tf,limit){for(const n of chain()){try{const k=await withTimeout(EX[n].klines(symFor(n,sym),tf,limit),6000+2000*Math.ceil((limit||300)/300));if(k&&k.length>10){window.dataSrc=n;if(limit>=100)kcPut(sym,tf,k);return k;}}catch(e){}}
   const c=kcGet()[sym+'|'+tf];const TFMS_={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5};if(c&&Date.now()-c.t>2*(TFMS_[tf]||144e5)){window.dataSrc='cache-stale';return null;} /* audit #9 */if(c){window.dataSrc='cache:'+new Date(c.t).toLocaleTimeString();return c.k.map(a=>({t:a[0],o:a[1],h:a[2],l:a[3],c:a[4],v:a[5]}));}return null;}
+/* v132c: older history before a timestamp (for the chart's infinite scroll). OKX history-candles (deep, parallel 100/page) → Bitget history-candles → Bybit `end` → Binance endTime. */
+async function klinesBefore(sym,tf,endT,limit){const TFM={'5m':3e5,'15m':9e5,'1H':36e5,'4H':144e5,'1D':864e5,'1W':6048e5}[tf]||144e5;limit=limit||600;
+  for(const n of chain()){try{let out=[];
+    if(n==='okx'){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m','5m':'5m'}[tf];const pages=Math.min(10,Math.ceil(limit/100));const res=await Promise.all(Array.from({length:pages},(_,i)=>J(`${EX.okx.base}/api/v5/market/history-candles?instId=${symFor('okx',sym)}&bar=${m}&after=${endT-i*100*TFM}&limit=100`).then(d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}))).catch(()=>[])));out=res.flat();}
+    else if(n==='bitget'){const m={'1W':'1Wutc','1D':'1Dutc','4H':'4H','1H':'1H','15m':'15m','5m':'5m'}[tf];const pages=Math.min(5,Math.ceil(limit/200));const res=await Promise.all(Array.from({length:pages},(_,i)=>J(`${EX.bitget.base}/api/v2/mix/market/history-candles?productType=USDT-FUTURES&symbol=${sym}&granularity=${m}&endTime=${endT-1-i*200*TFM}&limit=200`).then(d=>d.data.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}))).catch(()=>[])));out=res.flat();}
+    else if(n==='bybit'){const m={'1W':'W','1D':'D','4H':'240','1H':'60','15m':'15','5m':'5'}[tf];const d=await J(`${EX.bybit.base}/v5/market/kline?category=linear&symbol=${sym}&interval=${m}&end=${endT-1}&limit=${Math.min(limit,1000)}`);out=d.result.list.map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));}
+    else if(n==='binance'){const m={'1W':'1w','1D':'1d','4H':'4h','1H':'1h','15m':'15m','5m':'5m'}[tf];const d=await J(`${EX.binance.base}/fapi/v1/klines?symbol=${sym}&interval=${m}&endTime=${endT-1}&limit=${Math.min(limit,1500)}`);out=d.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]}));}
+    else continue;
+    const seen=new Set();out=out.filter(x=>x.t<endT&&!seen.has(x.t)&&seen.add(x.t)).sort((a,b)=>a.t-b.t);if(out.length)return out;}catch(e){}}
+  return [];}
+window.klinesBefore=klinesBefore;
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 
 /* ---------- screener ---------- */
@@ -1239,7 +1250,7 @@ const LWK={};const LWK_TTL=90e3;async function lwBars(q,tf,n){const key=q+'|'+tf
 window.lwBars=lwBars;
 async function loadLw(){const {q}=tvSymbol();const tf=TFOF[$('tvInt').value]||'4H';lwStop();const box=$('tvBox');box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⏳ ${q} ${tf}…</div>`;const t0=Date.now();let k=null;try{k=await lwBars(q,tf,300);}catch(e){}if(!k||k.length<50){box.innerHTML=`<div class="hint" style="padding:20px;text-align:center">⚠️ ${q}: no data (${window.dataSrc||'—'})</div>`;return;}
   const mine=++lwGen;
-  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],onFullscreen:()=>{if(document.body.classList.contains('tvfs')){exitFs();if(history.state?.tvfs)history.back();}else enterFs();},mainIndicators:['EMA'],subIndicators:['VOL'],onPeriod:async nt=>{try{const nb=await lwBars(q,nt,300);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));const g=++lwGen;if(nb.length<1000)lwBars(q,nt,1000).then(full=>{if(g!==lwGen||!LWH||LWH._dead||LWH.tf!==nt||!full||full.length<=nb.length)return;try{LWH.extend(full);}catch(e){}}).catch(()=>{});return nb;}}catch(e){}return null;}});
+  LWH=window.__tvLw=LWChart.mount({el:box,sym:q,tf,bars:k,light:tvTheme()==='light',periods:['5m','15m','1H','4H','1D','1W'],onFullscreen:()=>{if(document.body.classList.contains('tvfs')){exitFs();if(history.state?.tvfs)history.back();}else enterFs();},mainIndicators:['EMA'],subIndicators:['VOL'],onMore:(oldest,tf)=>klinesBefore(q,tf,oldest,600),onPeriod:async nt=>{try{const nb=await lwBars(q,nt,300);if(nb&&nb.length){$('tvInt').value=IVOF[nt]||$('tvInt').value;localStorage.setItem('fc_tv',JSON.stringify({s:$('tvSym').value,e:$('tvExch').value,i:$('tvInt').value}));const g=++lwGen;if(nb.length<1000)lwBars(q,nt,1000).then(full=>{if(g!==lwGen||!LWH||LWH._dead||LWH.tf!==nt||!full||full.length<=nb.length)return;try{LWH.extend(full);}catch(e){}}).catch(()=>{});return nb;}}catch(e){}return null;}});
   if(!LWH)return;try{LWH.fit(160);}catch(e){}
   /* background: extend to 1000 bars (visible range is kept — only older bars are added) */
   if(k.length<1000)lwBars(q,tf,1000).then(full=>{if(mine!==lwGen||!LWH||LWH._dead||!full||full.length<=k.length)return;try{LWH.extend(full);}catch(e){}}).catch(()=>{});
@@ -2371,7 +2382,7 @@ const FIBS=[0,0.236,0.382,0.5,0.618,0.786,1,1.618,2.618,3.618,4.236],FIBX=[0,0.6
 /* ---------- mount ---------- */
 function mount(o){const L=LWC();if(!L)return null;const el=typeof o.el==='string'?document.getElementById(o.el):o.el;if(!el)return null;el.innerHTML='';el.style.direction='ltr';el.classList.add('lwc-root');
  const light=o.light!=null?o.light:(localStorage.getItem('fc_theme')||'dark')==='light';
- const H={el,sym:o.sym,tf:o.tf,bars:(o.bars||[]).slice(),marks:[],wantLines:[],ext:{},extras:{},ind:{},subs:[],_dead:false,_id:'lw'+Date.now().toString(36),light,lw:true,engine:'lwc'};
+ const H={el,sym:o.sym,tf:o.tf,bars:(o.bars||[]).slice(),marks:[],wantLines:[],ext:{},extras:{},ind:{},subs:[],_dead:false,_id:'lw'+Date.now().toString(36),light,lw:true,engine:'lwc',onMore:o.onMore||null};
  H.prec=o.precision!=null?o.precision:precOf(H.bars.length?H.bars[H.bars.length-1].c:1);
  const T=theme(light);H.T=T;
  /* ---- DOM: top bar + main pane + sub panes + drawing canvas ---- */
@@ -2471,7 +2482,7 @@ function mount(o){const L=LWC();if(!L)return null;const el=typeof o.el==='string
  H.setTheme=l=>{H.light=!!l;};
  /* period switching: ask the host for new bars, swap data in place */
  H.setPeriod=async tf=>{if(!tf||tf===H.tf||!o.onPeriod)return;if(H._loading){H._queuedTf=tf;return;}saveDrawings(H,true);H._loading=true;bar.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('lw-on',b.dataset.tf===tf));bar.querySelectorAll('[data-tf]').forEach(b=>b.style.opacity='.5');let nb=null;try{nb=await o.onPeriod(tf);}catch(e){}finally{H._loading=false;bar.querySelectorAll('[data-tf]').forEach(b=>b.style.opacity='');}
-  if(H._dead)return;if(nb&&nb.length){H.tf=tf;H.bars=nb.slice();H.marks=[];setAll();restoreDrawings(H);if(o.onPeriodApplied)o.onPeriodApplied(H,tf);}else bar.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('lw-on',b.dataset.tf===H.tf));const q=H._queuedTf;H._queuedTf=null;if(q&&q!==H.tf)setTimeout(()=>H.setPeriod(q),50);};
+  if(H._dead)return;if(nb&&nb.length){H.tf=tf;H._noMore=false;H.bars=nb.slice();H.marks=[];setAll();restoreDrawings(H);if(o.onPeriodApplied)o.onPeriodApplied(H,tf);}else bar.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('lw-on',b.dataset.tf===H.tf));const q=H._queuedTf;H._queuedTf=null;if(q&&q!==H.tf)setTimeout(()=>H.setPeriod(q),50);};
  /* ---- top bar ---- */
  const mkBtn=(txt,title,fn,cls)=>{const b=document.createElement('button');b.className='lw-b '+(cls||'');b.title=title||'';b.innerHTML=txt;b.onclick=fn;bar.appendChild(b);return b;};
  const sep=()=>{const s=document.createElement('span');s.style.cssText=`width:1px;height:18px;background:${T.border};margin:0 3px;flex:none`;bar.appendChild(s);};
@@ -2586,7 +2597,9 @@ function mount(o){const L=LWC();if(!L)return null;const el=typeof o.el==='string
   ctx.restore();
   /* draggable price lines (SL/TP plan) */
   (H.dragLines||[]).forEach(Ln=>{const y=H.y(Ln.price);if(!isFinite(y))return;ctx.strokeStyle=Ln.color||PRI;ctx.lineWidth=2;ctx.setLineDash(Ln.dash?[5,4]:[]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(xlim,y);ctx.stroke();ctx.setLineDash([]);ctx.font='bold 10px sans-serif';const t=(Ln.text||'')+' '+fmtP(Ln.price,H.prec);const m=ctx.measureText(t).width;ctx.fillStyle=Ln.color||PRI;ctx.fillRect(xlim-m-10,y-8,m+8,16);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.fillText(t,xlim-m-6,y+4);});}
- chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{H.subs.forEach(s=>s.sync());draw();});
+ chart.timeScale().subscribeVisibleLogicalRangeChange(r=>{H.subs.forEach(s=>s.sync());draw();
+   /* v132c infinite history: when the user drags within 60 bars of the oldest candle, ask the host for older bars (TradingView-style lazy loading) */
+   if(r&&H.onMore&&!H._more&&!H._noMore&&r.from<60&&H.bars.length){H._more=true;const oldest=H.bars[0].t;Promise.resolve(H.onMore(oldest,H.tf)).then(older=>{if(H._dead)return;if(!older||!older.length||older[0].t>=oldest){H._noMore=H._noMore||(!older||!older.length);return;}H.extend(older);}).catch(()=>{}).finally(()=>{H._more=false;});}});
  chart.subscribeCrosshairMove(p=>{draw();if(p&&p.time&&p.seriesData){const b=p.seriesData.get(candles);if(b){const i=Math.round(H.idxOf(p.time*1000));const bb=H.bars[i];if(bb){const main=H.indOn.filter(id=>IND[id]&&IND[id].pane==='main').map(id=>{const rec=H.ind[id];if(!rec||!rec.vals)return '';return `<span style="opacity:.9">${IND[id].label.split(' ')[0]} `+rec.keys.map(key=>`<span style="color:${IND[id].colors[key]}">${fmtP(rec.vals[key][i],H.prec)}</span>`).join(' ')+'</span>';}).join(' · ');legend.innerHTML=`<b>${H.sym}</b>${H.cmp?' <span style="color:#f59e0b">vs '+H.cmp+'</span>':''} · ${H.tf}${H.style!=='candle'?' · '+H.style.toUpperCase():''}${H.scaleMode!=='normal'?' · '+H.scaleMode:''} <span class="lw-cd" style="opacity:.7"></span> <span style="color:${bb.c>=bb.o?GREEN:RED}">O ${fmtP(bb.o,H.prec)} H ${fmtP(bb.h,H.prec)} L ${fmtP(bb.l,H.prec)} C ${fmtP(bb.c,H.prec)}</span> <span style="opacity:.7">V ${Math.round(bb.v||0).toLocaleString('en-US')}</span><br>${main}`;}}}else legendUpd();});
  /* v131: tap hook for the Academy chart lab — H.onClick({t,price,i}) when no drawing tool is active */
  try{chart.subscribeClick(p=>{if(!H.onClick||H.tool||!p||!p.point||!p.time)return;let price=null;try{price=candles.coordinateToPrice(p.point.y);}catch(e){}if(price==null)return;const t=p.time*1000;const i=Math.round(H.idxOf(t));H.onClick({t,price,i});});}catch(e){}
