@@ -260,3 +260,10 @@ node tests/run.js
 - **v132b LWC data/perf fix**: (1) OKX history pages are fetched in parallel by time window (1000 bars ≈ 0.5 s instead of 8 sequential round-trips); (2) Bitget `candles` silently capped at ~90 bars on 1D → now pages `history-candles?endTime` in parallel (540+ bars); (3) staged load — 300 bars painted first, 1000 merged in place (`H.extend`, view anchored by TIME of the right-edge bar; at-end views snap to the newest bar — fixes "chart shows the oldest 300 bars after extension"); (4) 90-s in-memory kline cache so switching back to a timeframe is instant.
 - **v132c infinite history (LWC)**: dragging within 60 bars of the oldest candle lazily loads ~600 older bars (`H.onMore` → `klinesBefore`: OKX history-candles parallel pages → Bitget → Bybit → Binance), view anchored by time. The initial 1000 bars per timeframe are the same as TradingView's first page; history is now unlimited (OKX keeps 4H back to 2019).
 - **v132d deeper default history**: per-timeframe background depth `LW_DEEP` (15m/1H/4H 3000 bars, 1D 2500, 1W 1000 = everything OKX has) fetched in rate-limit-friendly batches (8 parallel pages, 450 ms gap, retry once); new **⏪** toolbar button loads 600 older bars on demand (touch-friendly alternative to drag-to-edge, which now triggers 150 bars before the edge).
+
+
+### v132e — SCORE indicator: lookahead fix + MIN 5
+- `scoreSeries` S/R criterion now walk-forward (only pivots confirmed by the current bar, rolling 400-bar window). Previously it saw future pivots (small lookahead, ~0.01–0.03 R/trade).
+- 5-year backtest (Bitget BTC/ETH/SOL 2021-11→2026-11, 0.14% round-trip cost, same exit logic): 4H +0.11 R/trade PF 1.18 (edge entirely from score 5–6; score 4 ≈ break-even), 1H PF 0.91, 15m PF 0.72 → threshold raised to **score ≥5** for markers/plan/stats; score 4 shown as a dim grey `4/6` marker only. PLAN follows the same threshold.
+- Standalone re-run with MIN 5 (walk-forward): 4H pooled n879 +0.127 R/trade PF 1.20 MaxDD 24R (BTC PF 1.05, ETH 1.20, SOL 1.37); 1H n3724 +0.008 R PF 1.01 (break-even); 15m negative.
+- Script: `reports/score_backtest.js` (workspace).
