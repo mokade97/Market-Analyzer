@@ -273,5 +273,12 @@ node tests/run.js
 - Tutor chat and every AI / hands-on exercise have a **📷 Photo** button (camera or gallery, up to 4 images). Photos are downscaled client-side (≤1280 px JPEG q0.8) and sent inline to the tutor model: OpenAI-compatible `image_url`, Gemini `inline_data`, Anthropic `image` base64. The grading prompt tells the model to read the handwriting and flag illegible parts rather than guess.
 - Exercise can be submitted with photo only (text optional). Chat history keeps images only for the last 3 messages (token budget). If the selected model has no vision, the error message says which models to pick.
 
+## v134c — اسکرین‌شات LWC → تحلیل / گفتگو
+- در پنجرهٔ اسکرین‌شات چارت دو دکمهٔ جدید: **🔎 ارسال برای تحلیل** (تصویر با نماد/تایم‌فریم به تب «تحلیل چارت» می‌رود و تحلیل خودکار شروع می‌شود) و **💬 ارسال به گفتگو** (تصویر با ترسیم‌ها به‌عنوان ضمیمهٔ پیام بعدیِ «مشورت با هوش مصنوعی» می‌نشیند؛ پیش‌نمایش قابل‌حذف بالای ورودی؛ ارسال بدون متن هم مجاز است). `window.chatAttachImage(b64)`.
+
+## v134b — کندل زنده (WebSocket) + منطقهٔ زمانی چارت
+- **کندل زنده:** چارت LWC علاوه بر پولینگ ۲۰ ثانیه‌ای، به وب‌سوکت عمومی OKX (`candle1m…1Wutc`) وصل می‌شود؛ هر تیک قیمت کندل جاری را به‌روز می‌کند. نقطهٔ سبز کنار شمارش‌معکوس = زنده، خاکستری = پولینگ. با تغییر نماد/تایم‌فریم اشتراک قبلی بسته و دوباره باز می‌شود؛ قطعی با backoff نمایی (تا ۶ تلاش) ترمیم می‌شود و پولینگ همیشه پشتیبان است. برای فلزات (XAU/XAG…) و تایم‌فریم‌های بدون کانال فقط پولینگ.
+- **منطقهٔ زمانی (🕒 در نوار چارت):** `fc_tz` = `utc` (پیش‌فرض، هماهنگ با ربات) / `tehran` / `local` / سفارشی `±hh:mm`. فقط محور زمان، کراس‌هیر و لِجند جابه‌جا می‌شوند؛ ترسیم‌ها، share-hash، روز معاملاتی، PDH/PDL، VWAP و ربات روی UTC می‌مانند. `window.fcTz.{off,label,set}`.
+
 ## v134 — Academy full lessons
 Every lesson now has a full-length section (📖 متن کامل درس) under the summary: step-by-step explanation, all formulas written out, a numeric example, one or two solved problems, and a self-check exercise with answer. Files `src/learn_full1.js … learn_full4.js` (`window.LEARN_FULL[lessonId]`). The tutor receives it as `LESSON_FULL` so "explain simpler / go deeper / grade" use the same material. Summary texts and exercises unchanged.
