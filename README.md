@@ -272,3 +272,6 @@ node tests/run.js
 ### v132f — Academy: photo answers
 - Tutor chat and every AI / hands-on exercise have a **📷 Photo** button (camera or gallery, up to 4 images). Photos are downscaled client-side (≤1280 px JPEG q0.8) and sent inline to the tutor model: OpenAI-compatible `image_url`, Gemini `inline_data`, Anthropic `image` base64. The grading prompt tells the model to read the handwriting and flag illegible parts rather than guess.
 - Exercise can be submitted with photo only (text optional). Chat history keeps images only for the last 3 messages (token budget). If the selected model has no vision, the error message says which models to pick.
+
+## v134 — Academy full lessons
+Every lesson now has a full-length section (📖 متن کامل درس) under the summary: step-by-step explanation, all formulas written out, a numeric example, one or two solved problems, and a self-check exercise with answer. Files `src/learn_full1.js … learn_full4.js` (`window.LEARN_FULL[lessonId]`). The tutor receives it as `LESSON_FULL` so "explain simpler / go deeper / grade" use the same material. Summary texts and exercises unchanged.
