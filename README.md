@@ -267,3 +267,8 @@ node tests/run.js
 - 5-year backtest (Bitget BTC/ETH/SOL 2021-11→2026-11, 0.14% round-trip cost, same exit logic): 4H +0.11 R/trade PF 1.18 (edge entirely from score 5–6; score 4 ≈ break-even), 1H PF 0.91, 15m PF 0.72 → threshold raised to **score ≥5** for markers/plan/stats; score 4 shown as a dim grey `4/6` marker only. PLAN follows the same threshold.
 - Standalone re-run with MIN 5 (walk-forward): 4H pooled n879 +0.127 R/trade PF 1.20 MaxDD 24R (BTC PF 1.05, ETH 1.20, SOL 1.37); 1H n3724 +0.008 R PF 1.01 (break-even); 15m negative.
 - Script: `reports/score_backtest.js` (workspace).
+
+
+### v132f — Academy: photo answers
+- Tutor chat and every AI / hands-on exercise have a **📷 Photo** button (camera or gallery, up to 4 images). Photos are downscaled client-side (≤1280 px JPEG q0.8) and sent inline to the tutor model: OpenAI-compatible `image_url`, Gemini `inline_data`, Anthropic `image` base64. The grading prompt tells the model to read the handwriting and flag illegible parts rather than guess.
+- Exercise can be submitted with photo only (text optional). Chat history keeps images only for the last 3 messages (token budget). If the selected model has no vision, the error message says which models to pick.
