@@ -273,6 +273,9 @@ node tests/run.js
 - Tutor chat and every AI / hands-on exercise have a **📷 Photo** button (camera or gallery, up to 4 images). Photos are downscaled client-side (≤1280 px JPEG q0.8) and sent inline to the tutor model: OpenAI-compatible `image_url`, Gemini `inline_data`, Anthropic `image` base64. The grading prompt tells the model to read the handwriting and flag illegible parts rather than guess.
 - Exercise can be submitted with photo only (text optional). Chat history keeps images only for the last 3 messages (token budget). If the selected model has no vision, the error message says which models to pick.
 
+## v134d — دو حالت در «مشورت با هوش مصنوعی دربارهٔ این چارت»
+- مانند «بازار AI»: **💬 گفتگوی آزاد / آموزش** (پاسخ طبیعی، بدون قالب، دمای 0.7، نقد ترسیم‌ها و آموزش روی همین چارت) و **📋 تحلیل ساختاریافته** (SKILL + قالب اجباری ۷ بخشی: ساختار HTF→LTF، نقدینگی/سطوح، مومنتوم/مشتقات، سناریوها با تریگر، پلن معامله یا «بدون معامله»، ابطال، اطمینان؛ با اسکرین‌شات ضمیمه بخش «ترسیم‌های شما» اضافه می‌شود). انتخاب در `fc_chatmode` ذخیره می‌شود؛ متن پیش‌فرضِ ارسالِ بدون سؤال هم به حالت وابسته است.
+
 ## v134c — اسکرین‌شات LWC → تحلیل / گفتگو
 - در پنجرهٔ اسکرین‌شات چارت دو دکمهٔ جدید: **🔎 ارسال برای تحلیل** (تصویر با نماد/تایم‌فریم به تب «تحلیل چارت» می‌رود و تحلیل خودکار شروع می‌شود) و **💬 ارسال به گفتگو** (تصویر با ترسیم‌ها به‌عنوان ضمیمهٔ پیام بعدیِ «مشورت با هوش مصنوعی» می‌نشیند؛ پیش‌نمایش قابل‌حذف بالای ورودی؛ ارسال بدون متن هم مجاز است). `window.chatAttachImage(b64)`.
 
