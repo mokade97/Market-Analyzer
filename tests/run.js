@@ -27,5 +27,54 @@ setTimeout(()=>{const w=d.window;const $=id=>w.document.getElementById(id);
   console.log('\nLedger');
   {const base=1700000000000;const okr=w.ledger.record({src:'test',sym:'ZZZUSDT',tf:'4H',side:'LONG',entry:100,stop:98,t1:103,t2:106,time:base,quad:'Q1'});ok('record',okr===true);ok('dedupe',w.ledger.record({src:'test',sym:'ZZZUSDT',tf:'4H',side:'LONG',entry:100,stop:98,t1:103,t2:106,time:base})===false);
    const st=w.ledger.stats([{rr:1},{rr:-1},{rr:2}]);ok('stats',st.n===3&&st.win===67&&st.pf===3,JSON.stringify(st));}
+  console.log('\nv125: indicator catalogue + strategies + help');
+  {const IND=w.LWChart.IND;const ids=Object.keys(IND).filter(id=>IND[id].calc);ok('≥80 indicators registered',ids.length>=80,String(ids.length));
+   const kb=synth([[100,100,120],[100,130,40],[130,118,30],[118,150,50],[150,140,20],[140,160,40]],0.6).map((b,i)=>Object.assign(b,{t:1700000000000+i*36e5,v:1000+((i*7919)%500)}));
+   let bad=[];ids.forEach(id=>{try{const r=IND[id].calc(kb);const keys=Object.keys(r).filter(x=>x[0]!=='_');if(keys.some(x=>!Array.isArray(r[x])||r[x].length!==kb.length))bad.push(id+':len');if(keys.some(x=>r[x].some(v=>v!=null&&!isFinite(v))))bad.push(id+':NaN');}catch(e){bad.push(id+':'+e.message);}});ok('every indicator runs clean on synthetic data',bad.length===0,bad.join(','));
+   ok('indHelp has text for every indicator',ids.every(id=>w.indHelp.data[id]),ids.filter(id=>!w.indHelp.data[id]).join(','));
+   const B=w.btStudio;const SIDS=Object.keys(B.STR).filter(x=>x!=='CUSTOM');ok('≥20 strategies',SIDS.length>=20,String(SIDS.length));B.setData(kb,'TEST','1H');let sb=[];
+   SIDS.forEach(id=>{const S=B.STR[id];const p={};Object.keys(S.params).forEach(q=>p[q]=S.params[q].def);try{const tr=B.runBacktest(id,p,{side:'BOTH',slMode:'atr',slAtr:1.5,swN:10,tp:2,t1:0,trail:0,maxBars:40,flip:0,fee:0.1,slip:0.03,fund:0.01,risk:1});if(!Array.isArray(tr))sb.push(id);}catch(e){sb.push(id+':'+e.message);}});ok('every strategy backtests without throwing',sb.length===0,sb.join(','));
+   ok('LWChart v1.2 API exported',w.LWChart.version==='1.2'&&!!w.LWChart.math&&!!w.ind2&&typeof w.ind2.liqSignals==='function'); /* mount itself is covered by the Playwright smoke test (jsdom lacks matchMedia listeners) */
+   ok('mscan has D27 presets + D28 indicators',w.mscan.PRESETS.some(p=>p.id==='nr7')&&w.mscan.PRESETS.some(p=>p.id==='c97')&&!!w.mscan.IND.stage&&!!w.mscan.IND.extSma50Atr);
+   ok('journal grader + ind editor + indHelp exposed',!!w.journalTag&&!!w.indEditor&&!!w.indHelp.open);}
+   /* v129 */
+   ok('quant toolkit exposed (GARCH/FDR/Kelly)',!!w.quant&&typeof w.quant.fdrVariants==='function'&&typeof w.quant.kellyFromTrades==='function'&&typeof w.quant.garch11==='function');
+   { const pe=w.quant.plantedEdgeTest?w.quant.plantedEdgeTest():null; ok('planted-edge test: FDR finds the planted edge & rejects noise',!pe||(pe.ok===true&&pe.approved.length===1&&pe.approved[0]==='planted'),JSON.stringify(pe)); }
+   ok('ind2 SDZ/SCORE/LVLT + scoreSeries',typeof w.ind2.scoreSeries==='function'&&!!w.indHelp.data&&['SDZ','SCORE','LVLT'].every(k=>!!w.indHelp.data[k]));
+   { const ks=[];let px=100;for(let i=0;i<400;i++){const o=px;px=px*(1+(Math.sin(i/9)*0.01)+((i*7919)%13-6)/2000);ks.push({t:i*3600e3,o,h:Math.max(o,px)*1.003,l:Math.min(o,px)*0.997,c:px,v:1000+i});} let sc=null,e=null;try{sc=w.ind2.scoreSeries(ks);}catch(x){e=x.message;} ok('scoreSeries runs on synthetic bars',!e&&sc!=null,e||''); }
+   { let e=null;try{w.mscan.render();}catch(x){e=x.message;} ok('mscan universe floor + dashboard render',!e&&!!w.document.getElementById('msDash')&&!!w.document.getElementById('msMinDv'),e||'no msDash/msMinDv'); }
+   ok('multi-chart card mounted on chart page',!!w.document.getElementById('mcCard'));
+   ok('calculator kelly i18n present',/kellyK/.test(html));
+   /* v130 */
+   { let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647-0.5;};const ks=[];let px=100;for(let i=0;i<600;i++){const o=px;px=px*(1+rnd()*0.03);const h=Math.max(o,px)*(1+Math.abs(rnd())*0.01),l=Math.min(o,px)*(1-Math.abs(rnd())*0.01);ks.push({t:1.6e12+i*14400e3,o,h,l,c:px,v:1000+Math.abs(rnd())*3000});}
+     const IND=w.LWChart.IND;const res={};let err=null;for(const id of ['STPSR','MAFILL','DIP','STRONG','PLAN','ATRTS']){try{res[id]=IND[id].calc(ks);}catch(e){err=id+': '+e.message;}}
+     ok('v130 indicators run (STPSR/MAFILL/DIP/STRONG/PLAN/ATRTS)',!err,err||'');
+     ok('STPSR emits STP / STP PB markers',!!res.STPSR&&(res.STPSR._markers||[]).some(m=>m.text==='STP')&&(res.STPSR._shapes||[]).length>0);
+     ok('ATRTS/MAFILL provide _barColors + fill shapes',!!res.ATRTS&&res.ATRTS._barColors.filter(Boolean).length>500&&res.ATRTS._shapes[0].k==='fill'&&!!res.MAFILL&&res.MAFILL._shapes.length===2);
+     ok('PLAN draws entry/stop/targets + risk/reward boxes',!!res.PLAN&&(res.PLAN._shapes||[]).filter(s=>s.k==='box').length>=2&&(res.PLAN._shapes||[]).filter(s=>s.k==='hl').length>=5);
+     ok('indHelp has v130 entries',['STPSR','MAFILL','DIP','STRONG','PLAN'].every(k=>!!w.indHelp.data[k]));
+     ok('SMC watcher toggle present',!!w.document.getElementById('awSmc')); }
+   /* v131 */
+   { let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647-0.5;};const ks=[];let px=100;for(let i=0;i<500;i++){const o=px;px=px*(1+rnd()*0.03);const h=Math.max(o,px)*(1+Math.abs(rnd())*0.01),l=Math.min(o,px)*(1-Math.abs(rnd())*0.01);ks.push({t:1.6e12+i*14400e3,o,h,l,c:px,v:1000+Math.abs(rnd())*3000});}
+     const kinds=['swingH','swingL','fvg','ob','res','sup','stop','predict','trend'];const got={};let err=null;for(const k of kinds){try{const t=w.chartLab.makeTask(k,ks.slice(0,480),ks);got[k]=!!t&&typeof t.check==='function';}catch(e){err=k+': '+e.message;}}
+     ok('chart lab: deterministic task generators',!err&&['swingH','swingL','res','sup','stop','predict','trend'].every(k=>got[k]),err||JSON.stringify(got));
+     ok('chart lab: numeric chart description for the AI',/SYMBOL .* TF .*ATR14/.test(w.chartLab.describe(ks)));
+     ok('chart tab: LWC source + loadLw',!!w.document.getElementById('srcLw')&&typeof w.loadLw==='function');
+     ok('learn: chart exercises present + lab button',/type:'chart'/.test(html)&&typeof w.learnMd==='function'); }
+   { const px=w.paperX;const st=px.state();const keep=JSON.parse(JSON.stringify(st));const T0=Date.UTC(2026,0,7,12);st.startBal=100;st.closed=[{pnl:-1,closedT:T0-3*36e5},{pnl:-1,closedT:T0-2*36e5},{pnl:-1,closedT:T0-1*36e5}];
+     const b1=px._test.breaker(T0),b2=px._test.breaker(T0+30*36e5);st.closed=[{pnl:-4,closedT:T0-36e5}];const b3=px._test.breaker(T0);st.closed=[{pnl:1,closedT:T0-36e5}];const b4=px._test.breaker(T0);px._test.setState(keep);
+     ok('paper: circuit breaker (streak 24h / daily loss / clear)',b1&&b1.kind==='streak'&&!b2&&b3&&b3.kind==='daily'&&!b4,JSON.stringify([b1&&b1.kind,!!b2,b3&&b3.kind,!!b4])); }
+   ok('bot ui: execution audit + filter report helpers',typeof w.execAudit==='function'&&/filterReportHtml/.test(html));
+   ok('review: journal tutor review module',!!w.tradeReview&&w.tradeReview._isRound(60000)&&!w.tradeReview._isRound(61234)&&w.tradeReview._qsym('btc')==='BTCUSDT'&&w.tradeReview._qsym('XAUUSD')==='XAUUSDT');
+   { const J=[{id:777,ts:Date.now()-864e5,symbol:'BTC',dir:'LONG',entry:100,sl:95,tp:115,size:1,maxLoss:5,rr:3,status:'closed',pnl:10,rMult:2,closedAt:Date.now()}];w.localStorage.setItem('fc_journal',JSON.stringify(J));let rvErr='';try{const fb=w.document.querySelector('#jFilters button[data-f="closed"]');if(fb)fb.click();else w.renderJournal();}catch(e){rvErr=e.message;}try{w.tradeReview.hook();}catch(e){rvErr+=' hook:'+e.message;}ok('review: button injected on closed trades',!!w.document.querySelector('#jList .rvBtn'),rvErr+' rows='+w.document.querySelectorAll('#jList .jrow').length+' '+String((w.document.getElementById('jList')||{}).innerHTML).slice(0,120));w.localStorage.removeItem('fc_journal'); }
+   { const E=w.learnExam;const m=w.LEARN_MODULES[0];const qs=E.build(m,42),qs2=E.build(m,42),qs3=E.build(m,43);ok('exam: deterministic build, shuffled options keep answer',qs.length>=4&&JSON.stringify(qs)===JSON.stringify(qs2)&&JSON.stringify(qs)!==JSON.stringify(qs3)&&qs.every(x=>x.opts[x.a]!=null));
+     const svg=E.certSvg({name:'Test <User>',title:'T',sub:'S',score:'90%',date:'2026-01-01',id:'X'});ok('exam: certificate svg escapes + renders',/^<svg/.test(svg)&&svg.includes('&lt;User&gt;')&&!svg.includes('<User>')); }
+   { const px=w.paperX;const st=px.state();const keep=JSON.parse(JSON.stringify(st));const mk=(f)=>{const k=[];let c=100;for(let i=0;i<40;i++){c*=1+f(i);k.push({t:1.7e12+i*864e5,o:c,h:c,l:c,c,v:1});}return k;};
+     px._test.setDaily({AAAUSDT:{'1D':mk(i=>Math.sin(i)*0.02)},BBBUSDT:{'1D':mk(i=>Math.sin(i)*0.02+0.001)},CCCUSDT:{'1D':mk(i=>Math.cos(i*1.7)*0.02)}});st.positions=[{sym:'BBBUSDT',side:'LONG'},{sym:'CCCUSDT',side:'LONG'}];
+     const c1=px._test.corrMult('AAAUSDT','LONG',1.7e12+45*864e5),c2=px._test.corrMult('AAAUSDT','SHORT',1.7e12+45*864e5);px._test.setState(keep);px._test.setDaily({});
+     ok('paper: correlation → half risk only vs same-direction twin',c1.mult===0.5&&c1.with&&c1.with.length===1&&/BBB/.test(c1.with[0])&&c2.mult===1,JSON.stringify([c1,c2])); }
+   { const d={v:1,lastRun:new Date().toISOString(),config:{symbols:['BTCUSDT'],timeframes:['4H'],account:100,riskPct:1},equityR:1.2,stats:{all:{n:3,win_rate:0.5,avg_r:0.1,profit_factor:1.2}},shadowStats:{all:{n:5},byVerdict:{},byConf:{},byAiDecision:{},byChase:{},byStrategy:{},byQuad:{}},judgeReport:null,filterReport:{generatedAt:'2026-01-01T00:00:00Z',minClusters:20,weekN:2,allN:5,week:{'ADX < 30':{all:{n:2},kept:{n:1,clusters:1,clAvg:0.5},dropped:{n:1,clusters:1,clAvg:-1},verdict:'inconclusive',why:'x'}},allTime:{}},live:{gate:'live.enabled=false',cfg:{enabled:false},events:[],errors:[],open:0},shadowIndep:null,reconcile:null,shadow:[],shadowClosed:[],positions:[{sym:'BTCUSDT',tf:'4H',side:'LONG',entry:100,stop:95,t1:105,t2:110,size:1,riskUSD:1,fillSlipPct:0.2,hourUtc:3,cls:'crypto',strategy:'VAB',openedAt:new Date().toISOString(),reasons:[]}],alerts:[],closed:[{sym:'ETHUSDT',tf:'4H',side:'SHORT',entry:100,stop:105,t1:95,t2:90,rr:1.5,out:'T2',fillSlipPct:0.1,hourUtc:14,cls:'crypto',strategy:'VAB',openedAt:new Date().toISOString(),closedAt:new Date().toISOString(),reasons:[]}],errors:[]};
+     w.localStorage.setItem('fc_bot_url','https://x.test/bot.json');let be='';try{w.botUI._setData(d);}catch(e){be=e.message;}const h=(w.document.getElementById('btBox')||{}).innerHTML||'';
+     ok('bot ui: renders real-shaped bot.json without exception (v132 cards)',!be&&!/render error/.test(h)&&/ممیزی اجرا|Execution audit/.test(h)&&/پل اجرای زنده|Live 1%/.test(h),be||h.slice(0,200));w.localStorage.removeItem('fc_bot_url'); }
   ok('no runtime errors',errs.filter(e=>!/createObjectURL/.test(e)).length===0,errs.join(' | '));
   console.log(`\n${pass} passed, ${fail} failed`);process.exit(fail?1:0);},900);

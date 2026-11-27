@@ -30,9 +30,11 @@ ${S('دکمه‌ها')}
 ${L(['<b>🛡 چک ریسک قبل از ورود</b>: ۸ کنترل خودکار (ریسک نسبت به حساب، R:R، هم‌جهتی با تایم‌فریم بالاتر، رژیم بازار، لیکوئید قبل از SL، اهرم، فاصله‌ی استاپ نسبت به ATR، امتیاز Lens و سابقه‌ی تاریخی ستاپ). سبز = عبور، زرد = هشدار، قرمز = رد. حتی یک قرمز یعنی ورود نکنید یا پارامتر را اصلاح کنید.',
 '<b>📒 ثبت در ژورنال</b>: یک خط «دلیل ورود» می‌پرسد (اختیاری) و معامله را با همه‌ی اعداد در ژورنال (آیکون 📒 بالای صفحه) ذخیره می‌کند؛ بعداً نتیجه‌اش را ثبت کنید.',
 '<b>کپی نتایج</b> / <b>ریست</b>.'])}
-<p class="hint">ورودی‌ها به‌صورت خودکار ذخیره می‌شوند. از تب «تحلیل چارت»، «اسکرینر» و «ابزارها ← طرح معامله» می‌توان اعداد را مستقیم به این‌جا فرستاد.</p>`;
+<p class="hint">ورودی‌ها به‌صورت خودکار ذخیره می‌شوند. از تب «تحلیل چارت»، «اسکرینر» و «ابزارها ← طرح معامله» می‌توان اعداد را مستقیم به این‌جا فرستاد.</p>
+<h3>🆕 v129 — کارت نیم‌کِلی</h3><p>اگر ≥۱۰ معاملهٔ بسته در ژورنال/لجر داشته باشید، زیر نتایج کارت «کِلی» می‌آید: کسر کِلی از توزیع R واقعی شما، نیم‌کِلی پیشنهادی و مقایسه با درصد ریسک فعلی (هشدار اگر بالاتر از نیم‌کِلی هستید). با نمونهٔ کم، عدد نویزی است — فقط به‌عنوان سقف نگاه کنید.</p>`;
 
-H.fa.chart=`
+H.fa.chart=`<p><button type="button" onclick="indHelp&&indHelp.open()" style="background:#2962ff;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer">📚 راهنمای کامل همهٔ اندیکاتورها (۸۰+)</button> — هر اندیکاتور: چیست، فرمول، و چطور خوانده می‌شود. در منوی ƒx چارت هم دکمهٔ ❓ و کنار هر اندیکاتور «?» هست.</p>
+
 ${S('🖼 تحلیل تصویر چارت با Gemini')}
 <p>یک اسکرین‌شات از چارت (TradingView، صرافی، هر جایی) بدهید تا تحلیل‌گر ارشد، تحلیل چندتایم‌فریمی عددی تحویل دهد.</p>
 ${S('نحوه استفاده')}
@@ -62,7 +64,7 @@ ${S('گزینه‌ها')}
 ${L(['<b>صرافی</b>: Binance / Bybit / OKX / Bitget / Gate — فقط فهرست نمادها عوض می‌شود.',
 '<b>تعداد (Top N)</b>: چند نماد پرحجم اسکن شوند (۲۰ تا ۱۵۰).',
 '<b>اسکن بازار</b>: اجرا. نتیجه با ستون‌های تغییر ۱D، تغییر ۴H، RSI، فاصله تا EMA و <b>امتیاز روند</b> مرتب می‌شود (روی سرستون بزنید تا مرتب‌سازی عوض شود).',
-'<b>نماد دلخواه</b>: مثلاً PEPE یا PEPEUSDT → مستقیم به صفحه‌ی جزئیات همان کوین.',
+'<b>نماد دلخواه</b>: مثلاً PEPE یا PEPEUSDT (یا از ▾ انتخاب کن) → مستقیم به صفحه‌ی جزئیات همان کوین.',
 '<b>⭐ واچ‌لیست</b> و <b>🔔 هشدارهای قیمت</b>: بالای فهرست؛ هشدارها وقتی اپ باز است با نوتیفیکیشن/صدا اعلام می‌شوند.'])}
 ${S('خواندن جدول')}
 ${L(['<b>امتیاز</b>: ترکیب جهت EMAها، RSI و مومنتوم در ۱D و ۴H. +۱۰۰ = صعودی قوی در هر دو، −۱۰۰ = نزولی قوی. اعداد نزدیک صفر یعنی رنج/تضاد تایم‌فریم‌ها.',
@@ -76,13 +78,14 @@ ${L(['<b>تایم‌فریم چارت</b> (پیش‌فرض 4H) و چارت کن�
 '<b>فراخوانی چارت این نماد</b>: تب «چارت» را با همین نماد و تایم‌فریم باز می‌کند.',
 '<b>📄 گزارش بدون AI</b>: همان قالب گزارش فقط با اندیکاتورها، بدون کلید و هزینه.',
 '<b>🔔 هشدار قیمت</b> / <b>⭐ واچ‌لیست</b> / <b>→ بازگشت</b>.'])}
-<p class="hint">اسکرینر «کاندید» می‌دهد نه سیگنال؛ هر کاندید را در تب چارت و با Lens بررسی کنید.</p>`;
+<p class="hint">اسکرینر «کاندید» می‌دهد نه سیگنال؛ هر کاندید را در تب چارت و با Lens بررسی کنید.</p>
+<h3>🆕 v129 — اسکن چندنمادی</h3><p><b>کف یونیورس</b>: «حداقل حجم دلاری (میانگین ۲۰)» و «حداقل ATR٪» نمادهای بی‌حرکت/کم‌عمق را قبل از اسکن حذف می‌کند. <b>🧭 همهٔ اسکن‌ها</b>: داشبورد کارتی — هر پریست یک هدر رنگی با تعداد نتیجه و ردیف نمادها با Δ٪.</p>`;
 
 H.fa.tv=`
 ${S('📈 تب چارت (صفحه‌ی اصلی)')}
-${L(['<b>نماد</b>: مثلاً BTCUSDT یا فقط BTC. <b>صرافی</b> و <b>تایم‌فریم</b> (پیش‌فرض 4H) را انتخاب و <b>نمایش</b> را بزنید.',
+${L(['<b>نماد</b>: تایپ کنید (BTCUSDT یا فقط BTC) یا با دکمه‌ی <b>▾</b> فهرست کامل را باز کنید: جست‌وجو، ⭐ اخیر، 🥇 فلزات (طلا/نقره/پلاتین/PAXG)، 🪙 ۱۵۰ رمزارز برتر بر اساس حجم با تغییر ۲۴ساعته (فارکس فقط در ربات پایش می‌شود). <b>صرافی</b> و <b>تایم‌فریم</b> (15m تا 1W، پیش‌فرض 4H) را انتخاب و <b>نمایش</b> را بزنید.',
 '<b>⛶</b> (کنار نمایش): تمام‌صفحه‌ی افقی؛ با دکمه‌ی ✕ بالای چارت خارج شوید.',
-'<b>منبع چارت</b>: <b>TradingView</b> (ویجت رسمی با ابزار ترسیم و اندیکاتور)، <b>TheFreeChart</b> (نماد/تایم‌فریم را داخل خود چارت انتخاب کنید) یا <b>FreeCharting</b> (رایگان و بدون اکانت؛ نماد/تایم‌فریم/تم از همین فیلدها اعمال می‌شود، داده‌ی اسپات مستقیم از OKX (بایننس برای ایران بسته است)؛ نمادهایی که فقط فیوچرز/توکن‌سهام هستند (مثل SOXL) این‌جا نیستند → TradingView؛ نسخه‌ی داخل اپ فقط زوم/اسکرول دارد و لینک «چارت کامل» ترسیم، بار ری‌پلی، بک‌تست و ۶۸ اندیکاتور را در تب جدید باز می‌کند).',
+'<b>منبع چارت</b>: <b>TradingView</b> (ویجت رسمی با ابزار ترسیم و اندیکاتور) یا <b>LWC</b> (چارت خودمان با دادهٔ زندهٔ صرافی، ابزار ترسیم، ۹۰+ اندیکاتور و تغییر تایم‌فریم داخل چارت؛ ترسیم‌ها به‌ازای نماد ذخیره می‌شوند).',
 '<b>پس‌زمینه چارت</b>: تیره/روشن.',
 'نماد و تایم‌فریم این تب <u>مرجع همه‌ی ابزارها</u> است: تحلیل چارت، Lens، میزگرد، بازپخش، ماشین زمان، چک ریسک.'])}
 ${S('💬 مشورت با هوش مصنوعی درباره این چارت')}
@@ -92,7 +95,21 @@ ${L(['<b>Gemini / ChatGPT</b>: انتخاب مدل (کلیدها در تنظیم
 'سؤال خوب: «با این دیتا، ستاپ لانگ معتبر است؟ تریگر، SL و TP عددی بده و بگو چه چیزی ابطالش می‌کند.»'])}
 ${S('خواندن پاسخ')}
 <p>پاسخ‌ها با همان قالب 🧭 سوگیری / 🏗 ساختار / 📍 سطوح / ⚡ تریگر / 🎯 پلن / ⚠️ ابطال می‌آیند. دنبال <b>اعداد</b> باشید؛ اگر پاسخ عدد ندارد یا R:R زیر 1:1.5 است، ستاپ نیست. مدل پیش‌بینی نمی‌کند — سناریو می‌دهد.</p>
-<p class="hint">ویجت رایگان TradingView ترسیم‌ها را ذخیره نمی‌کند؛ برای چارت کامل از «ابزارها ← باز کردن در TradingView» استفاده کنید.</p>`;
+<p class="hint">ویجت رایگان TradingView ترسیم‌ها را ذخیره نمی‌کند؛ برای چارت کامل از «ابزارها ← باز کردن در TradingView» استفاده کنید.</p>
+<h3>🆕 v129 — چند-چارت و اندیکاتورهای جدید</h3>
+<ul><li><b>🗂 چند-چارت (واچ‌لیست)</b>: زیر کنترل‌های چارت؛ تا ۸ نماد ستاره‌دار اسکرینر به‌صورت مینی‌چارت SVG با EMA20/50، Δ٪ شش کندل و نزدیک‌ترین مقاومت/حمایت شکسته‌نشده (زرد/بنفش). تایم‌فریم مشترک؛ تپ روی کارت → چارت اصلی.</li>
+<li><b>SCORE</b> (کارت امتیاز ستاپ ۰–۶): جهت EMA، HTF هم‌جهت، حجم، تاچ S/R، بدنهٔ بزرگ، ساختار؛ پلن ورود/استاپ/TP و ✓/✗ نتیجه روی چارت + آمار درون‌چارتی (n، WR، نرخ هر TP، Net R). کندل آخر «~» = موقتی.</li>
+<li><b>LVLT</b> (قدرت سطوح): سطوح شکسته‌نشده با امتیاز ۱–۵ (سن + دفعات نگه‌داشتن) و جدول «قوی‌ترین سطح نزدیک».</li>
+<li><b>SDZ</b>: ناحیه‌های عرضه/تقاضای ۲ کندل آخر (قرمز بالا/آبی پایین) با خط میانی.</li></ul>
+<h3>🆕 v130 — لایه‌های ترسیمی و ضد-repaint</h3>
+<ul><li><b>رنگ کندل و پرشدگی</b>: موتور چارت حالا رنگ‌آمیزی کندل به‌ازای اندیکاتور و پرشدگی بین دو خط را پشتیبانی می‌کند — <b>ATRTS</b> (کندل سبز/قرمز + fill تا استاپ)، <b>MAFILL</b> (EMA21 رنگ‌شونده + fill قیمت/MA + ریبون دوبل).</li>
+<li><b>STPSR</b>: حمایت/مقاومت سوئینگی ۱۰۰ کندل؛ «STP» = شکست، «STP PB» = پولبک به سطح شکسته، ✗ = شکست ناموفق.</li>
+<li><b>PLAN</b>: از آخرین سیگنال SCORE≥۴ برچسب ورود/استاپ/هدف ۱-۳ (۱٫۱R/۲R/۳R) + باکس قرمز ریسک و سبز ریوارد + نوار پنجره‌ی فعال.</li>
+<li><b>DIP</b>: پریست ترکیبی ایچیموکو + دو سوپرترند + پیوت‌های پله‌ای + EMA ۵۰/۲۰۰ با مارکر DIP. <b>STRONG</b>: خرید/فروش قوی (۳ از ۴ شرط) + ⚡ مومنتوم.</li>
+<li><b>WOLFE</b> اکنون TP3 (رأس گوه)، اهداف Broadening (W×۰٫۶۱۸/۱/۱٫۶۱۸) و هشدار «R:R ضعیف» دارد؛ <b>FVG</b> شکاف‌های بازشدن (OG) را هم می‌کشد.</li>
+<li><b>ضد-repaint</b>: هر مارکر اندیکاتور روی کندلِ در حال شکل‌گیری با پیشوند «~» (موقت) نشان داده می‌شود؛ با بسته شدن کندل قطعی می‌شود.</li>
+<li><b>هشدار SMC</b> (تب دیده‌بان، گزینه‌ی 🔔): اردربلاک جدید / ورود قیمت به FVG باز روی کندل بسته.</li></ul>
+<h3>🆕 v131 — LWC: چارت خودمان با دادهٔ زنده</h3><p>دکمهٔ <b>LWC</b> کنار TradingView همان موتور چارت بک‌تست/ری‌پلی را با دادهٔ زندهٔ صرافی (OKX/Bitget/Gate، هر ۲۰ ثانیه به‌روز) باز می‌کند: ابزارهای ترسیم (ذخیره به‌ازای نماد)، ۹۰+ اندیکاتور (ƒx)، تغییر تایم‌فریم داخل چارت. TheFreeChart/FreeCharting حذف شدند. دکمهٔ ↗ همان «باز کردن در مرورگر» است.</p>`;
 
 H.fa.market=`
 ${S('🌍 بازار AI — تحلیل‌گر ارشد ماکرو')}
@@ -122,18 +139,6 @@ ${L(['<b>تایم‌فریم</b> و <b>حداقل امتیاز</b> را تنظی
 '<b>🔍 اسکن الان</b>: اجرای فوری. <b>پاک کردن فهرست</b>.'])}
 ${S('🧪 آزمایشگاه استراتژی')}
 ${L(['در خروجی Lens (ابزارها) جدولی با ۶ استراتژی: ستاپ Lens، شکست دانکیان ۲۰ (Turtle)، پول‌بک RSI-2 (Connors)، بازگشت به میانگین بولینگر، تقاطع MACD با فیلتر EMA200، تقاطع EMA 20/50 با فیلتر HTF. قوانین از توصیف‌های عمومی (freqtrade/Jesse/کتاب‌ها) بازنویسی شده‌اند.','همه با یک مدل خروج و همان کارمزد/لغزش روی ~۱۰۰۰ کندل آخر همین نماد/تایم‌فریم سنجیده می‌شوند؛ پس عدد «Avg R» بین‌شان قابل مقایسه است. حکم: مزیت دارد (avgR ≥ +0.15 و PF ≥ 1.2)، ضعیف، منفی، نمونه کم (<۸).','چک ریسک یک ردیف «آزمایشگاه استراتژی» دارد: اگر استراتژی پیشنهادی روی این نماد با ≥۱۵ معامله منفی باشد → رد؛ ربات هم همین قانون را دارد و برعکس، سیگنال زنده‌ی استراتژی‌ای که این‌جا «مزیت دارد» را به‌عنوان کاندید جدید به میزگرد می‌فرستد (انتخاب استراتژی داده‌محور برای هر نماد/تایم‌فریم).','هشدار: ۶ ماه داده، ۲۰–۴۰ معامله است؛ کافی برای حذف استراتژی‌های بد، نه برای اثبات قطعی خوب‌ها.'])}
-${S('🤖 تب ربات')}
-${L(['تب «🤖 ربات» نتیجه‌هاست: کارت ربات ۲۴ساعته و دفتر سیگنال‌ها. ابزارهای تحلیل دستی در «ابزارها» می‌مانند.','تب «چارت» → «📸 تحلیل تصویری»: یا چارت همین نماد/تایم‌فریم را خود اپ رسم می‌کند و می‌فرستد، یا یک اسکرین‌شات از گالری انتخاب می‌کنی؛ تحلیل تصویری (با SKILL و داده‌ی MTF) در تب «تحلیل چارت» خودکار شروع می‌شود.'])}
-${S('🤖 ربات ۲۴ساعته')}
-${L(['ربات (پوشه‌ی <b>lens-bot</b>) همان موتور Lens اپ را بیرون از گوشی اجرا می‌کند: هر ۱۵ دقیقه روی نمادها/تایم‌فریم‌های config.json → پکت کامل (امتیاز، رژیم ۴خانه، کش‌شدگی، SMC، الگوها، ساختار/CHoCH/واگرایی، Sweep+CHoCH+FVG) → همان قوانین چک ریسک (Q4، خلاف HTF، کش‌شدگی ≥۴، CHoCH خلاف، الگوی تأییدشده‌ی خلاف، R:R) → میزگرد کامل ایجنت‌ها با Gemini جداگانه: تحلیل‌گر تکنیکال (پکت + MTF 1D/4H/1H + ۶۰ کندل)، تحلیل‌گر ماکرو/فاندامنتال (با جست‌وجوی گوگل برای ۷۲ ساعت اخیر و تقویم ۷ روز آینده؛ هر ۴ ساعت یک‌بار و مشترک بین نمادها)، تحلیل‌گر سنتیمنت/مشتقات (فاندینگ، OI، پرمیوم، نسبت تیکر، نسبت لانگ/شورت، F&G، دامیننس) → مناظره‌ی گاو/خرس → مدیر ریسک (LONG/SHORT/WAIT/SKIP + اعتماد + چه کسی را رد کرد). بودجه‌ی روزانه‌ی LLM (پیش‌فرض ۲۲۰ فراخوانی) و اگر تمام شد، قاضی تک‌مرحله‌ای و سپس قوانین → معامله‌ی مجازی با سایز = حساب × ریسک٪ × ضریب رژیم.',
-'مدیریت پوزیشن فقط روی کندل‌های بسته: SL −1R، T1 سپس SL +0.25R، T2 +2.25/+3R، تایم‌اوت ۴۰ کندل؛ کارمزد+اسلیپیج+فاندینگ کم می‌شود. حداکثر ۶ پوزیشن، یک پوزیشن برای هر نماد؛ بقیه فقط «هشدار».',
-'راه‌اندازی: ریپوی عمومی GitHub (Actions رایگان و نامحدود) → Secret به نام GEMINI_API_KEY → Actions را فعال و یک‌بار Run workflow بزن → آدرس raw فایل public/bot.json را در تنظیمات وارد کن. بدون کلید Gemini هم کار می‌کند (قاضی = قوانین).',
-'در اپ: وضعیت آخرین اجرا (قرمز اگر >۹۰ دقیقه)، نتیجه‌ی مجازی R/$، آمار به تفکیک رژیم/تایم‌فریم/جهت، پوزیشن‌های باز با MTM، ستاپ‌های اخیر با دلایل قاضی و دکمه‌های «چارت» و «→ ماشین‌حساب» برای ورود واقعی با دست خودت. ستاپ‌های جدید هنگام باز بودن اپ toast/نوتیف می‌دهند (هر ۵ دقیقه بررسی).',
-'جهان نمادها (v75): خودکار هر اجرا — ۶۰ رمزارز پرحجم‌ترین پرپچوال‌های OKX (با فیلتر «بازار اسپات دارد» تا سهام توکنی و میکروکپ‌های فقط‌پرپ کنار بروند) + طلا/نقره + ۱۴ جفت فارکس از Yahoo Finance (۱H و ۱D، ۴H از تجمیع ۱H). سه مرحله: اسکن سریع همه (۳۲۰ کندل) → انتخاب کاندیدها با سهمیه‌ی هر کلاس دارایی → تحلیل عمیق ۱۲ تای برتر (۱۰۰۰ کندل + HTF + آزمایشگاه + قوانین + میزگرد). هزینه‌ی فارکس: اسپرد ۰.۰۲٪ بدون کارمزد/فاندینگ. در config.json: universe.cryptoTop، forex، metals، classes (می‌توانی "stock" را هم اضافه کنی).','AI اجباری (v77، `requireAI:true`): اگر هیچ کلید/مدلی در دسترس نباشد، ستاپ باز نمی‌شود و «قاضی ساده» جایگزین نمی‌شود؛ با وضعیت ⏳ «منتظر AI» ثبت و تا ۴ اجرای بعدی (تا وقتی همان کندل آخرین کندل بسته است) دوباره تلاش می‌شود، بعد رد می‌شود. برای کم‌کردن ۴۲۹: فاصله‌ی حداقل ۶.۵ ثانیه بین فراخوانی‌ها، چرخش روی کلید×مدل (flash و flash-lite سهمیه‌ی جدا دارند)، و خنک‌کردن ۶۰ ثانیه‌ای اسلات پس از ۵۰۳.','ربات هرگز سفارش واقعی نمی‌زند و هیچ کلید صرافی ندارد.'])}
-${S('📒 دفتر سیگنال‌ها')}
-${L(['هر ستاپ Lens (LONG_SETUP/SHORT_SETUP) از هر منبعی — دکمه‌ی 🎯، پایش خودکار، 🎯 اسکرینر — با ورود/SL/T1/T2 همان لحظه ثبت می‌شود (بدون تکرار برای یک کندل).',
-'«تسویه» کندل‌های بسته‌شده‌ی بعدی را می‌گیرد و نتیجه را می‌بندد: SL = −1R؛ T1 سپس SL = +0.25R؛ T2 = +2.25R (یا +3R اگر T1 را رد کرده باشد)؛ ۴۰ کندل بدون نتیجه = قیمت روز. هنگام باز شدن اپ هر ۳۰ دقیقه خودکار تسویه می‌شود.',
-'آمار به تفکیک رژیم ۴خانه، تایم‌فریم و منبع نشان می‌دهد موتور <u>واقعاً</u> کجا کار می‌کند. زیر N=30 نتیجه‌گیری نکن. اگر بعد از ۱–۲ ماه رژیمی منفی ماند، در آن رژیم معامله نکن — همین است هدف این دفتر.'])}
 ${S('🧰 ابزارهای تحلیل (روی نماد/تایم‌فریم تب چارت)')}
 <p><b>🎯 سیگنال این کندل (Lens)</b> — محاسبه‌ی محلی و بدون AI روی آخرین کندل <u>بسته‌شده</u>:</p>
 ${L(['<b>پنل تصمیم</b> (بالای کارت): تصمیم موتور، امتیاز، رژیم و ضریب سایز، HTF، آخرین رویداد ساختار، پلن، سایز/ریسک دلاری و هشدارها در یک جدول. در <b>حالت ساده</b> (تنظیمات Lens) بقیه‌ی جزئیات و ماشین زمان جمع‌شده‌اند؛ برای دیدن همه، «جزئیات کامل» را باز کن یا حالت ساده را خاموش کن. 📡 = منبع داده‌ی فعلی (okx/bitget/gate یا cache = آفلاین با آخرین کندل‌های ذخیره‌شده).',
@@ -147,22 +152,67 @@ ${L(['<b>پنل تصمیم</b> (بالای کارت): تصمیم موتور، ا
 '<b>پلن</b>: ورود، SL (پشت ساختار/۱.۵×ATR)، T1/T2، R:R و <b>اندازه‌ی پوزیشن</b> بر اساس حساب/ریسک٪ تنظیمات. اگر R:R کمتر از «حداقل R:R» تنظیمات باشد یا خلاف HTF باشد (و تیک مربوطه فعال)، <b>NO TRADE</b> می‌دهد.',
 '<b>⏱ ماشین زمان</b> (زیر Lens): همین قاعده را روی تاریخچه‌ی همین نماد اجرا می‌کند: N = تعداد، Win% ، T1%/T2% رسیدن به اهداف، SL%، Avg R. فیلتر لانگ/شورت و هم‌جهت/خلاف HTF. N کمتر از ۱۵ یعنی آمار قابل اتکا نیست.'])}
 <p><b>⚖️ میزگرد ایجنت‌ها</b> — ۶ نقش AI پشت‌سرهم: تکنیکال، ماکرو، احساسات/مشتقات، وکیل گاوها، وکیل خرس‌ها و در نهایت <b>مدیر ریسک</b> که تصمیم می‌دهد (LONG/SHORT/NO TRADE + اندازه). <b>توافق ایجنت‌ها</b> را ببینید: توافق پایین = بمانید بیرون. اگر یک ایجنت خطا بدهد میزگرد ادامه می‌یابد.</p>
-<p><b>🎬 بازپخش و تست استراتژی</b>:</p>
-${L(['<b>شروع از چند کندل قبل</b>: اسلایدر. آینده پنهان است. تا ۱۰۰۰ کندل بارگذاری می‌شود.',
-'<b>اندیکاتورها</b>: EMA20/50/200، بولینگر، کلتنر، دانچیان ۲۰، ایچیموکو (تنکان/کیجون/ابر)، VWAP روزانه، سوپرترند(10,3)، پارابولیک SAR، پیوت‌های کلاسیک روزانه (P/R1/R2/S1/S2)، سوئینگ‌ها (فراکتال ۵ کندلی)، حجم، و پنل‌های RSI، MACD، استوکاستیک — هر کدام با یک لمس روشن/خاموش. تعداد کندل ۶۰ تا ۴۰۰؛ کشیدن چارت = پیمایش به عقب.',
-'<b>تایم‌فریم</b>: دکمه‌های 1H / 4H / 1D بالای چارت؛ همان نماد با همان نقطه‌ی زمانی دوباره بارگذاری می‌شود (معاملات ریپلی صفر می‌شود، ترسیم‌های هر تایم‌فریم جدا ذخیره‌اند).',
-'<b>⛶ افقی</b>: تمام‌صفحه با قفل افقی؛ اگر گوشی اجازه‌ی چرخش ندهد، خود چارت ۹۰ درجه می‌چرخد. خروج با ✕ یا دکمه‌ی Back.',
-'<b>استراتژی</b>: یکی از ۶ استراتژی آزمایشگاه را انتخاب کن تا سیگنال‌هایش روی کندل‌های گذشته با مثلث نشان داده شود و روی کندل فعلی 📣 اعلام شود. «🤖 معامله‌ی خودکار» = با هر سیگنال خودش با همان SL/TP تو وارد می‌شود؛ آمار (برد، جمع R، Max DD) همان‌جا جمع می‌شود — کندل‌به‌کندل می‌بینی استراتژی کجا درست و کجا غلط می‌کند.',
-'<b>ترسیم</b>: خط افقی و عمودی (یک لمس)، خط روند (دو لمس، با امتداد نقطه‌چین)، پرتو (از نقطه‌ی اول تا انتهای چارت)، ناحیه، فیبو اصلاح (دو لمس)، فیبو گسترش (سه لمس: شروع موج، پایان موج، پایان اصلاح → سطوح 0.618/1/1.272/1.618/2/2.618)، 📈 کانال رگرسیون خطی (دو لمس: بازه → خط رگرسیون ± ۱σ و ۲σ، شیب درصدی در هر کندل و فاصله‌ی قیمت فعلی به σ)، 📏 اندازه (درصد، چند ATR، چند کندل)، 🎯 پوزیشن (لمس اول = ورود، لمس دوم = استاپ؛ TP از «TP (R)» و سایز از تنظیمات حساب)، T متن، ⌫ پاک‌کن (لمس روی ترسیم)، 🧲 آهنربا (چسبیدن به O/H/L/C کندل)؛ ↶ برگشت، 🗑 پاک‌کردن همه. ترسیم‌ها برای هر نماد/تایم‌فریم در گوشی ذخیره می‌شوند.',
-'<b>⏮ / ▶ +1 / ⏩ +10 / ▶▶ (پخش با سرعت)</b>.',
-'<b>SL (×ATR)</b>، <b>TP (R)</b>، <b>حداکثر نگهداری</b>: مدیریت معامله‌ی یکسان برای شما و تست خودکار.',
-'<b>کارمزد رفت‌وبرگشت + اسلیپیج</b> (پیش‌فرض ۰.۱٪ + ۰.۰۳٪) و فاندینگ تقریبی ۰.۰۱٪/۸ساعت از هر معامله کم می‌شود (در ماشین زمان هم). نتایج «بعد از هزینه» هستند — صادق‌تر و معمولاً کوچک‌تر.',
-'<b>💧 Sweep + CHoCH + FVG</b> (استراتژی دهم، مدل ورود ICT): سایه زیر آخرین کف سوئینگ می‌رود ولی کلوز بالای آن می‌ماند (جمع‌آوری نقدینگی) → تا ۱۰ کندل بعد کلوز بالای آخرین سقف سوئینگ (CHoCH/MSS) → در همان حرکت یک FVG صعودی باقی مانده → ورود در اولین بازگشت به FVG (تا ۱۵ کندل) با کندل صعودی. آینه برای شورت. وضعیت زنده‌اش در کارت Lens (SWEPT / ARMED / ENTRY) دیده می‌شود؛ استاپ منطقی آن زیر کف sweep است. خانه: Q2/Q3.',
-'<b>🧱 FVG retest</b> (استراتژی نهم): گپ ۳کندلی پرنشده (≤۶۰ کندل)، قیمت واردش می‌شود و هم‌جهت با روند EMA20/50 بیرون کلوز می‌کند. خانه‌اش Q1/Q2 است.',
-'<b>▲ LONG / ▼ SHORT / بستن</b>: معامله‌ی دستی روی کلوز کندل فعلی. آمار (تعداد، برد٪، مجموع R) و لاگ پایین می‌آید. زیر چارت امتیاز Lens همان لحظه نمایش داده می‌شود تا تمرین کنید.',
-'<b>📐 طرح معامله</b>: خطوط ورود/SL/TP قابل کشیدن روی چارت؛ <b>⇅</b> جهت را عوض می‌کند؛ <b>→ ماشین‌حساب</b> اعداد را می‌فرستد.',
-'<b>🧪 اجرای تست</b>: ۸ قاعده (کراس EMA، شکست ۲۰ کندلی، پولبک EMA، RSI، انگالفینگ هم‌جهت، Zone Break، پروفایل حجم، Champion) روی همین بازه با مدیریت یکسان. ستون‌ها: N، برد٪، PF (سود ناخالص ÷ ضرر ناخالص؛ بالای ۱.۳ خوب)، مجموع R، بیشینه افت. <b>فیلتر بقا</b>: حداقل N، حداکثر افت (R)، حداقل PF و «بهتر از خرید و نگهداری» (B&H بر حسب R با همان اندازه‌ی استاپ محاسبه می‌شود). ردیف‌های رد‌شده خاکستری‌اند و دلیل رد در ستون آخر است؛ اگر هیچ قاعده‌ای عبور نکرد یعنی روی این نماد/تایم‌فریم لبه‌ای نیست. <b>🧬 تست استحکام</b> (بعد از اجرای تست): <b>مونت‌کارلو</b> ترتیب معاملات را ۱۰۰۰ بار بُر می‌زند و افت P95 و احتمال عبور از سقف افت را می‌دهد؛ <b>حساسیت</b> همان قاعده را با ۹ ترکیب SL/TP اجرا می‌کند (≥۶ مثبت = فلات مستحکم، کمتر = قله‌ی شکننده)؛ <b>IS/OOS</b> نیمه‌ی اول بازه را با نیمه‌ی دومِ دیده‌نشده مقایسه می‌کند. حکم: ✅ مستحکم / ⚠️ مختلط / ❌ شکننده. <u>برای مقایسه‌ی نسبی روی همین نماد است، نه تضمین آینده.</u>'])}
+<p><b>🎬 بازپخش / 📊 بک‌تست</b> به تب «📊 بک‌تست» منتقل شده‌اند (راهنمای خودش را دارد). <b>🤖 ربات ۲۴ساعته</b> و <b>📒 دفتر سیگنال‌ها</b> در تب «🤖 ربات» هستند.</p>
 <p><b>↗ باز کردن در TradingView</b>: چارت کامل tradingview.com با همین نماد/تایم‌فریم در تب جدید (Bar Replay و ترسیم‌های ذخیره‌شونده آن‌جاست).</p>`;
+
+H.fa.backtest=`<p><button type="button" onclick="indHelp&&indHelp.open()" style="background:#2962ff;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer">📚 راهنمای کامل همهٔ اندیکاتورها (۸۰+)</button> — هر اندیکاتور: چیست، فرمول، و چطور خوانده می‌شود. در منوی ƒx چارت هم دکمهٔ ❓ و کنار هر اندیکاتور «?» هست.</p>
+
+${S('📊 تب بک‌تست — دو محیط')}
+<p>بالای صفحه یک سوئیچ دوتایی است: <b>📊 بک‌تست</b> (استودیوی بک‌تست روی تاریخچه) و <b>🎬 بازپخش</b> (کندل‌به‌کندل با آینده‌ی پنهان). آخرین انتخاب به خاطر سپرده می‌شود.</p>
+${S('📊 استودیوی بک‌تست')}
+${L(['<b>نماد</b> (با دکمه‌ی ▾ فهرست کامل رمزارزها/فلزات با جست‌وجو باز می‌شود)، <b>تایم‌فریم</b> (15m/1H/4H/1D/1W) و <b>تعداد کندل</b> (تا ۵۰۰۰) → <b>بارگذاری داده</b>. داده از OKX (و در صورت نیاز Bybit/Gate) می‌آید.',
+'<b>استراتژی</b>: ایچیموکو TK-cross + ابر (همان قواعد گزارش ۱۷ آزمایش)، سوپرترند + فیلتر EMA، کراس EMA، پولبک روند به EMA، شکست کانال دانچین، بازگشت RSI، بازگشت به داخل بولینگر، کراس MACD، کراس DI با ADX، روند EMA + RSI از ۵۰ + انبساط نوسان، و <b>🧩 سفارشی (سازنده)</b> که شرط‌های ورود را خودت می‌چینی. پارامترهای هر استراتژی زیرش قابل تغییر است.',
+'<b>جهت</b> (هر دو / فقط لانگ / فقط شورت) و <b>ریسک هر معامله %</b> (برای منحنی سرمایه).',
+'<b>◂ خروج و مدیریت · هزینه‌ها</b>: SL بر حسب ATR، اهداف R، تایم‌اوت، کارمزد، لغزش و فاندینگ — نتایج «بعد از هزینه» هستند.',
+'<b>اجرای بک‌تست</b>: خلاصه (N، برد٪، Avg R، PF، مجموع R، حداکثر افت)، منحنی سرمایه، جدول معاملات و <b>IS/OOS</b> (نیمه‌ی اول در برابر نیمه‌ی دومِ دیده‌نشده) برای سنجش اورفیت. <b>💾 ذخیره‌ی تنظیمات</b> برای دفعه‌ی بعد.',
+'نتیجه‌ی گذشته تضمین آینده نیست؛ از استراتژی‌ای که فقط در IS خوب است فاصله بگیر.'])}
+${S('🎬 بازپخش (Bar Replay)')}
+${L(['<b>نماد</b> (▾ برای فهرست) → <b>🎬 بارگذاری بازپخش</b>. تا ۱۰۰۰ کندل می‌آید؛ اسلایدر <b>شروع از چند کندل قبل</b> نقطه‌ی شروع را تعیین می‌کند. <b>↗ TradingView</b> همین نماد را آن‌جا باز می‌کند.',
+'<b>استراتژی</b> (بالای چارت): سیگنال‌های استراتژی انتخابی روی کندل‌های گذشته با مثلث و روی کندل فعلی با 📣 نشان داده می‌شود. <b>🤖 معامله‌ی خودکار</b> = با هر سیگنال خودش با SL/TP تو وارد می‌شود تا کندل‌به‌کندل رفتار استراتژی را ببینی.',
+'<b>نوار چارت</b>: تایم‌فریم 15m/1H/4H/1D/1W (همان نقطه‌ی زمانی حفظ می‌شود)، <b>ƒx</b> اندیکاتورها، <b>⤢ N</b> تعداد کندل روی صفحه، <b>✏</b> ابزار ترسیم، <b>🧲</b> آهنربا (چسبیدن به O/H/L/C)، <b>🔒</b> قفل همه‌ی ترسیم‌ها، <b>✋</b> حالت دست (فقط پیمایش)، <b>↶</b> برگشت، <b>🗑</b> پاک‌کردن همه، <b>📷</b> اسکرین‌شات، <b>⛶</b> افقی/تمام‌صفحه (خروج با ✕ یا Back).',
+'<b>ƒx اندیکاتورها</b> — روی چارت: EMA 20/50/200، EMA 9/21، SMA 50/150/200، بولینگر، کلتنر، Envelope، HMA، WMA، VWAP روزانه، سوپرترند، دانچیان، ایچیموکو (با ابر رنگی)، پارابولیک SAR، حجم. پنل جدا (قابل تغییر ارتفاع با کشیدن لبه): RSI، MACD، ATR، ADX، OBV، Stochastic، Stoch RSI، CCI، Williams %R، MFI، Chaikin MF، Aroon، ROC، Squeeze Momentum. هرکدام با یک لمس روشن/خاموش؛ انتخاب‌ها ذخیره می‌شوند.',
+'<b>✏ ترسیم</b> (ظاهر و رنگ‌ها مثل TradingView): خطوط (افقی، پرتو افقی، عمودی، روند، پرتو، خط ممتد، فلش، خط قیمت)؛ کانال‌ها (کانال موازی با خطوط چارکی، کانال قیمت، رگرسیون خطی با نیمه‌ی بالا آبی/پایین قرمز و Pearson R)؛ فیبوناچی (اصلاح با سطوح تا 4.236 و نوارهای رنگی، فیبوی کوتاه، گسترش سه‌نقطه‌ای)؛ شکل‌ها (ناحیه، بیضی، مثلث، قلم‌مو، هایلایتر)؛ معامله (پوزیشن لانگ/شورت با جعبه‌ی سود/زیان و R:R، اندازه‌گیری درصد/ATR/کندل، متن، یادداشت). تعداد لمس‌ها در توضیح هر ابزار آمده است.',
+'<b>ویرایش ترسیم</b>: روی ترسیم <u>تَپ</u> کنید (نه کشیدن) تا انتخاب شود؛ دستگیره‌ها را بکشید، یا از نوار بالایش رنگ/ضخامت/سبک خط، 🔒 قفل تک‌ترسیم، 🗑 حذف را انتخاب کنید. پیمایش و پینچ‌زوم هیچ‌وقت ترسیم را جابه‌جا نمی‌کند. ترسیم‌ها برای هر نماد/تایم‌فریم در گوشی ذخیره می‌شوند.',
+'<b>⏮ / ▶ +1 / ⏩ +10 / ▶▶</b> با انتخاب سرعت (۰.۵× تا ۵×). زیر چارت امتیاز Lens همان لحظه نشان داده می‌شود.',
+'<b>⚙️ تنظیمات معامله</b> (تاشو): SL (×ATR)، TP (R)، حداکثر نگهداری (کندل)، کارمزد رفت‌وبرگشت، اسلیپیج — برای معامله‌ی دستی، خودکار و تست استراتژی‌ها یکسان است.',
+'<b>📐 طرح معامله</b> (خطوط ورود/SL/TP قابل کشیدن؛ ⇅ تغییر جهت؛ → ماشین‌حساب)، <b>▲ LONG / ▼ SHORT / بستن</b> روی کلوز کندل فعلی. آمار فشرده (کندل، کلوز، معاملات/برد، جمع R، Max DD) و پوزیشن باز با R لحظه‌ای زیرش.',
+'<b>🧪 تست خودکار استراتژی‌ها روی همین بازه</b>: همه‌ی قواعد با مدیریت یکسان؛ فیلتر بقا (حداقل N، حداکثر افت، حداقل PF، بهتر از خرید و نگهداری) و 🧬 تست استحکام (مونت‌کارلو، حساسیت SL/TP، IS/OOS).'])}
+<p class="hint">بازپخش برای تمرین «تصمیم در لحظه» است: اول تحلیل کن، بعد ▶ بزن. اگر پیمایش چارت تصادفاً ترسیمی را گرفت، 🔒 را روشن کن.</p>
+<h3>🆕 v129 — آمار صادقانه</h3>
+<ul><li><b>استاپ GARCH</b> (انتخاب «حالت استاپ»): به‌جای ATR، نوسان شرطی GARCH(1,1) با MLE روی بازده‌ها برآورد و استاپ = k×σ_پیش‌بینی. در بازار آرامِ بعد از شوک، استاپ تنگ‌تر و در خوشهٔ نوسان گشادتر از ATR می‌شود. نتیجهٔ ATR و GARCH را در تب <b>Stops</b> کنار هم ببینید (MAE/MFE و R بر حسب ATR).</li>
+<li><b>تب Factors</b>: میانگین R با/بدون هر فیلتر (حجم، رژیم، کشیدگی از EMA20، HTF، سشن) برای همان استراتژی — فیلتر فقط وقتی ارزش دارد که Δ معنادار و n کافی باشد.</li>
+<li><b>کارت کِلی</b>: کسر کِلی از توزیع R معاملات (نه فقط win-rate) + نیم‌کِلی پیشنهادی؛ با ریسک فعلی مقایسه می‌شود.</li>
+<li><b>TWRB</b>: استراتژی «شکست پنجرهٔ زمانی» پارامتری (شروع HH:MM + منطقهٔ زمانی، طول پنجره، RR، حداکثر معامله در روز) با پریست‌های ۰۰:۰۰ UTC و ۱۳:۳۰ UTC.</li>
+<li><b>FDR در آزمایشگاه استراتژی (Lens)</b>: وقتی ۹ استراتژی هم‌زمان آزمون می‌شوند، یکی تصادفاً «لبه» نشان می‌دهد. اکنون t خوشه‌ای (هفتگی) + تصحیح Benjamini-Hochberg (q=۰٫۱) اعمال می‌شود؛ لبهٔ تأییدنشده با برچسب <b>EDGE_UNCONFIRMED</b> می‌آید.</li></ul>`;
+
+H.fa.bot=`
+${S('🤖 تب ربات — فقط نتیجه‌ها')}
+<p>این‌جا چیزی تنظیم نمی‌شود؛ آن‌چه ربات ۲۴ساعته بیرون از گوشی پیدا/معامله کرده و آن‌چه ستاپ‌های Lens داخل اپ در واقعیت نتیجه داده‌اند نمایش داده می‌شود.</p>
+${S('🤖 ربات ۲۴ساعته (GitHub Actions)')}
+${L(['هر ۱۵ دقیقه کل جهان نمادها (۶۰ رمزارز پرحجم با فیلتر «بازار اسپات دارد» + طلا/نقره + ۱۴ جفت فارکس از Yahoo) را با همان موتور Lens اسکن می‌کند → کاندیدها → تحلیل عمیق (۱۰۰۰ کندل + HTF + آزمایشگاه استراتژی + قوانین چک ریسک) → میزگرد ایجنت‌ها با Gemini (تکنیکال، ماکرو/فاندامنتال با جست‌وجوی وب، سنتیمنت/مشتقات، مناظره‌ی گاو/خرس، مدیر ریسک) → معامله‌ی مجازی. <b>هرگز سفارش واقعی نمی‌زند</b> و کلید صرافی ندارد.',
+'<b>کارت وضعیت</b>: آخرین اجرا (قرمز اگر >۹۰ دقیقه گذشته باشد)، منبع داده، قاضی (roundtable/k3/قوانین)، سهمیه‌ی LLM امروز، جهان نمادها، استراتژی‌های زنده (مثلاً ICHI 4H/1D)، و قیف اسکن → کاندید → عمیق. <b>⟳</b> به‌روزرسانی دستی (اپ هر ۵ دقیقه خودش چک می‌کند و ستاپ جدید را toast/نوتیف می‌دهد).',
+'<b>🔑 وضعیت کلیدها</b>: هر کلید×مدل یک اسلات است؛ exhausted/cooling یعنی ۴۲۹/۵۰۳ گرفته و موقتاً کنار گذاشته شده.',
+'<b>R تجمعی، ۳۰ معامله‌ی آخر، پوزیشن‌های باز</b> و <b>🛡 ریل‌های ریسک</b>: ریسک باز امروز/هفته در برابر سقف‌ها، لغزش ورود، جلوگیری‌ها (زیر حداقل صرافی و…). ⚠️ ربات با ۱۰۰$ × ۳٪ سایز می‌زند (config.json ریپو)؛ تنظیمات داخل اپ روی ربات اثر ندارد — عدد 👤 کنار هر پوزیشن سایز مقیاس‌شده برای حساب توست.',
+'<b>قاضی</b>: در حالت سایه (shadow) AI معامله‌ای را مسدود نمی‌کند، فقط نظرش ثبت و با نتیجه‌ی واقعی مقایسه می‌شود؛ وقتی n موافق/مخالف ≥۴۰ شد، گزارش می‌گوید حق وتو بگیرد یا خاموش شود.',
+'<b>🔬 سنجش تحلیل — دفتر سایه</b>: هر ستاپ تحلیل‌شده (تأییدشده یا ردشده) با همان ورود/استاپ/هدف دنبال می‌شود؛ اگر AI_APPROVED به‌طور معنادار بهتر از AI_REJECTED نباشد، تحلیل ارزش افزوده ندارد (حداقل ۳۰ نمونه در هر گروه). تفکیک بر اساس حکم، اطمینان AI، رژیم، ساعت.',
+'<b>📂 پوزیشن‌های باز</b> (با امتیاز Lens، استراتژی، تایم‌فریم، ورود/SL/T1/T2، لغزش، R و کندل‌های سپری‌شده؛ زدن روی ▾ جزئیات قاضی و دکمه‌های «چارت» و «→ ماشین‌حساب» برای ورود واقعی با دست خودت)، <b>🔔 ستاپ‌های اخیر</b>، <b>⛔ ردشده‌ها (قوانین/AI)</b> با دلیل، <b>📕 بسته‌شده‌ها</b>.',
+'مدیریت پوزیشن ربات فقط روی کندل‌های بسته: SL −1R، T1 سپس SL +0.25R، T2 +2.25/+3R، تایم‌اوت ۴۰ کندل؛ کارمزد+اسلیپیج+فاندینگ کم می‌شود؛ حداکثر ۶ پوزیشن، یکی برای هر نماد.',
+'<b>راه‌اندازی/به‌روزرسانی</b>: ریپوی عمومی GitHub با فایل‌های lens-bot → Secret به نام GEMINI_API_KEY (و اختیاری OPENROUTER_API_KEY) → Actions فعال → آدرس raw فایل public/bot.json در تنظیمات. <u>هنگام آپلود نسخه‌ی جدید هرگز state.json را جایگزین نکن</u> — حافظه‌ی ربات آن‌جاست (در صورت اشتباه از History همان فایل در GitHub نسخه‌ی قبلی را برگردان).'])}
+${S('📒 دفتر سیگنال‌ها (نتیجه‌ی واقعی ستاپ‌های Lens داخل اپ)')}
+${L(['هر ستاپ Lens (دکمه‌ی 🎯، پایش خودکار، 🎯 اسکرینر) با ورود/SL/T1/T2 همان لحظه ثبت می‌شود (بدون تکرار برای یک کندل).',
+'<b>⟳ تسویه با کندل‌های جدید</b>: SL = −1R؛ T1 سپس SL = +0.25R؛ T2 = +2.25R (یا +3R)؛ ۴۰ کندل بدون نتیجه = قیمت روز. هنگام باز بودن اپ هر ۳۰ دقیقه خودکار.',
+'جدول N / %Win / Avg R / Total R / PF و تفکیک رژیم/تایم‌فریم/منبع: نشان می‌دهد موتور <u>واقعاً</u> کجا کار می‌کند. زیر N=30 نتیجه نگیر. <b>پاک کردن دفتر</b> برگشت‌ناپذیر است.'])}`;
+
+H.fa.exchange=`
+${S('🏦 صرافی مجازی — ربات با ۱۰۰ دلار (داخل اپ)')}
+<p>یک صرافی فیوچرز شبیه‌سازی‌شده (USDT-M، مارجین ایزوله) داخل گوشی: همان موتور Lens و همان قواعد ربات، ولی با اجرای واقع‌گرایانه — اهرم خودکار، قیمت لیکوئید، کارمزد، لغزش و فاندینگ. همه‌چیز بر اساس کندل‌های بسته و قطعی است؛ وقتی اپ باز می‌شود کندل‌های ازدست‌رفته را «جبران» می‌کند، پس با بسته بودن اپ چیزی گم نمی‌شود.</p>
+${L(['<b>پروفایل</b>: محافظه‌کار (قواعد ربات فعلی)، متعادل (۶ باز / ۳ هم‌جهت / ۱٪)، تهاجمی (۶ باز / ۴ هم‌جهت / ۱٫۵٪)، متعادل + بدون تعقیب (رد سیگنال بعد از حرکت >۱۶٪ در ۶۰ کندل). پژوهش ۲۳ ماهه روی ۵۲ نماد: محافظه‌کار ≈ +۱٪/سال (افت ۱۹٪)، متعادل ≈ +۲۰–۳۰٪ (افت ~۲۲٪)، تهاجمی +۲۰–۷۰٪ (افت ~۳۰٪). تغییر پروفایل حساب را از ۱۰۰$ دوباره شبیه‌سازی می‌کند.',
+'<b>جهان معامله</b>: ۵۰ ارز اصلی به‌ترتیب حجم + طلا و نقره؛ در تنظیمات کارت می‌توانی نمادها (با کاما) و تایم‌فریم‌ها را عوض کنی. <b>کتاب</b>: کتاب زنده‌ی بات (ICHI · فقط SHORT در 4H) یا ICHI هر دو جهت (آزمایشی).',
+'<b>ریسک هر معامله %</b>، <b>سقف اهرم</b>، <b>شروع از چند روز قبل</b> (برای دیدن سریع نتیجه) → <b>ذخیره و اسکن</b>.',
+'<b>⟳ اجرای اسکن</b> دستی یا <b>اسکن خودکار هر ۵ دقیقه</b> تا وقتی اپ باز است. <b>ریست حساب به ۱۰۰$</b> همه‌چیز را پاک می‌کند.',
+'<b>خواندن کارت</b>: موجودی، ارزش حساب، سود/زیان باز، بازده، حداکثر افت، مارجین درگیر، موجودی آزاد، معاملات بسته، نرخ برد، PF و <b>منحنی ارزش حساب</b>. هر پوزیشن: اهرم (و «چرا این اهرم؟»)، لیکوئید، ورود، قیمت فعلی، حجم، PnL، کندل‌ها، <b>بستن دستی</b>. پایین: معاملات بسته‌شده و <b>تصمیم‌های ربات</b> (چرا وارد شد/نشد).',
+'نکته: اهرم فقط مارجین درگیر و قیمت لیکوئید را تعیین می‌کند؛ اندازه‌ی پوزیشن از ریسک٪ و فاصله‌ی استاپ می‌آید. <b>خروجی JSON</b> برای بکاپ/تحلیل.'])}
+<p class="hint">این شبیه‌ساز برای دیدن «اجرای واقعی» قواعد است (لیکوئید، کارمزد، فاندینگ) — نه مشاوره‌ی سرمایه‌گذاری. پول واقعی درگیر نیست.</p>`;
 
 H.fa.journal=`
 ${S('📒 ژورنال معاملات')}
@@ -176,7 +226,8 @@ ${L(['معاملات از ماشین‌حساب («ثبت در ژورنال») �
 
 H.fa.settings=`
 ${S('⚙️ تنظیمات')}
-${L(['<b>ظاهر</b>: تیره/روشن. زبان با دکمه‌ی بالای صفحه (FA/EN).',
+${L(['<b>🔐 قفل ورود</b>: اپ با رمز عددی باز می‌شود (هر بار که اپ از نو باز شود). رمز در کد اپ به‌صورت هش ذخیره شده و برای تغییرش باید index.html را با هش جدید بسازی (README را ببین). این قفل برای جلوگیری از دسترسی اتفاقی است، نه رمزنگاری داده‌ها.',
+'<b>ظاهر</b>: تیره/روشن. زبان با دکمه‌ی بالای صفحه (FA/EN).',
 '<b>نظر دوم</b>: روشن باشد → در اسکرینر و تحلیل چارت، مدل دوم هم جداگانه تحلیل می‌کند (هزینه دو برابر).',
 '<b>خروجی/ورودی تنظیمات (JSON)</b>: بکاپ کامل کلیدها، واچ‌لیست، هشدارها، ژورنال و تنظیمات. <b>حذف همه کلیدها</b> فقط کلیدهای API را پاک می‌کند.',
 '<b>هزینه‌ی تقریبی تحلیل‌های این ماه</b>: برآورد از روی توکن‌ها.'])}
@@ -223,9 +274,11 @@ ${S('Buttons')}
 ${L(['<b>🛡 Risk check before entry</b>: 8 automatic checks (risk vs. account, R:R, HTF alignment, market regime, liquidation before SL, leverage, stop distance vs. ATR, Lens score and historical stats of this setup). Green = pass, yellow = warn, red = fail. Any red → do not enter or fix the parameter.',
 '<b>📒 Save to journal</b>: asks a one-line "entry reason" (optional) and stores the trade with all numbers (📒 icon in the header); log the outcome later.',
 '<b>Copy results</b> / <b>Reset</b>.'])}
-<p class="hint">Inputs are auto-saved. Chart analysis, Screener and Tools → Trade plan can push numbers straight into this tab.</p>`;
+<p class="hint">Inputs are auto-saved. Chart analysis, Screener and Tools → Trade plan can push numbers straight into this tab.</p>
+<h3>🆕 v129 — half-Kelly card</h3><p>With ≥10 closed trades in journal/ledger a Kelly card appears under the results: Kelly fraction from your real R distribution, suggested half-Kelly, and a comparison with your current risk % (warning when above half-Kelly). Small samples are noisy — treat it as a ceiling.</p>`;
 
-H.en.chart=`
+H.en.chart=`<p><button type="button" onclick="indHelp&&indHelp.open()" style="background:#2962ff;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer">📚 Full indicator guide (80+)</button> — what each indicator is, its formula and how to read it. Also via ❓ in the chart ƒx menu and the “?” next to every indicator.</p>
+
 ${S('🖼 Chart image analysis with Gemini')}
 <p>Give a screenshot of any chart (TradingView, exchange…) and get a numeric multi-timeframe analysis from the senior analyst.</p>
 ${S('How to use')}
@@ -269,13 +322,14 @@ ${L(['<b>Chart timeframe</b> (default 4H) with an offline candlestick chart + EM
 '<b>Send chart to Chart analysis (Gemini)</b>: pushes this coin\'s chart image to the Chart-analysis tab.',
 '<b>📄 Report without AI</b>: same template from indicators only — no key, no cost.',
 '<b>🔔 Alert</b> / <b>⭐ Watchlist</b> / <b>→ Back</b>.'])}
-<p class="hint">The screener gives candidates, not signals; verify each in the Chart tab and with Lens.</p>`;
+<p class="hint">The screener gives candidates, not signals; verify each in the Chart tab and with Lens.</p>
+<h3>🆕 v129 — multi-symbol scan</h3><p><b>Universe floor</b>: min $volume (avg 20) and min ATR% drop dead/thin symbols before scanning. <b>🧭 All scans</b>: card dashboard — one coloured header per preset with hit count and symbol rows with Δ%.</p>`;
 
 H.en.tv=`
 ${S('📈 Chart tab (home)')}
-${L(['<b>Symbol</b> (BTCUSDT or just BTC), <b>exchange</b>, <b>timeframe</b> (default 4H) → <b>Show</b>.',
+${L(['<b>Symbol</b>: type it (BTCUSDT or just BTC) or press <b>▾</b> for the full list: search, ⭐ recent, 🥇 metals (gold/silver/platinum/PAXG), 🪙 top-150 crypto by volume with 24h change (forex is bot-only). <b>Exchange</b>, <b>timeframe</b> (15m–1W, default 4H) → <b>Show</b>.',
 '<b>⛶</b> next to Show: landscape fullscreen; exit with ✕ on the chart.',
-'<b>Chart source</b>: <b>TradingView</b> (official widget with drawing tools/indicators), <b>TheFreeChart</b> (pick symbol/timeframe inside the chart) or <b>FreeCharting</b> (free, no account; symbol/timeframe/theme applied from the fields above, direct OKX spot data (Binance is geo-blocked in Iran); futures-only / tokenized-stock symbols such as SOXL are not available here → use TradingView; the in-app embed is zoom/scroll only — the "full chart" link opens drawings, bar replay, backtests and 68 indicators in a new tab).',
+'<b>Chart source</b>: <b>TradingView</b> (official widget with drawing tools/indicators) or <b>LWC</b> (our own chart on live exchange data, drawing tools, 90+ indicators, in-chart timeframe switch; drawings saved per symbol).',
 '<b>Chart background</b>: dark/light.',
 'The symbol/timeframe here is <u>the reference for every tool</u>: chart analysis, Lens, Roundtable, Replay, Time Machine, Risk Check.'])}
 ${S('💬 Ask AI about this chart')}
@@ -285,7 +339,21 @@ ${L(['<b>Gemini / ChatGPT</b> model switch (keys in Settings).',
 'Good question: "With this data, is a long setup valid? Give numeric trigger, SL, TP and what invalidates it."'])}
 ${S('Reading the answer')}
 <p>Answers follow 🧭 bias / 🏗 structure / 📍 levels / ⚡ trigger / 🎯 plan / ⚠️ invalidation. Look for <b>numbers</b>; no numbers or R:R under 1:1.5 = no setup. The model gives scenarios, not predictions.</p>
-<p class="hint">The free TradingView widget does not save drawings; for the full chart use Tools → Open in TradingView.</p>`;
+<p class="hint">The free TradingView widget does not save drawings; for the full chart use Tools → Open in TradingView.</p>
+<h3>🆕 v129 — multi-chart & new indicators</h3>
+<ul><li><b>🗂 Multi-chart (watchlist)</b>: under the chart controls; up to 8 starred symbols as SVG mini-charts with EMA20/50, 6-bar Δ% and the nearest unbroken resistance/support (yellow/purple). Shared timeframe; tap a card → main chart.</li>
+<li><b>SCORE</b> (setup scorecard 0–6): EMA direction, HTF alignment, volume, S/R touch, body size, structure; entry/stop/TP plan with ✓/✗ outcomes and on-chart stats (n, WR, TP hit rates, Net R). Last bar '~' = provisional.</li>
+<li><b>LVLT</b> (level power): unbroken levels scored 1–5 (age + holds) and a "strongest nearby level" table.</li>
+<li><b>SDZ</b>: supply/demand zones of the last 2 candles (red above / blue below) with midline.</li></ul>
+<h3>🆕 v130 — drawing layers & anti-repaint</h3>
+<ul><li><b>Candle colouring & fills</b>: the chart engine now supports per-indicator candle colours and fills between two lines — <b>ATRTS</b> (green/red candles + fill to the stop), <b>MAFILL</b> (state-coloured EMA21 + price/MA fill + double ribbon).</li>
+<li><b>STPSR</b>: 100-bar swing S/R; "STP" = break, "STP PB" = pullback to the broken level, ✗ = failed break.</li>
+<li><b>PLAN</b>: from the last SCORE≥5 signal: ENTRY / STOP / TARGET 1-3 (1.1R/2R/3R) labels + red risk / green reward boxes + active-window band.</li>
+<li><b>DIP</b> composite preset (Ichimoku + 2 Supertrends + stepped pivots + EMA 50/200, DIP marker). <b>STRONG</b>: strong buy/sell (3 of 4) + ⚡ momentum.</li>
+<li><b>WOLFE</b> adds TP3 (apex), broadening targets (W×0.618/1/1.618) and a weak-R:R warning; <b>FVG</b> also draws opening gaps (OG).</li>
+<li><b>Anti-repaint</b>: any indicator marker on the forming candle is shown with a "~" prefix until the candle closes.</li>
+<li><b>SMC alerts</b> (Auto-watch tab, 🔔 option): new order block / price entering an open FVG on closed candles.</li></ul>
+<h3>🆕 v131 — LWC: our own chart with live data</h3><p><b>LWC</b> next to TradingView opens the Backtest/Replay chart engine on live exchange data (refreshes every 20 s): drawing tools (saved per symbol), 90+ indicators (ƒx), in-chart timeframe switch. TheFreeChart/FreeCharting were removed. ↗ = open in browser.</p>`;
 
 H.en.market=`
 ${S('🌍 Market AI — senior macro analyst')}
@@ -315,18 +383,6 @@ ${L(['Set <b>timeframe</b> and <b>min score</b>, tick "on".',
 '<b>🔍 Scan now</b> / <b>Clear list</b>.'])}
 ${S('🧪 Strategy lab')}
 ${L(['Inside the Lens output (Tools): a table with 6 strategies — Lens setup, Donchian-20 breakout (Turtle), RSI-2 pullback (Connors), Bollinger mean-reversion, MACD cross + EMA200 filter, EMA 20/50 crossover + HTF filter. Rules re-written from public descriptions (freqtrade/Jesse/books).','All use one exit model and the same fee/slippage over the last ~1000 candles of this symbol/timeframe, so "Avg R" is comparable. Verdict: has edge (avgR ≥ +0.15 & PF ≥ 1.2), weak, negative, few samples (<8).','Risk Check gets a "Strategy lab" row: a proposed strategy that is negative here with ≥15 trades → fail; the bot applies the same rule and, conversely, sends a live signal of a strategy that "has edge" here to the roundtable as a new candidate (data-driven strategy selection per symbol/timeframe).','Caveat: 6 months of data is 20–40 trades — enough to drop bad strategies, not to prove good ones.'])}
-${S('🤖 Bot tab')}
-${L(['The 🤖 Bot tab is results only: the 24/7 bot card and the signal ledger. Manual analysis tools stay in Tools.','Chart tab → \"📸 Vision analysis\": either the app draws this symbol/timeframe itself and sends it, or you pick a screenshot from the gallery; the vision analysis (SKILL + MTF data) starts automatically in the Chart Analysis tab.'])}
-${S('🤖 24/7 bot')}
-${L(['The bot (folder <b>lens-bot</b>) runs the app\'s own Lens engine off-phone: every 15 min over the symbols/timeframes in config.json → full packet (score, 4-quadrant regime, extension, SMC, patterns, structure/CHoCH/divergence, Sweep+CHoCH+FVG) → the same Risk-Check rules (Q4, against HTF, extension ≥4, opposing CHoCH, confirmed opposing pattern, R:R) → a full agents roundtable on a separate Gemini: technical analyst (packet + MTF 1D/4H/1H + 60 candles), macro/fundamental analyst (Google Search for the last 72h and the 7-day calendar; refreshed every 4h and shared across symbols), sentiment/derivatives analyst (funding, OI, premium, taker ratio, long/short ratio, F&G, dominance) → bull-vs-bear debate → risk manager (LONG/SHORT/WAIT/SKIP + confidence + who was overruled). Daily LLM budget (default 220 calls); when exhausted, the single judge and then the rules → paper trade sized account × risk% × regime multiplier.',
-'Positions are managed on closed candles only: SL −1R, T1 then SL +0.25R, T2 +2.25/+3R, 40-bar timeout; fee+slippage+funding deducted. Max 6 positions, one per symbol; the rest are "alert only".',
-'Setup: public GitHub repo (Actions free & unlimited) → Secret GEMINI_API_KEY → enable Actions and press Run workflow once → paste the raw URL of public/bot.json in Settings. Works without a Gemini key too (judge = rules).',
-'In the app: last-run status (red if >90 min), paper result in R/$, stats by regime/timeframe/side, open positions with MTM, recent setups with the judge\'s reasons and "Chart" / "→ Calculator" buttons for a manual real entry. New setups toast/notify while the app is open (checked every 5 min).',
-'Universe (v75): automatic every run — top-60 OKX USDT perps by volume (filtered to symbols that have a spot market, so tokenized stocks and perp-only micro-caps drop out) + gold/silver + 14 forex pairs from Yahoo Finance (1H and 1D; 4H aggregated from 1H). Three phases: quick scan of everything (320 candles) → candidate pick with a per-asset-class quota → deep analysis of the top 12 (1000 candles + HTF + lab + rules + roundtable). Forex costs: 0.02% spread, no fee/funding. config.json: universe.cryptoTop, forex, metals, classes (you may add "stock").','AI mandatory (v77, `requireAI:true`): if no key/model is available the setup is NOT opened and the simple judge is NOT used; it is logged as ⏳ "waiting for AI" and retried on up to 4 following runs (while that candle is still the last closed one), then rejected. To reduce 429s: ≥6.5 s between calls, rotation over key×model slots (flash and flash-lite have separate quotas), 60 s cool-down of a slot after 503.','The bot never places real orders and holds no exchange keys.'])}
-${S('📒 Signal ledger')}
-${L(['Every Lens setup (LONG_SETUP/SHORT_SETUP) from any source — 🎯 button, auto-watch, screener 🎯 — is recorded with entry/SL/T1/T2 at that moment (no duplicates per candle).',
-'"Settle" fetches the closed candles that followed and resolves it: SL = −1R; T1 then SL = +0.25R; T2 = +2.25R (or +3R if T1 was skipped); 40 bars without a result = mark-to-market. Auto-settles every 30 min while the app is open.',
-'Stats by 4-quadrant regime, timeframe and source show where the engine <u>actually</u> works. Don\'t conclude below N=30. If a regime stays negative after 1–2 months, stop trading it — that is the whole point of this ledger.'])}
 ${S('🧰 Analysis tools (on the Chart-tab symbol/timeframe)')}
 <p><b>🎯 Lens (this candle)</b> — local, no-AI computation on the last <u>closed</u> candle:</p>
 ${L(['<b>Decision panel</b> (top of the card): engine decision, score, regime and size multiplier, HTF, last structure event, plan, size/$ risk and warnings in one table. In <b>Simple mode</b> (Lens settings) the rest of the details and Time Machine are collapsed; open "Full details" or turn simple mode off. 📡 = current data source (okx/bitget/gate, or cache = offline with the last stored candles).',
@@ -340,18 +396,67 @@ ${L(['<b>Decision panel</b> (top of the card): engine decision, score, regime an
 '<b>Plan</b>: entry, SL (behind structure / 1.5×ATR), T1/T2, R:R and <b>position size</b> from Settings account/risk%. If R:R < your min R:R or against HTF (with that option on) → <b>NO TRADE</b>.',
 '<b>⏱ Time Machine</b> (below Lens): runs the same rule over this symbol\'s history: N, Win%, T1%/T2% reached, SL%, Avg R; filter long/short, with/against HTF. N < 15 = statistics not reliable.'])}
 <p><b>⚖️ Agent roundtable</b> — 6 AI roles in sequence: technical, macro, sentiment/derivatives, bull advocate, bear advocate and finally the <b>risk manager</b> who decides (LONG/SHORT/NO TRADE + size). Check <b>agent agreement</b>: low agreement = stay out. If one agent fails the roundtable continues.</p>
-<p><b>🎬 Replay & strategy tester</b>:</p>
-${L(['<b>Indicators</b>: EMA20/50/200, Bollinger, Keltner, Donchian 20, Ichimoku, daily VWAP, Supertrend(10,3), Parabolic SAR, classic daily pivots, swings (5-bar fractals), volume, and RSI / MACD / Stochastic panes — one tap each. 60–400 visible bars; drag to scroll back.','<b>Timeframe</b>: 1H / 4H / 1D buttons above the chart reload the same symbol at the same point in time (replay trades reset; drawings are stored per timeframe).',
-'<b>⛶ landscape</b>: fullscreen with landscape lock; if the device refuses rotation the chart itself rotates 90°. Exit with ✕ or Back.','<b>Strategy</b>: pick one of the 6 Lab strategies; its signals are marked with triangles on past bars and announced (📣) on the current bar. “🤖 auto-trade” enters on every signal with your SL/TP; win rate, total R and max DD accumulate so you can watch bar by bar where the strategy works and where it fails.','<b>Drawing</b>: horizontal/vertical line (one tap), trend line, ray, zone, Fib retracement (2 taps), Fib extension (3 taps: swing start, swing end, retracement end → 0.618/1/1.272/1.618/2/2.618), 📈 linear-regression channel (2 taps: range → regression line ±1σ/±2σ, slope %/bar and current distance in σ), 📏 measure (%, ATR multiples, bars), 🎯 position (entry then stop; TP from “TP (R)”, size from account settings), T text, ⌫ erase (tap a drawing), 🧲 magnet (snap to O/H/L/C); ↶ undo, 🗑 clear. Stored per symbol/timeframe on the device.','<b>Start N candles back</b> slider. The future is hidden.',
-'<b>⏮ / ▶ +1 / ⏩ +10 / ▶▶ (auto-play, speed)</b>.',
-'<b>SL (×ATR)</b>, <b>TP (R)</b>, <b>max hold</b>: identical trade management for you and the auto tester.',
-'<b>Round-trip fee + slippage</b> (default 0.1% + 0.03%) and an approximate funding cost of 0.01%/8h are deducted from every trade (Time Machine too). Results are "after costs" — more honest and usually smaller.',
-'<b>💧 Sweep + CHoCH + FVG</b> (10th rule, ICT entry model): wick below the last swing low but close above it (liquidity sweep) → within 10 bars a close above the last swing high (CHoCH/MSS) → a bullish FVG left in that move → entry on the first return into the FVG (within 15 bars) with a bullish close. Mirrored for shorts. Live state shows in the Lens card (SWEPT / ARMED / ENTRY); the logical stop is beyond the sweep level. Home: Q2/Q3.',
-'<b>🧱 FVG retest</b> (9th rule): unfilled 3-candle gap (≤60 bars old), price trades into it and closes back out with the EMA20/50 trend. Home regime Q1/Q2.',
-'<b>▲ LONG / ▼ SHORT / Close</b>: manual trade on the current close. Stats (N, win%, total R) and log below. The Lens score of that moment is shown so you can practise.',
-'<b>📐 Trade plan</b>: draggable entry/SL/TP lines; <b>⇅</b> flips side; <b>→ Calculator</b> sends the numbers.',
-'<b>🧪 Run test</b>: 8 rules (EMA cross, 20-bar breakout, EMA pullback, RSI, with-trend engulfing, Zone Break, volume profile, Champion) on this range with identical management. Columns: N, win%, PF (gross profit ÷ gross loss; > 1.3 good), total R, max drawdown. <b>Survival filter</b>: min N, max drawdown (R), min PF and "must beat Buy & Hold" (B&H converted to R with the same stop size). Rejected rows are greyed out with the reason in the last column; if nothing passes there is no edge on this symbol/timeframe. <b>🧬 Robustness test</b> (after running the test): <b>Monte Carlo</b> reshuffles the trade order 1000× and reports P95 drawdown and the probability of exceeding your DD cap; <b>sensitivity</b> reruns the rule with 9 SL/TP combos (≥6 positive = robust plateau, fewer = fragile spike); <b>IS/OOS</b> compares the first half of the range with the unseen second half. Verdict: ✅ robust / ⚠️ mixed / ❌ fragile. <u>Relative comparison on this symbol only — not a promise.</u>'])}
+<p><b>🎬 Replay / 📊 Backtest</b> moved to the «📊 Backtest» tab (it has its own help). The <b>🤖 24h bot</b> and the <b>📒 signal ledger</b> live in the «🤖 Bot» tab.</p>
 <p><b>↗ Open in TradingView</b>: full tradingview.com chart with this symbol/timeframe in a new tab (Bar Replay and saved drawings live there).</p>`;
+
+H.en.backtest=`<p><button type="button" onclick="indHelp&&indHelp.open()" style="background:#2962ff;color:#fff;border:0;border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer">📚 Full indicator guide (80+)</button> — what each indicator is, its formula and how to read it. Also via ❓ in the chart ƒx menu and the “?” next to every indicator.</p>
+
+${S('📊 Backtest tab — two environments')}
+<p>The segmented switch at the top selects <b>📊 Backtest</b> (historical studio) or <b>🎬 Replay</b> (bar-by-bar with the future hidden). The last choice is remembered.</p>
+${S('📊 Backtest studio')}
+${L(['<b>Symbol</b> (▾ opens the full searchable list of crypto/metals), <b>timeframe</b> (15m/1H/4H/1D/1W) and <b>bars</b> (up to 5000) → <b>Load data</b> (OKX, falling back to Bybit/Gate).',
+'<b>Strategy</b>: Ichimoku TK-cross + cloud (same rules as the 17-experiment report), Supertrend + EMA filter, EMA cross, trend pullback to EMA, Donchian breakout, RSI reversal, Bollinger re-entry, MACD cross, DI cross with ADX, EMA trend + RSI-50 + volatility expansion, and <b>🧩 Custom (builder)</b>. Parameters are editable below.',
+'<b>Direction</b> (both / long / short) and <b>risk per trade %</b> (for the equity curve).',
+'<b>◂ Exits & costs</b>: ATR stop, R targets, timeout, fees, slippage, funding — results are after costs.',
+'<b>Run backtest</b>: summary (N, win%, Avg R, PF, total R, max DD), equity curve, trade table and <b>IS/OOS</b> split for overfitting. <b>💾 Save settings</b>.',
+'Past results do not guarantee the future; distrust strategies that only shine in-sample.'])}
+${S('🎬 Replay (bar replay)')}
+${L(['<b>Symbol</b> (▾ for the list) → <b>🎬 Load replay</b>. Up to 1000 bars; the slider sets how many bars back to start. <b>↗ TradingView</b> opens the same symbol there.',
+'<b>Strategy</b> (above the chart) marks its past signals with triangles and the current bar with 📣. <b>🤖 Auto-trade</b> enters on every signal with your SL/TP so you can watch the strategy bar by bar.',
+'<b>Chart bar</b>: timeframe 15m/1H/4H/1D/1W (same point in time is kept), <b>ƒx</b> indicators, <b>⤢ N</b> bars on screen, <b>✏</b> drawing tools, <b>🧲</b> magnet (snap to O/H/L/C), <b>🔒</b> lock all drawings, <b>✋</b> hand mode (pan only), <b>↶</b> undo, <b>🗑</b> clear, <b>📷</b> screenshot, <b>⛶</b> landscape/fullscreen (exit with ✕ or Back).',
+'<b>ƒx indicators</b> — overlay: EMA 20/50/200, EMA 9/21, SMA 50/150/200, Bollinger, Keltner, Envelope, HMA, WMA, daily VWAP, Supertrend, Donchian, Ichimoku (filled cloud), Parabolic SAR, volume. Separate panes (drag the edge to resize): RSI, MACD, ATR, ADX, OBV, Stochastic, Stoch RSI, CCI, Williams %R, MFI, Chaikin MF, Aroon, ROC, Squeeze Momentum. One tap toggles each; selections persist.',
+'<b>✏ Drawings</b> (TradingView look & colours): lines (horizontal, horizontal ray, vertical, trend, ray, extended, arrow, price line); channels (parallel with quartile lines, price channel, linear regression with blue upper / red lower halves and Pearson R); Fibonacci (retracement up to 4.236 with coloured bands, short fib, 3-point extension); shapes (zone, ellipse, triangle, brush, highlighter); trade (long/short position with P/L boxes and R:R, measure %/ATR/bars, text, note).',
+'<b>Editing</b>: <u>tap</u> a drawing (do not drag) to select it; drag its handles, or use its toolbar for colour/width/style, 🔒 per-drawing lock and 🗑 delete. Panning and pinch-zoom never move drawings. Drawings are stored per symbol/timeframe on the device.',
+'<b>⏮ / ▶ +1 / ⏩ +10 / ▶▶</b> with speed (0.5×–5×). The Lens score at that moment is shown under the chart.',
+'<b>⚙️ Trade settings</b> (collapsible): SL (×ATR), TP (R), max hold bars, round-trip fee, slippage — shared by manual, auto and strategy tests.',
+'<b>📐 Trade plan</b> (draggable entry/SL/TP lines; ⇅ flip; → calculator), <b>▲ LONG / ▼ SHORT / Close</b> at the current close. Compact stats (bar, close, trades/win, total R, max DD) and the open position with live R.',
+'<b>🧪 Auto-test strategies on this range</b>: all rules with identical management; survival filter (min N, max DD, min PF, beat buy&hold) and 🧬 robustness (Monte-Carlo, SL/TP sensitivity, IS/OOS).'])}
+<p class="hint">Replay trains decision-making: analyse first, then press ▶. If panning ever grabs a drawing, turn on 🔒.</p>
+<h3>🆕 v129 — honest statistics</h3>
+<ul><li><b>GARCH stop</b> (stop mode): GARCH(1,1) conditional volatility fitted by MLE on returns; stop = k×forecast σ. Compare ATR vs GARCH in the <b>Stops</b> tab (MAE/MFE, R in ATR units).</li>
+<li><b>Factors tab</b>: avg R with/without each filter (volume, regime, extension from EMA20, HTF, session) for the selected strategy.</li>
+<li><b>Kelly card</b>: Kelly fraction from the R distribution (not just win-rate) + suggested half-Kelly vs your current risk.</li>
+<li><b>TWRB</b>: parametric time-window range breakout (start HH:MM + tz, window length, RR, max trades/day) with 00:00 UTC / 13:30 UTC presets.</li>
+<li><b>FDR in the Lens strategy lab</b>: 9 strategies tested at once → one will look good by chance. Weekly-clustered t + Benjamini-Hochberg (q=0.1); unconfirmed edges are labelled <b>EDGE_UNCONFIRMED</b>.</li></ul>`;
+
+H.en.bot=`
+${S('🤖 Bot tab — results only')}
+<p>Nothing is configured here; it shows what the 24h bot found/traded outside the phone and how the in-app Lens setups actually resolved.</p>
+${S('🤖 24h bot (GitHub Actions)')}
+${L(['Every 15 min it scans the whole universe (top-60 crypto perps with a spot market + gold/silver + 14 forex pairs from Yahoo) with the same Lens engine → candidates → deep analysis (1000 bars + HTF + strategy lab + risk-check rules) → Gemini agent roundtable (technical, macro with web search, sentiment/derivatives, bull/bear debate, risk manager) → paper trade. <b>It never places real orders</b> and holds no exchange keys.',
+'<b>Status card</b>: last run (red if >90 min), data source, judge (roundtable/k3/rules), today’s LLM budget, universe, live strategies (e.g. ICHI 4H/1D) and the scan → candidate → deep funnel. <b>⟳</b> refresh (the app checks every 5 min and toasts new setups).',
+'<b>🔑 Key status</b>: each key×model is a slot; exhausted/cooling = got 429/503 and is parked.',
+'<b>Cumulative R, last 30 trades, open positions</b> and <b>🛡 risk rails</b>: open risk today/week vs caps, entry slippage, blocks. ⚠️ The bot sizes with $100 × 3% (repo config.json); in-app settings do not affect it — the 👤 number is the size scaled to your account.',
+'<b>Judge</b>: in shadow mode the AI blocks nothing, it only records its opinion and is compared with reality; once n agree/against ≥40 the report says whether to give it a veto or switch it off.',
+'<b>🔬 Analysis audit — shadow ledger</b>: every analysed setup (approved or rejected) is tracked with the same entry/stop/target; if AI_APPROVED is not meaningfully better than AI_REJECTED the analysis adds no value (≥30 per group). Split by verdict, AI confidence, regime, hour.',
+'<b>📂 Open positions</b> (Lens score, strategy, TF, entry/SL/T1/T2, slip, R, bars; ▾ shows judge details and “chart” / “→ calculator” buttons for a real entry by your own hand), <b>🔔 recent setups</b>, <b>⛔ rejected (rules/AI)</b> with reasons, <b>📕 closed</b>.',
+'Position management on closed candles only: SL −1R, T1 then SL +0.25R, T2 +2.25/+3R, 40-bar timeout; fees+slippage+funding deducted; max 6 positions, one per symbol.',
+'<b>Setup/update</b>: public GitHub repo with the lens-bot files → Secret GEMINI_API_KEY (optional OPENROUTER_API_KEY) → enable Actions → paste the raw URL of public/bot.json in Settings. <u>Never overwrite state.json when uploading a new version</u> — that file is the bot’s memory (restore an older version from the file’s History on GitHub if it happens).'])}
+${S('📒 Signal ledger (real outcome of in-app Lens setups)')}
+${L(['Every Lens setup (🎯 button, auto-watch, 🎯 screener) is recorded with entry/SL/T1/T2 at that moment (no duplicates per candle).',
+'<b>⟳ Settle with new candles</b>: SL = −1R; T1 then SL = +0.25R; T2 = +2.25R (or +3R); 40 bars without result = mark price. Automatic every 30 min while the app is open.',
+'N / %Win / Avg R / Total R / PF and the regime/TF/source split show where the engine <u>really</u> works. Do not conclude below N=30. <b>Clear ledger</b> is irreversible.'])}`;
+
+H.en.exchange=`
+${S('🏦 Paper exchange — the bot with $100 (inside the app)')}
+<p>A simulated USDT-M perpetual exchange on the phone: the same Lens engine and bot rules, but with realistic execution — auto leverage, liquidation price, fees, slippage and funding. Everything is closed-candle and deterministic; when the app opens it catches up on missed candles, so nothing is lost while it is closed.</p>
+${L(['<b>Profile</b>: Conservative (current bot rules), Balanced (6 open / 3 same-side / 1%), Aggressive (6 / 4 / 1.5%), Balanced + no-chase (reject after >16% move in 60 bars). 23-month research on 52 symbols: conservative ≈ +1%/yr (DD 19%), balanced ≈ +20–30% (DD ~22%), aggressive +20–70% (DD ~30%). Changing profile re-simulates from $100.',
+'<b>Universe</b>: top-50 by volume + gold & silver; symbols (comma list) and timeframes are editable in the card settings. <b>Book</b>: the bot’s live book (ICHI · SHORT only on 4H) or ICHI both sides (experimental).',
+'<b>Risk per trade %</b>, <b>leverage cap</b>, <b>start N days back</b> → <b>Save & scan</b>.',
+'<b>⟳ Run scan</b> manually or <b>auto every 5 min</b> while open. <b>Reset to $100</b> wipes everything.',
+'<b>Reading the card</b>: balance, equity, unrealised PnL, ROI, max DD, margin used, free balance, closed trades, win rate, PF and the <b>equity curve</b>. Per position: leverage (“why this leverage?”), liquidation, entry, mark, size, PnL, bars, <b>manual close</b>. Below: closed trades and the <b>bot’s decisions</b>.',
+'Leverage only sets margin used and the liquidation price; position size comes from risk % and stop distance. <b>Export JSON</b> for backup/analysis.'])}
+<p class="hint">This simulator shows the rules under “real” execution (liquidation, fees, funding) — no real money is involved.</p>`;
 
 H.en.journal=`
 ${S('📒 Trade journal')}
@@ -365,7 +470,7 @@ ${L(['Trades arrive here from the calculator ("Save to journal") or from analyse
 
 H.en.settings=`
 ${S('⚙️ Settings')}
-${L(['<b>Appearance</b>: dark/light. Language via the FA/EN button in the header.',
+${L(['<b>🔐 Entry lock</b>: the app opens with a numeric PIN each time it is launched. The PIN is stored in the app code as a hash; to change it rebuild index.html with a new hash (see README). It prevents casual access — it does not encrypt data.','<b>Appearance</b>: dark/light. Language via the FA/EN button in the header.',
 '<b>Second opinion</b>: on → in Screener and Chart analysis the second model also analyses (double cost).',
 '<b>Export/Import settings (JSON)</b>: full backup of keys, watchlist, alerts, journal and settings. <b>Wipe keys</b> deletes API keys only.',
 '<b>Approx. analysis cost this month</b>: token-based estimate.'])}
@@ -406,7 +511,7 @@ const css=document.createElement('style');css.textContent=`
 document.head.appendChild(css);
 const ov=document.createElement('div');ov.id='helpOv';ov.innerHTML='<div id="helpMd"><div id="helpWrap"><button id="helpX" aria-label="close">✕</button><h2 id="helpT"></h2><div id="helpB"></div></div></div>';
 document.body.appendChild(ov);
-const titleFallback={fa:{journal:'📒 ژورنال',settings:'⚙️ تنظیمات'},en:{journal:'📒 Journal',settings:'⚙️ Settings'}};
+const titleFallback={fa:{journal:'📒 ژورنال',settings:'⚙️ تنظیمات',exchange:'🏦 صرافی مجازی'},en:{journal:'📒 Journal',settings:'⚙️ Settings',exchange:'🏦 Paper exchange'}};
 window.showHelp=function(id){const lg=(typeof lang!=='undefined'&&lang)||localStorage.getItem('fc_lang')||'fa';const h=(H[lg]||H.fa)[id];if(!h)return;
   let tt=(titleFallback[lg]||{})[id]||'';if(!tt){const tb=document.querySelector('.tabs button[data-tab="'+id+'"]');tt=tb?tb.textContent.trim():'';}
   document.getElementById('helpT').textContent=(lg==='fa'?'راهنمای ':'Help: ')+tt;

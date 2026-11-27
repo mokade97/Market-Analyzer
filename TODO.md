@@ -279,3 +279,7 @@ Parked items from the previous list are now all applied; the list is empty.
 - [ ] #254 after 1 week on v136: funnel_live.js — deepPicked split live/shadow, confirm ICHI 4H no longer queued (shadowDeferred>0 and labRejected/rulesRejected now mostly ICHI)
 - [x] #255 v136b flow snapshot (OKX REST, shadow-only): 4 `flow:` filter arms; app hides empty orderflow rows + shows flow line
 - [ ] #256 ~2027-01: first look at `flow:` arms in the weekly report (need ≥20 clusters each side); until then no rule change
+- [x] #257 v136c bot: session arms (00:00 / 16:00 UTC, 4H) in filterReport — report-only
+- [x] #258 v137 chart actions: AI → chart (draw/indicator/alert/chart/jsIndicator) with approve card; indEditor.add
+- [ ] #259 chart actions in Market-AI tab and screenshot modal (same card) — after a week of use in chart chat
+- [x] #260 v136d bot: judge `size` FULL/HALF recorded (aiSize) + filterReport arm — shadow-only

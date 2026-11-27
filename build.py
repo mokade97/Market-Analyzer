@@ -3,7 +3,7 @@
 import re,pathlib
 root=pathlib.Path(__file__).parent
 html=(root/'src/index.template.html').read_text(encoding='utf-8')
-for f in ['screener.js','sympick.js','mscan.js','features.js','quant.js','lens.js','policy.js','lensui.js','agents.js','lwc.js','lwchart.js','multichart.js','ind2.js','ind3.js','indhelp.js','indeditor.js','btchart.js','replay.js','backtest.js','strat2.js','chartbar.js','watcher.js','flow.js','ledger.js','botui.js','paper.js','journal2.js','help.js','learn_data1.js','learn_data2.js','learn_data3.js','learn_full1.js','learn_full2.js','learn_full3.js','learn_full4.js','learn.js','learnchart.js','learnexam.js','review.js','mmui.js']:
+for f in ['screener.js','sympick.js','mscan.js','features.js','quant.js','lens.js','policy.js','chartact.js','lensui.js','agents.js','lwc.js','lwchart.js','multichart.js','ind2.js','ind3.js','indhelp.js','indeditor.js','btchart.js','replay.js','backtest.js','strat2.js','chartbar.js','watcher.js','flow.js','ledger.js','botui.js','paper.js','journal2.js','help.js','learn_data1.js','learn_data2.js','learn_data3.js','learn_full1.js','learn_full2.js','learn_full3.js','learn_full4.js','learn.js','learnchart.js','learnexam.js','review.js','mmui.js']:
     js=(root/'src'/f).read_text(encoding='utf-8')
     html=html.replace(f'<script src="{f}"></script>',f'<script>/* ==== {f} ==== */\n'+js+'\n</script>')
 ver=re.search(r"fcalc-(v\d+)",(root/'sw.js').read_text(encoding='utf-8')).group(1)

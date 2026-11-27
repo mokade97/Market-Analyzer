@@ -1,0 +1,6 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const html=fs.readFileSync('../index.html','utf8');const mm=JSON.parse(fs.readFileSync('/tmp/mmtest/mm.json','utf8'));
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'http://localhost/',beforeParse(w){w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:()=>()=>({})});w.fetch=async(u)=>({ok:/mm\.json/.test(u),json:async()=>mm});w.matchMedia=()=>({matches:false,addListener(){},addEventListener(){}});w.scrollTo=()=>{};}});
+const w=dom.window,d=w.document;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+(async()=>{await new Promise(r=>setTimeout(r,1500));const $=id=>d.getElementById(id);w.openPage('bot');[...$('botSeg').querySelectorAll('button')].find(b=>b.dataset.k==='mm').click();await new Promise(r=>setTimeout(r,500));
+console.log('mmCard visible:',$('mmCard').style.display==='','btCard hidden:',$('btCard').style.display==='none','rows:',$('mmBox').querySelectorAll('tbody tr').length,'sparks:',$('mmBox').querySelectorAll('svg').length,'text:',$('mmBox').textContent.slice(0,80).replace(/\s+/g,' '));
+[...$('botSeg').querySelectorAll('button')].find(b=>b.dataset.k==='bot').click();console.log('back to bot:',$('btCard').style.display==='','errors:',errs);process.exit(0);})();

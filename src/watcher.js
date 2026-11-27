@@ -20,6 +20,10 @@ async function scanOnce(manual){if(running)return;running=true;const c=cfg();con
         notify(`${side==='LONG'?'🟢':'🔴'} ${s} ${c.tf} · Lens ${e.score}`,`${side} · ${e.regime||''} · HTF ${e.htf||''} · ${e.pat||''}`);
         if(window.toast)toast(`${side==='LONG'?'🟢':'🔴'} ${s} ${side} ${e.score}`);}}
     }catch(e){}
+    /* v130: SMC alerts — new order block / price entering an open FVG (uses the chart indicators VOB & FVG on closed candles; opt-in via fc_aw_smc) */
+    try{if(LS('fc_aw_smc')==='1'&&window.LWChart&&LWChart.IND.VOB&&LWChart.IND.FVG&&window.klinesAny){const k=(await klinesAny(s,c.tf,320)||[]).slice(0,-1);if(k.length>60){const lastT=k[k.length-1].t,px=k[k.length-1].c;
+      const ob=(LWChart.IND.VOB.calc(k)._shapes||[]).filter(o=>o.k==='box'&&o.text&&/^OB/.test(o.text)&&o.t1===k[k.length-2].t||o.t1===lastT);ob.slice(0,1).forEach(o=>{const key=`${s}|${c.tf}|OB|${o.t1}`;if(seen[key])return;seen[key]=1;hits++;const e={ts:Date.now(),sym:s,tf:c.tf,side:/▲/.test(o.text)?'LONG':'SHORT',score:'OB',regime:'new order block',px};log.unshift(e);notify(`🧱 ${s} ${c.tf} · ${o.text.split('·')[0]}`,`${t().awObNew||'New order block'} ${o.p2.toPrecision(5)}–${o.p1.toPrecision(5)}`);});
+      const fv=(LWChart.IND.FVG.calc(k)._shapes||[]).filter(o=>o.k==='box'&&o.t2==null&&o.text&&/FVG|OG/.test(o.text)&&!/CE/.test(o.text)&&px<=Math.max(o.p1,o.p2)&&px>=Math.min(o.p1,o.p2));fv.slice(0,1).forEach(o=>{const key=`${s}|${c.tf}|FVG|${o.t1}|${lastT}`;if(seen[key])return;seen[key]=1;hits++;const e={ts:Date.now(),sym:s,tf:c.tf,side:/▲/.test(o.text)?'LONG':'SHORT',score:'FVG',regime:'price inside FVG',px};log.unshift(e);notify(`🕳 ${s} ${c.tf} · ${o.text}`,`${t().awFvgIn||'Price entered the gap'} ${Math.min(o.p1,o.p2).toPrecision(5)}–${Math.max(o.p1,o.p2).toPrecision(5)}`);});}}}catch(e){}
     await new Promise(r=>setTimeout(r,400));}
   saveLog();renderLog();const sec=Math.round((Date.now()-started)/1000);
   st.textContent=`${t().awDone} ${ok}/${syms.length} · ${hits} ${t().awHits} · ${sec}s · ${new Date().toLocaleTimeString()}`;localStorage.setItem('fc_aw_last',String(Date.now()));running=false;}
@@ -33,7 +37,7 @@ function schedule(){clearInterval(timer);timer=null;const c=cfg();if(!c.on)retur
   const last=+(LS('fc_aw_last')||0);if(Date.now()-last>c.every*60000)setTimeout(()=>scanOnce(false),3000);}
 function init(){const c=cfg();$('awOn').checked=c.on;$('awTf').value=c.tf;$('awMin').value=c.min;$('awEvery').value=c.every;$('awSyms').value=c.syms;
   $('awOn').onchange=()=>{localStorage.setItem('fc_aw_on',$('awOn').checked?'1':'0');if($('awOn').checked&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission();schedule();$('awStatus').textContent=$('awOn').checked?t().awArmed:t().awOff;};
-  $('awTf').onchange=()=>localStorage.setItem('fc_aw_tf',$('awTf').value);$('awMin').onchange=()=>localStorage.setItem('fc_aw_min',$('awMin').value);
+  $('awTf').onchange=()=>localStorage.setItem('fc_aw_tf',$('awTf').value);$('awMin').onchange=()=>localStorage.setItem('fc_aw_min',$('awMin').value);if($('awSmc')){$('awSmc').value=LS('fc_aw_smc')||'0';$('awSmc').onchange=()=>localStorage.setItem('fc_aw_smc',$('awSmc').value);}
   $('awEvery').onchange=()=>{localStorage.setItem('fc_aw_every',$('awEvery').value);schedule();};$('awSyms').onchange=()=>localStorage.setItem('fc_aw_syms',$('awSyms').value);
   $('awScan').onclick=()=>scanOnce(true);$('awClear').onclick=()=>{log=[];saveLog();renderLog();};
   $('awStatus').textContent=c.on?t().awArmed:t().awOff;renderLog();schedule();

@@ -27,7 +27,7 @@ const syncBt=()=>{try{const s=window.tvSymbol?tvSymbol().q:null;const tf={'5':'1
 const T=L();
 bar.appendChild(mk(T.lens,()=>open(T.lens,['lensBox'],'lensBtn'),'#7c3aed'));
 bar.appendChild(mk(T.rt,()=>open(T.rt,['rtBox'],'rtBtn'),'#0e7490'));
-bar.appendChild(mk(T.replay,()=>{syncBt();toTab('backtest');setTimeout(()=>{const b=$('rpBtn');if(b){b.scrollIntoView({block:'start'});b.click();}},50);}));
+bar.appendChild(mk(T.replay,()=>{syncBt();toTab('backtest');setTimeout(()=>{if(window.rpShowPane){rpShowPane('rp');const s=$('rpSym'),b=$('btSym');if(s&&b)s.value=b.value;}const x=$('rpBtn');if(x){x.scrollIntoView({block:'start'});x.click();}},50);}));
 bar.appendChild(mk(T.bt,()=>{syncBt();toTab('backtest');setTimeout(()=>{const b=$('btLoad');if(b)b.scrollIntoView({block:'start'});},50);}));
 bar.appendChild(mk(T.chat,()=>{const d=$('chatBox');if(d){d.open=true;d.scrollIntoView({block:'start'});}}));
 bar.appendChild(mk(T.vision,()=>{const b=$('tvVision');if(b)b.click();}));
