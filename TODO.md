@@ -283,3 +283,6 @@ Parked items from the previous list are now all applied; the list is empty.
 - [x] #258 v137 chart actions: AI → chart (draw/indicator/alert/chart/jsIndicator) with approve card; indEditor.add
 - [ ] #259 chart actions in Market-AI tab and screenshot modal (same card) — after a week of use in chart chat
 - [x] #260 v136d bot: judge `size` FULL/HALF recorded (aiSize) + filterReport arm — shadow-only
+- [x] #261 v136e bot: HAR-RV vol forecast recorded (volF) + filterReport arm — shadow-only; compare with existing volMult/q4Size when n allows
+- [x] #262 v137b Triple RSI (QS) backtested on crypto 1D/4H → rejected (research/v137-trirsi.md); TRIRSI in lab STRATS only
+- [x] #263 v137b bot: judge `counterparty` field recorded on signals (no gating)
