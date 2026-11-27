@@ -270,3 +270,12 @@ Parked items from the previous list are now all applied; the list is empty.
 - [x] #245 v135: bot signals[]/funnel/coverage + seen bug fix + Signals card (active/watch/rejected, explained empty states, id-deduped notifications)
 - [x] #246 v135: funnel backtest ICHI 4H (20 syms, 5y, walk-forward) → Time Machine gate dropped for ICHI; HTF neutral (kept); CHASE inconsistent (kept shadow)
 - [ ] #247 after 2–3 weeks of v135 shadow data: re-check CHASE gate with filterReport; consider ICHI LONG only if shadow avgR>0 over ≥30 clusters
+- [x] #248 v135b: DONCHIAN20 1D walk-forward → rejected for live (IS t≈0, regime-dependent); stays lab/shadow. Report BACKTEST_v135b_donchian.md
+- [ ] #249 ~2026-12-20: run `node tests/funnel_live.js state.json` (≥3 weeks) → real ACTIVE/week vs ≤6 ceiling; altExits decision at n≥100
+- [x] #250 v136 policy judge in app (policy.js, Lens card) — mirrors bot shadowWhy via bot.json coverage
+- [x] #251 v136 one trade ticket (signals card 🎫 + Lens AI decision), sized from app account, policy-labelled
+- [x] #252 v136 bot: maxShadowDeep=2 + shadow cards rank below live-eligible (funnel.shadowDeferred)
+- [x] #253 v136 one account: sync button app←bot (coverage.sizing)
+- [ ] #254 after 1 week on v136: funnel_live.js — deepPicked split live/shadow, confirm ICHI 4H no longer queued (shadowDeferred>0 and labRejected/rulesRejected now mostly ICHI)
+- [x] #255 v136b flow snapshot (OKX REST, shadow-only): 4 `flow:` filter arms; app hides empty orderflow rows + shows flow line
+- [ ] #256 ~2027-01: first look at `flow:` arms in the weekly report (need ≥20 clusters each side); until then no rule change

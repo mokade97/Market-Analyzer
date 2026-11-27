@@ -292,3 +292,11 @@ node tests/run.js
 
 ## v134 — Academy full lessons
 Every lesson now has a full-length section (📖 متن کامل درس) under the summary: step-by-step explanation, all formulas written out, a numeric example, one or two solved problems, and a self-check exercise with answer. Files `src/learn_full1.js … learn_full4.js` (`window.LEARN_FULL[lessonId]`). The tutor receives it as `LESSON_FULL` so "explain simpler / go deeper / grade" use the same material. Summary texts and exercises unchanged.
+
+## v136 — «یک قرارداد» (اپ + ربات v136)
+مشکل: ربات فقط ICHI SHORT 4H/1D کریپتو می‌گیرد، اپ هر چیزی را تحلیل می‌کند، صرافی دستی است — سه برچسب متفاوت برای یک ستاپ. v136 یک قرارداد می‌سازد، نه استراتژی جدید.
+- **#250 قاضی سیاست در اپ** (`src/policy.js`): زیر کارت Lens هر چارت، همان predicate ربات (`shadowWhy` در bot.js، از `coverage` در bot.json) اجرا می‌شود: 🎯 ربات می‌گیرد / 👁 فقط پایش ربات / ⛔ خارج از ربات (نماد خارج از ۶۰ تا، تایم‌فریم اسکن‌نشده). نامزدی مثل ربات: LENS از event پکت + ICHI از همان strategy lab + ورود کش‌شده (maxExtAtr).
+- **#251 تیکت معامله یکتا** (`botPolicy.ticketHtml`): از سیگنال ربات (دکمهٔ 🎫 در کارت سیگنال‌ها) یا تصمیم AI در Lens: Entry/SL/T1/T2، Qty و notional و اهرم حداقلی **با حساب اپ**، و برچسب سیاست؛ کپی یک‌لمسی برای OKX. تیکت غیرفعال هشدار «خارج از قرارداد» می‌گیرد.
+- **#252 (ربات)** سقف ۲ جای تحلیل عمیق برای کارت‌های سایه (`maxShadowDeep`) + اولویت پایین‌تر برای سایه‌ها؛ شمارندهٔ `shadowDeferred` در قیف.
+- **#253 یک حساب**: هشدار زرد اختلاف حساب دکمهٔ «🔗 حساب اپ = ربات» دارد (از `coverage.sizing`). همهٔ سایزها در اپ از `fc_acct × fc_riskpct` حساب می‌شوند.
+- تست: `tests/signals_check.js` ۲۸ مورد؛ `tests/run.js` ۹۸.
