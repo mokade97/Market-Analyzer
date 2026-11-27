@@ -22,4 +22,27 @@ setTimeout(()=>{const w=d.window;w.localStorage.setItem('fc_bot_url','https://x/
  const e2=JSON.parse(JSON.stringify(e1));e2.lastRun=iso(now-3*36e5);w.botUI._setData(e2);ok('empty + stale → stale warning',/قدیمی است|stale/.test(w.document.getElementById('btBox').textContent));
  const e3=JSON.parse(JSON.stringify(e1));e3.funnel.dataFail=120;e3.funnel.dataOk=60;w.botUI._setData(e3);ok('empty + data failures → incomplete warning',/نرسید|incomplete/.test(w.document.getElementById('btBox').textContent));
  const e4=JSON.parse(JSON.stringify(e1));delete e4.signals;w.botUI._setData(e4);ok('legacy bot.json (no signals[]) → update hint',/v135/.test(w.document.getElementById('btBox').textContent));
+ // v136 one contract: policy judge mirrors bot shadowWhy; ticket; account sync
+ {const b6=JSON.parse(JSON.stringify(base));b6.config.account=100;b6.config.riskPct=3;w.botUI._setData(b6);w.localStorage.setItem('fc_bot_cache',JSON.stringify(Object.assign({},base,{coverage:Object.assign({},base.coverage,{maxExtAtr:2,sizing:{account:100,riskPct:3}}),config:Object.assign({},base.config,{symbols:['BTCUSDT','ETHUSDT'],account:100,riskPct:3})})));const P=w.botPolicy;
+  ok('policy: ICHI 4H SHORT BTC → ACTIVE',P.judge({sym:'BTCUSDT',tf:'4H',cls:'crypto',strategy:'ICHI',side:'SHORT'}).state==='ACTIVE');
+  ok('policy: ICHI 4H LONG → SHADOW (side)',P.judge({sym:'BTCUSDT',tf:'4H',cls:'crypto',strategy:'ICHI',side:'LONG'}).state==='SHADOW');
+  ok('policy: LENS 4H SHORT → SHADOW (strategy)',/LENS/.test(P.judge({sym:'BTCUSDT',tf:'4H',cls:'crypto',strategy:'LENS',side:'SHORT'}).why));
+  ok('policy: 1H → SHADOW (tf)',P.judge({sym:'BTCUSDT',tf:'1H',cls:'crypto',strategy:'ICHI',side:'SHORT'}).state==='SHADOW');
+  ok('policy: symbol outside universe → OUT',P.judge({sym:'PEPEUSDT',tf:'4H',cls:'crypto',strategy:'ICHI',side:'SHORT'}).state==='OUT');
+  ok('policy: 15m → OUT',P.judge({sym:'BTCUSDT',tf:'15m',cls:'crypto',strategy:'ICHI',side:'SHORT'}).state==='OUT');
+  ok('policy: extended entry → SHADOW (chase)',/ATR/.test(P.judge({sym:'BTCUSDT',tf:'4H',cls:'crypto',strategy:'ICHI',side:'SHORT',ext:-2.5}).why));
+  ok('cls heuristic',P.cls('BTCUSDT')==='crypto'&&P.cls('XAUUSD')==='metal'&&P.cls('EURUSD')==='forex');
+  w.localStorage.setItem('fc_acct','1000');w.localStorage.setItem('fc_riskpct','1');const T=P.ticket({sym:'BTCUSDT',tf:'4H',strategy:'ICHI',side:'SHORT',entry:100,stop:102,t1:97,t2:94});
+  ok('ticket: qty from app account (1000×1%/2 = 5)',T&&Math.abs(T.qty-5)<1e-9&&T.r1===1.5&&T.r2===3&&T.lev===0.5,T);
+  ok('ticket text is exchange-ready',/Entry 100 · SL 102/.test(T.text)&&/Policy: ACTIVE/.test(T.text),T.text);
+  const box2=w.document.getElementById('btBox');const tb=box2.querySelector('[data-bt-ticket]');tb.click();ok('signal row ticket button renders ticket',/🎫/.test(box2.querySelector('[data-ticket-box]').textContent));
+  ok('account mismatch shows sync button',!!box2.querySelector('[data-bt-sync]'));box2.querySelector('[data-bt-sync]').click();
+  ok('sync sets app account = bot (100 × 3%)',w.localStorage.getItem('fc_acct')==='100'&&w.localStorage.getItem('fc_riskpct')==='3');
+  ok('after sync the yellow mismatch alert is gone',!w.document.getElementById('btBox').querySelector('[data-bt-sync]'));
+  w.localStorage.setItem('fc_acct','1000');w.localStorage.setItem('fc_riskpct','1');}
+ {const k=[];let c=100;for(let i=0;i<400;i++){c*=1+(Math.sin(i/9)*0.01-0.002);k.push({t:Date.now()-(400-i)*144e5,o:c,h:c*1.01,l:c*0.99,c,v:1000});}
+  const html=w.botPolicy.cardHtml({packet:{event:'SHORT_SETUP'},k},'BTCUSDT','4H');ok('lens card: LENS SHORT detected and labelled watch-only',/LENS SHORT/.test(html)&&/فقط پایش ربات|watch-only/.test(html),html.slice(0,300));
+  const html2=w.botPolicy.cardHtml({packet:{event:'CANDLE'},k},'BTCUSDT','1H');ok('lens card 1H: scope line + base pill SHADOW',/1H/.test(html2)&&/👁/.test(html2));}
+ {const b7=JSON.parse(JSON.stringify(base));b7.signals[0].flow={funding:0.0002,lsRatio:2.9,oiChg1hPct:1.5,taker1h:0.44};b7.filterReport={week:{'orderflow: 5m flow aligned':{kept:{n:0,clusters:0},dropped:{n:0,clusters:0},verdict:'inconclusive',why:''},'flow: OI rising 1h':{kept:{n:3,clusters:2,clAvg:0.1},dropped:{n:2,clusters:1,clAvg:-0.2},verdict:'inconclusive',why:''}},allTime:{'orderflow: 5m flow aligned':{kept:{n:0,clusters:0},dropped:{n:0,clusters:0},verdict:'inconclusive',why:''},'flow: OI rising 1h':{kept:{n:3,clusters:2,clAvg:0.1},dropped:{n:2,clusters:1,clAvg:-0.2},verdict:'inconclusive',why:''}}};
+  w.botUI._setData(b7);const tx=w.document.getElementById('btBox').textContent;ok('signal row shows REST flow snapshot',/L\/S 2\.9/.test(tx)&&/OI1h \+1\.5%/.test(tx));ok('empty orderflow rows hidden, flow rows shown',!/orderflow: 5m flow aligned/.test(tx)&&/flow: OI rising 1h/.test(tx)&&/پنهان شد|hidden/.test(tx));}
  ok('no runtime errors',errs.length===0,errs);console.log(`\n${pass} passed, ${fail} failed`);process.exit(fail?1:0);},1500);
