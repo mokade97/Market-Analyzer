@@ -267,3 +267,6 @@ Parked items from the previous list are now all applied; the list is empty.
 - [ ] #242 منبع دوم وب‌سوکت (Binance) برای نمادهایی که در OKX نیستند
 - [x] #243 v134c: دکمه‌های «ارسال برای تحلیل» و «ارسال به گفتگو» در پنجرهٔ اسکرین‌شات LWC
 - [x] #244 v134d: حالت گفتگوی آزاد / تحلیل ساختاریافته در چت چارت
+- [x] #245 v135: bot signals[]/funnel/coverage + seen bug fix + Signals card (active/watch/rejected, explained empty states, id-deduped notifications)
+- [x] #246 v135: funnel backtest ICHI 4H (20 syms, 5y, walk-forward) → Time Machine gate dropped for ICHI; HTF neutral (kept); CHASE inconsistent (kept shadow)
+- [ ] #247 after 2–3 weeks of v135 shadow data: re-check CHASE gate with filterReport; consider ICHI LONG only if shadow avgR>0 over ≥30 clusters

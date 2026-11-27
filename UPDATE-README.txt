@@ -1,5 +1,3 @@
-v134b+v134c+v134d (incremental on top of v134)
-APP: replace index.html and sw.js in the app repo root (cache fcalc-v134d); hard-refresh / reinstall PWA.
-Changed sources: src/lwchart.js, src/screener.js, src/index.template.html.
-v134b live OKX websocket candles + time-zone picker; v134c screenshot -> analysis/chat; v134d chart chat free/structured modes.
-BOT unchanged (v133b).
+APP v135 (on top of v134d)
+Replace index.html + sw.js in the app repo root (cache fcalc-v135). Changed source: src/botui.js. New test: tests/signals_check.js. Report: research/v135-ichi-funnel.md.
+The Signals card needs bot v135 (bot.json v2); with an older bot it shows an update hint and everything else keeps working.

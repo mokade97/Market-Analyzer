@@ -273,6 +273,13 @@ node tests/run.js
 - Tutor chat and every AI / hands-on exercise have a **📷 Photo** button (camera or gallery, up to 4 images). Photos are downscaled client-side (≤1280 px JPEG q0.8) and sent inline to the tutor model: OpenAI-compatible `image_url`, Gemini `inline_data`, Anthropic `image` base64. The grading prompt tells the model to read the handwriting and flag illegible parts rather than guess.
 - Exercise can be submitted with photo only (text optional). Chat history keeps images only for the last 3 messages (token budget). If the selected model has no vision, the error message says which models to pick.
 
+## v135 — کارت «🎯 سیگنال‌ها» (ربات v135)
+- بالای کارت Bot: کارت سیگنال‌ها از `bot.json` v2 (`signals[]`, `funnel`, `coverage`) با سه تب **فعال / فقط پایش / ردشده**. هدر: تازگی آخرین اسکن (سبز ≤۲۰ دقیقه، زرد ≤۹۰، قرمز)، خط **قیف** اجرای اخیر، **پوشش** (کلاس/تایم‌فریم/استراتژی/جهت کتاب زنده؛ 👁 = فقط پایش بنا به سیاست)، و **کارنامهٔ کاغذی به تفکیک استراتژی فعال** با هشدار «N معاملهٔ بسته از استراتژی‌های قبلی — شاهدِ استراتژی فعلی نیست».
+- هر سیگنال: جهت، ورود/محدوده، SL/T1/T2/R، دلیل صدور، سطح ابطال، زمان انقضا (شمارش معکوس)، نتیجهٔ دفتر کاغذی (باز شد / سقف پر / مشغول / …)، HTF، نظر AI، منبع قیمت، نسخهٔ استراتژی، شناسه؛ دکمه‌های چارت و ماشین‌حساب.
+- **حالت خالیِ توضیح‌دار:** «اسکن انجام شد و ستاپ معتبری نبود (+نرخ تاریخی ≈ ۶/هفته)» ≠ «دادهٔ ربات قدیمی است» ≠ «بخش بزرگی از داده نرسید» ≠ «ربات هنوز v135 نیست».
+- **اعلان‌ها:** فقط برای سیگنال `ACTIVE` و منقضی‌نشده، با حذف تکرار بر اساس `id` (`fc_sig_notified`). برای bot.json قدیمی مسیر قبلی حفظ شده.
+- تست: `tests/signals_check.js` (۱۲ مورد). گزارش بک‌تست قیف: `research/v135-ichi-funnel.md`.
+
 ## v134d — دو حالت در «مشورت با هوش مصنوعی دربارهٔ این چارت»
 - مانند «بازار AI»: **💬 گفتگوی آزاد / آموزش** (پاسخ طبیعی، بدون قالب، دمای 0.7، نقد ترسیم‌ها و آموزش روی همین چارت) و **📋 تحلیل ساختاریافته** (SKILL + قالب اجباری ۷ بخشی: ساختار HTF→LTF، نقدینگی/سطوح، مومنتوم/مشتقات، سناریوها با تریگر، پلن معامله یا «بدون معامله»، ابطال، اطمینان؛ با اسکرین‌شات ضمیمه بخش «ترسیم‌های شما» اضافه می‌شود). انتخاب در `fc_chatmode` ذخیره می‌شود؛ متن پیش‌فرضِ ارسالِ بدون سؤال هم به حالت وابسته است.
 
