@@ -34,7 +34,17 @@ setTimeout(()=>{const w=d.window;const $=id=>w.document.getElementById(id);
    ok('indHelp has text for every indicator',ids.every(id=>w.indHelp.data[id]),ids.filter(id=>!w.indHelp.data[id]).join(','));
    const B=w.btStudio;const SIDS=Object.keys(B.STR).filter(x=>x!=='CUSTOM');ok('≥20 strategies',SIDS.length>=20,String(SIDS.length));B.setData(kb,'TEST','1H');let sb=[];
    SIDS.forEach(id=>{const S=B.STR[id];const p={};Object.keys(S.params).forEach(q=>p[q]=S.params[q].def);try{const tr=B.runBacktest(id,p,{side:'BOTH',slMode:'atr',slAtr:1.5,swN:10,tp:2,t1:0,trail:0,maxBars:40,flip:0,fee:0.1,slip:0.03,fund:0.01,risk:1});if(!Array.isArray(tr))sb.push(id);}catch(e){sb.push(id+':'+e.message);}});ok('every strategy backtests without throwing',sb.length===0,sb.join(','));
-   ok('LWChart v1.2 API exported',w.LWChart.version==='1.2'&&!!w.LWChart.math&&!!w.ind2&&typeof w.ind2.liqSignals==='function'); /* mount itself is covered by the Playwright smoke test (jsdom lacks matchMedia listeners) */
+   ok('LWChart v1.3 API exported',w.LWChart.version==='1.3'&&!!w.LWChart.math&&!!w.ind2&&typeof w.ind2.liqSignals==='function'); /* mount itself is covered by the Playwright smoke test (jsdom lacks matchMedia listeners) */
+  console.log('\nv138 indicator params / settings');
+  {const LW=w.LWChart;const ks=synth([[100,100,120],[100,130,80],[130,110,60]],0.3);
+   ok('paramsOf defaults (RSI)',JSON.stringify(LW.paramsOf('RSI'))==='{"len":14,"ob":70,"os":30}',JSON.stringify(LW.paramsOf('RSI')));
+   ok('paramsOf clamps & ignores junk',LW.paramsOf('BOLL',{BOLL:{params:{len:9999,mult:'x'}}}).len===500&&LW.paramsOf('BOLL',{BOLL:{params:{len:9999,mult:'x'}}}).mult===2);
+   ok('labelOf follows params',LW.labelOf('EMA',{EMA:{params:{a:10,b:30,c:100}}})==='EMA 10/30/100'&&LW.labelOf('RSI',{RSI:{params:{len:9}}})==='RSI 9',LW.labelOf('EMA',{EMA:{params:{a:10,b:30,c:100}}}));
+   const r14=LW.IND.RSI.calc(ks),r5=LW.IND.RSI.calc(ks,{len:5,ob:70,os:30});ok('calc(k) without P uses defaults',r14.r.filter(v=>v!=null).length===ks.length-14,String(r14.r.filter(v=>v!=null).length));
+   ok('calc(k,P) honours length',r5.r.filter(v=>v!=null).length===ks.length-5&&Math.abs(r5.r[ks.length-1]-r14.r[ks.length-1])>1e-9);
+   const e=LW.IND.EMA.calc(ks,{a:5,b:10,c:20});ok('EMA params change output',Math.abs(e.e200[ks.length-1]-LW.IND.EMA.calc(ks).e200[ks.length-1])>1e-9);
+   ok('indCfg UI + chart-actions params exported',typeof w.indCfg.open==='function'&&typeof w.indCfg.layouts==='function'&&/params/.test(w.chartActions.promptAddendum()));
+   ok('≥25 indicators declare params',Object.keys(LW.IND).filter(id=>LW.IND[id].params).length>=25);}
    ok('mscan has D27 presets + D28 indicators',w.mscan.PRESETS.some(p=>p.id==='nr7')&&w.mscan.PRESETS.some(p=>p.id==='c97')&&!!w.mscan.IND.stage&&!!w.mscan.IND.extSma50Atr);
    ok('journal grader + ind editor + indHelp exposed',!!w.journalTag&&!!w.indEditor&&!!w.indHelp.open);}
    /* v129 */

@@ -286,3 +286,6 @@ Parked items from the previous list are now all applied; the list is empty.
 - [x] #261 v136e bot: HAR-RV vol forecast recorded (volF) + filterReport arm — shadow-only; compare with existing volMult/q4Size when n allows
 - [x] #262 v137b Triple RSI (QS) backtested on crypto 1D/4H → rejected (research/v137-trirsi.md); TRIRSI in lab STRATS only
 - [x] #263 v137b bot: judge `counterparty` field recorded on signals (no gating)
+- [x] #264 v138 LWC: TradingView-style indicator legend rows (⚙ settings with Inputs/Style/Help tabs, 👁, ✕); core indicators parametrised (`params` + `calc(k,P)`), settings saved in `fc_lw_indcfg`
+- [x] #265 v138 LWC: global 👁 (hide/show all indicators without removing) + 💾 layouts (≤10, symbol-independent, `fc_lw_layouts`, JSON export/import)
+- [x] #266 v138 chart actions: `{"indicator":ID,"on":true,"params":{…}}` + prompt lists current indicators and tunable inputs; help updated (FA/EN)

@@ -6,7 +6,7 @@
      {"draw":"zone","top":..,"bottom":..,"from":time?,"to":time?,"label"} → rect (defaults: last 60 bars → last bar)
      {"draw":"fib","from":{...},"to":{...}}                                → fibonacciLine
      {"draw":"text","time":..,"price":..,"text":"..."}                     → text
-     {"indicator":"RSI","on":true}        ids from LWChart.IND (EMA, EMA9, SMA, BOLL, VWAP, ST, DON, ICHI, VOL, RSI, MACD, ATR, ADX, KC, …)
+     {"indicator":"RSI","on":true,"params":{"len":9}}   ids from LWChart.IND; v138: optional params = the indicator's declared inputs (EMA a/b/c, BOLL len/mult, RSI len/ob/os …) (EMA, EMA9, SMA, BOLL, VWAP, ST, DON, ICHI, VOL, RSI, MACD, ATR, ADX, KC, …)
      {"alert":{"price":95800,"label":"..."}}                               → app price alert (features.js addAlert)
      {"chart":{"sym":"ETHUSDT","tf":"1D"}}                                 → switch symbol / timeframe
      {"jsIndicator":{"name":"...","pane":"main|sub","code":"..."}}         → user JS indicator (sandboxed iframe, indeditor.js), registered as U<n> and switched on
@@ -20,11 +20,13 @@ const ms=t=>{if(t==null)return null;if(typeof t==='number')return t<1e12?t*1000:
 const num=x=>{const v=+x;return isFinite(v)&&v>0?v:null;};
 const INDS=()=>Object.keys((window.LWChart&&window.LWChart.IND)||{});
 /* system-prompt addendum: what the model may emit */
-function promptAddendum(){const inds=INDS().filter(x=>!/^U\d+$/.test(x)).join(', ');return `
+function promptAddendum(){const I=(window.LWChart&&window.LWChart.IND)||{};const inds=INDS().filter(x=>!/^U\d+$/.test(x)).join(', ');const h=H();const on=h&&h.indOn?h.indOn.filter(x=>I[x]).map(id=>h.indLabel?h.indLabel(id):id).join(', '):'';
+ const pr=Object.keys(I).filter(id=>I[id].params).map(id=>id+'{'+Object.keys(I[id].params).map(n=>n+'='+I[id].params[n].d).join(',')+'}').join(' ');return `
 
 ## CHART ACTIONS (optional, end of answer)
 You control the trader's own chart (not TradingView). After your prose you MAY append exactly one fenced block whose language tag is chart-actions, containing a JSON array. Only include actions that add real value (key levels, zones, the indicators your analysis relies on, an alert at the trigger). Max 12 actions. Prices must be plausible for the visible chart. The user previews and approves before anything is applied — never claim you already drew something.
-Schema: {"draw":"horizontal","price":N,"label":"S"} | {"draw":"trend"|"ray","from":{"time":ISO,"price":N},"to":{"time":ISO,"price":N},"label":"S"} | {"draw":"zone","top":N,"bottom":N,"from":ISO?,"to":ISO?,"label":"S"} | {"draw":"fib","from":{"time":ISO,"price":N},"to":{"time":ISO,"price":N}} | {"draw":"text","time":ISO,"price":N,"text":"S"} | {"indicator":"ID","on":true|false} with ID in [${inds}] | {"alert":{"price":N,"label":"S"}} | {"chart":{"sym":"BTCUSDT","tf":"15m|1H|4H|1D|1W"}} | {"jsIndicator":{"name":"S","pane":"main"|"sub","code":"JS"}}
+Schema: {"draw":"horizontal","price":N,"label":"S"} | {"draw":"trend"|"ray","from":{"time":ISO,"price":N},"to":{"time":ISO,"price":N},"label":"S"} | {"draw":"zone","top":N,"bottom":N,"from":ISO?,"to":ISO?,"label":"S"} | {"draw":"fib","from":{"time":ISO,"price":N},"to":{"time":ISO,"price":N}} | {"draw":"text","time":ISO,"price":N,"text":"S"} | {"indicator":"ID","on":true|false,"params":{name:value}?} with ID in [${inds}] | {"alert":{"price":N,"label":"S"}} | {"chart":{"sym":"BTCUSDT","tf":"15m|1H|4H|1D|1W"}} | {"jsIndicator":{"name":"S","pane":"main"|"sub","code":"JS"}}
+Indicators are first-class tools: turn on the built-in ones your analysis uses (e.g. RSI for divergence, BOLL/KC for squeeze, ICHI for cloud, VWAP for intraday fair value, ST for a trailing stop) instead of describing them in words, and tune their inputs with "params" when a non-default length matters (declared inputs with defaults: ${pr}). ${on?'Currently ON the chart: '+on+'. Do not re-add those; turn off what is irrelevant.':'The chart currently shows no indicators besides volume.'}
 jsIndicator code contract: input k = bars [{t,o,h,l,c,v}] oldest→newest; helpers ema(arr,n) sma(arr,n) rsi(arr,n) atr(k,n) hh(k,n) ll(k,n); must return {series:{name:[numbers|null]}, pane, colors:{name:'#hex'}, markers:[{t,side:'up'|'dn',text}]}. No DOM, no network, no imports; pure arithmetic only. Write it only when the user asks for a custom indicator or when no built-in ID covers what you need.`;}
 /* parse: returns {text (answer without the block), actions[]} */
 function parse(answer){const m=/```chart-actions\s*([\s\S]*?)```/i.exec(answer||'');if(!m)return {text:answer,actions:[]};let arr=[];try{arr=JSON.parse(m[1].trim());}catch(e){try{arr=JSON.parse(m[1].trim().replace(/,\s*]$/,']'));}catch(_){arr=[];}}if(!Array.isArray(arr))arr=[];return {text:answer.replace(m[0],'').trim(),actions:arr.filter(a=>a&&typeof a==='object').slice(0,12)};}
@@ -35,7 +37,7 @@ function describe(a){const f=fa();const p=x=>x==null?'—':(+x).toLocaleString('
   if(a.draw==='zone')return `▭ ${f?'ناحیه':'zone'} ${p(a.bottom)}–${p(a.top)}${a.label?' · '+esc(a.label):''}`;
   if(a.draw==='fib')return `𝑓 ${f?'فیبوناچی':'fib'} ${p(a.from&&a.from.price)} → ${p(a.to&&a.to.price)}`;
   if(a.draw==='text')return `T ${esc(a.text||'')} @ ${p(a.price)}`;
-  if(a.indicator)return `ƒx ${esc(a.indicator)} ${a.on===false?(f?'خاموش':'off'):(f?'روشن':'on')}`;
+  if(a.indicator)return `ƒx ${esc(a.indicator)} ${a.on===false?(f?'خاموش':'off'):(f?'روشن':'on')}${a.params&&typeof a.params==='object'?' · '+esc(Object.keys(a.params).map(k=>k+'='+a.params[k]).join(' ')):''}`;
   if(a.alert)return `🔔 ${f?'هشدار قیمت':'price alert'} ${p(a.alert.price)}${a.alert.label?' · '+esc(a.alert.label):''}`;
   if(a.chart)return `📈 ${f?'چارت':'chart'} ${esc(a.chart.sym||'')} ${esc(a.chart.tf||'')}`;
   if(a.jsIndicator)return `✎JS ${esc(a.jsIndicator.name||'U')} (${esc(a.jsIndicator.pane||'main')}) · ${(a.jsIndicator.code||'').length} ${f?'کاراکتر':'chars'}`;
@@ -54,7 +56,8 @@ function applyOne(a,log){const h=H();const f=fa();
     else if(a.draw==='fib')pushDraw(h,{name:'fibonacciLine',points:[{timestamp:nearT(h,a.from.time||tAt(h,40)),value:num(a.from.price)},{timestamp:nearT(h,a.to.time||tAt(h,0)),value:num(a.to.price)}],styles:S});
     else if(a.draw==='text')pushDraw(h,{name:'text',points:[{timestamp:nearT(h,a.time||tAt(h,0)),value:num(a.price)}],styles:S,extendData:String(a.text)});
     h.saveDrawings&&h.saveDrawings(h,true);h.redraw&&h.redraw();return true;}
-  if(a.indicator){if(!h)throw new Error(f?'چارت باز نیست':'chart not open');const id=String(a.indicator).toUpperCase();const on=h.indOn.includes(id);const want=a.on!==false;if(on!==want)h.toggleExtra(id);return true;}
+  if(a.indicator){if(!h)throw new Error(f?'چارت باز نیست':'chart not open');const id=String(a.indicator).toUpperCase();const on=h.indOn.includes(id);const want=a.on!==false;if(on!==want)h.toggleExtra(id);
+    if(want&&a.params&&typeof a.params==='object'&&h.setIndCfg){const d=window.LWChart.IND[id];const P={};Object.keys(a.params).forEach(n=>{if(d&&d.params&&d.params[n])P[n]=a.params[n];});if(Object.keys(P).length)h.setIndCfg(id,{params:P});}return true;}
   if(a.alert){const sym=(h&&h.sym)||(document.getElementById('tvSym')&&document.getElementById('tvSym').value.toUpperCase().replace(/USDT$/,'')+'USDT')||'';if(!window.addAlert)throw new Error('alerts n/a');addAlert(sym,num(a.alert.price),(a.alert.label||'AI'));return true;}
   if(a.chart){const $=id=>document.getElementById(id);if(a.chart.sym&&$('tvSym'))$('tvSym').value=String(a.chart.sym).toUpperCase().replace(/USDT$/,'');const tfv={'5m':'5','15m':'15','1H':'60','4H':'240','1D':'D','1W':'W'}[a.chart.tf];if(tfv&&$('tvInt'))$('tvInt').value=tfv;if($('tvLoad'))$('tvLoad').click();return true;}
   if(a.jsIndicator){if(!window.indEditor||!indEditor.add)throw new Error('indEditor n/a');const id=indEditor.add({name:a.jsIndicator.name||'AI',pane:a.jsIndicator.pane==='sub'?'sub':'main',code:a.jsIndicator.code});if(h&&id&&!h.indOn.includes(id))h.toggleExtra(id);return id;}
