@@ -913,7 +913,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch
 <script src="review.js"></script>
 <script src="mmui.js"></script>
 <script>
-window.addEventListener('error',e=>{try{const d=document.createElement('div');d.className='alert red';d.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99;margin:0;border-radius:0;font-size:12px';d.textContent='JS error: '+(e.message||'')+' @'+(e.lineno||'');document.body.appendChild(d);setTimeout(()=>d.remove(),8000);}catch(_){}});
+window.addEventListener('error',e=>{try{const d=document.createElement('div');d.className='alert red';d.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99;margin:0;border-radius:0;font-size:12px';d.textContent='JS error: '+(e.message||'')+' @'+(e.lineno||'')+(e.error&&e.error.stack?' · '+String(e.error.stack).split('\n').slice(1,4).map(x=>x.trim().replace(/^at /,'').replace(/\(.*index\.html:/,'(').replace(/https?:\/\/[^)]*\//,'')).join(' ← '):'');d.onclick=()=>{try{navigator.clipboard.writeText(d.textContent);}catch(_){}d.remove();};try{localStorage.setItem('fc_lasterr',d.textContent);}catch(_){};document.body.appendChild(d);setTimeout(()=>d.remove(),8000);}catch(_){}});
 setTimeout(()=>{if(!window.renderJournal){const d=document.createElement('div');d.className='alert red';d.textContent='features module failed to load';document.body.prepend(d);}},1500);
 </script>
 </body>
